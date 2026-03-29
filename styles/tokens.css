@@ -1,0 +1,105 @@
+/* Tracent Design Tokens — colors, typography, spacing, radius, shadows, motion */
+/* ═══════════════════════════════════════════════════════════
+   TRACENT V21 — DESIGN SYSTEM
+   Philosophy: One hero per screen. Breathe. Be decisive.
+   Behavioral Architecture: Doctor-Not-Dashboard. Score-led. Band-aware.
+
+   CSS TABLE OF CONTENTS (for modularization):
+   ─────────────────────────────────────────────
+   1. Design Tokens (colors, type, spacing, radius, motion)
+   2. Base Layout (screen system, scroll area)
+   3. Splash Screen
+   4. Onboarding
+   5. Analysis Screen
+   6. Dashboard Shell (header, score hero, stat strip, tabs)
+   7. Bottom Nav (positioning + BSE native nav theme)
+   8. BSE Score Zone
+   9. Shared Components (cards, metrics, buttons, progress bars)
+  10. Home Tab Components (verdict, NBM, mode rail, retention)
+  11. Advice Tab (AI cards, chat)
+  12. Debt Tab (relief shell, strategy tools)
+  13. Progress Tab (net worth, career, retirement, goals)
+  14. Modals
+  15. Settings
+  16. Empty States + Animations
+  17. Sign-in Sheet
+  18. Feedback FAB
+  19. Utility Classes
+  20. V21 Behavioral Additions (phases, choice cards, score bands)
+  21. Premium Motion System (breathing, ring draw, counters, etc.)
+  22. BSE Injected Styles (score suppression, focus mode, debt relief)
+═══════════════════════════════════════════════════════════ */
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  /* Colour */
+  --navy:      #001F33;
+  --navy-mid:  #003B5C;
+  --navy-deep: #000D1A;
+  --sky:       #00A8E8;
+  --sky-dim:   rgba(0,168,232,0.10);
+  --sky-border:rgba(0,168,232,0.25);
+  --white:     #FFFFFF;
+  --off-white: #F7F9FC;
+  --gray-1:    #F0F4F8;
+  --gray-2:    #E2E8F0;
+  --gray-3:    #94A3B8;
+  --gray-4:    #64748B;
+  --green:     #10B981;
+  --amber:     #F59E0B;
+  --red:       #EF4444;
+  --teal:      #0077B6;
+
+  /* Typography */
+  --font-display: 'DM Serif Display', Georgia, serif;
+  --font-body:    'DM Sans', system-ui, sans-serif;
+
+  /* Spacing — 8pt grid */
+  --s1: 8px;  --s2: 16px;  --s3: 24px;
+  --s4: 32px; --s5: 40px;  --s6: 48px;
+
+  /* Radius */
+  --r-sm:  12px;
+  --r-md:  18px;
+  --r-lg:  24px;
+  --r-pill:50px;
+
+  /* Shadows */
+  --shadow-sm: 0 1px 3px rgba(0,31,51,0.06), 0 2px 8px rgba(0,31,51,0.04);
+  --shadow-md: 0 4px 16px rgba(0,31,51,0.10), 0 1px 4px rgba(0,31,51,0.06);
+  --shadow-lg: 0 8px 32px rgba(0,31,51,0.14), 0 2px 8px rgba(0,31,51,0.06);
+
+  /* Motion — base */
+  --spring:   cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-out: cubic-bezier(0.22, 0.61, 0.36, 1);
+  --fast:     0.15s;
+  --med:      0.28s;
+  --slow:     0.44s;
+
+  /* Motion — premium tokens (Tracent UI/UX pass) */
+  --tr-fast:    120ms;
+  --tr-med:     180ms;
+  --tr-slow:    240ms;
+  --tr-screen:  320ms;
+  --tr-score:   420ms;
+  --tr-ritual:  560ms;
+  --tr-ease-out-soft: cubic-bezier(0.22, 0.61, 0.36, 1);
+  --tr-ease-standard: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --tr-ease-emphasis: cubic-bezier(0.16, 1, 0.3, 1);
+  --tr-shift-xs: 4px;
+  --tr-shift-sm: 8px;
+  --tr-shift-md: 12px;
+  --tr-shift-lg: 20px;
+}
+
+html, body {
+  height: 100%; min-height: 100dvh;
+  background: var(--navy-deep);
+  font-family: var(--font-body);
+  font-size: 15px;
+  color: var(--navy);
+  -webkit-font-smoothing: antialiased;
+  overscroll-behavior: none;
+}
+

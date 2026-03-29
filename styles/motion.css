@@ -1,0 +1,397 @@
+/* Tracent Motion System — V21 motion classes + premium interactions */
+/* ═══════════════════════════════════════════════════════════
+   TRACENT PREMIUM UI/UX PASS — Motion & Interaction Layer
+   Calm · Exact · Rising
+═══════════════════════════════════════════════════════════ */
+
+/* ── Utility motion classes ───────────────────────────────── */
+.tr-fade-up {
+  opacity: 0;
+  transform: translateY(var(--tr-shift-md));
+  transition:
+    opacity var(--tr-slow) var(--tr-ease-out-soft),
+    transform var(--tr-slow) var(--tr-ease-out-soft);
+}
+.tr-fade-up.is-visible { opacity: 1; transform: translateY(0); }
+
+.tr-fade-in {
+  opacity: 0;
+  transition: opacity var(--tr-slow) var(--tr-ease-out-soft);
+}
+.tr-fade-in.is-visible { opacity: 1; }
+
+.tr-slide-x {
+  opacity: 0;
+  transform: translateX(var(--tr-shift-sm));
+  transition:
+    opacity var(--tr-slow) var(--tr-ease-out-soft),
+    transform var(--tr-slow) var(--tr-ease-out-soft);
+}
+.tr-slide-x.is-visible { opacity: 1; transform: translateX(0); }
+
+.tr-scale-soft {
+  transform: scale(0.985);
+  opacity: 0;
+  transition:
+    transform var(--tr-slow) var(--tr-ease-emphasis),
+    opacity var(--tr-slow) var(--tr-ease-emphasis);
+}
+.tr-scale-soft.is-visible { transform: scale(1); opacity: 1; }
+
+/* ── Shimmer loading skeleton ─────────────────────────────── */
+.tr-shimmer {
+  background: linear-gradient(
+    90deg,
+    rgba(255,255,255,0.05) 0%,
+    rgba(255,255,255,0.12) 50%,
+    rgba(255,255,255,0.05) 100%
+  );
+  background-size: 200% 100%;
+  animation: trShimmer 1.4s linear infinite;
+  border-radius: var(--r-sm);
+  min-height: 16px;
+}
+@keyframes trShimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* ── Score hero choreography ──────────────────────────────── */
+.score-hero-wrap,
+.score-ring-wrap,
+.score-driver-strip {
+  will-change: transform, opacity;
+}
+.score-hero-wrap.tr-score-ready .score-ring-wrap {
+  animation: trScorePop var(--tr-score) var(--tr-ease-emphasis) both;
+}
+@keyframes trScorePop {
+  0%   { opacity: 0; transform: scale(0.94); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+/* ── Onboarding phase transitions (upgrade existing fadeUp) ── */
+.v21-phase.active {
+  animation: trPhaseIn var(--tr-slow) var(--tr-ease-emphasis) both;
+}
+@keyframes trPhaseIn {
+  0%   { opacity: 0; transform: translateY(var(--tr-shift-md)); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Mode rail pill transitions ───────────────────────────── */
+.v21-mode-btn {
+  transition:
+    background var(--tr-med) var(--tr-ease-standard),
+    color var(--tr-med) var(--tr-ease-standard),
+    border-color var(--tr-med) var(--tr-ease-standard),
+    transform var(--tr-med) var(--tr-ease-standard),
+    box-shadow var(--tr-med) var(--tr-ease-standard);
+}
+.v21-mode-btn.active { transform: scale(1.02); }
+
+/* ── Next Best Move card motion ───────────────────────────── */
+.v21-nbm-card {
+  transition:
+    transform var(--tr-med) var(--tr-ease-standard),
+    box-shadow var(--tr-slow) var(--tr-ease-standard),
+    border-color var(--tr-med) var(--tr-ease-standard);
+}
+.v21-nbm-card:active { transform: scale(0.985); }
+.v21-nbm-card.is-updated {
+  animation: trNbmGlow 520ms var(--tr-ease-emphasis);
+}
+@keyframes trNbmGlow {
+  0%   { box-shadow: 0 0 0   rgba(0,168,232,0); }
+  40%  { box-shadow: 0 10px 28px rgba(0,168,232,0.14); }
+  100% { box-shadow: var(--shadow-md); }
+}
+
+/* ── Monthly review modal choreography ───────────────────── */
+.v21-review-inner {
+  transition:
+    opacity var(--tr-screen) var(--tr-ease-emphasis),
+    transform var(--tr-screen) var(--tr-ease-emphasis);
+}
+.modal-overlay.open .v21-review-inner {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+.v21-review-row {
+  opacity: 0;
+  transform: translateY(var(--tr-shift-sm));
+  transition:
+    opacity var(--tr-slow) var(--tr-ease-out-soft),
+    transform var(--tr-slow) var(--tr-ease-out-soft);
+}
+.v21-review-row.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* ── Home metric cards stagger ────────────────────────────── */
+.home-metric-card {
+  transition:
+    transform var(--tr-med) var(--tr-ease-standard),
+    box-shadow var(--tr-slow) var(--tr-ease-standard);
+}
+.home-metric-card:active { transform: scale(0.98); }
+
+/* ── Premium empty state ─────────────────────────────────── */
+.tr-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: var(--s5) var(--s3);
+  gap: var(--s2);
+  opacity: 0;
+  animation: trFadeUp var(--tr-slow) var(--tr-ease-out-soft) 120ms both;
+}
+.tr-empty-state h3 {
+  font-family: var(--font-display);
+  font-size: 20px;
+  color: var(--navy);
+  margin: 0;
+}
+.tr-empty-state p {
+  font-size: 14px;
+  color: var(--gray-4);
+  line-height: 1.6;
+  max-width: 260px;
+  margin: 0;
+}
+@keyframes trFadeUp {
+  0%   { opacity: 0; transform: translateY(var(--tr-shift-md)); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Choice card hover lift ───────────────────────────────── */
+.v21-choice {
+  transition:
+    border-color var(--tr-med) var(--tr-ease-standard),
+    box-shadow var(--tr-med) var(--tr-ease-standard),
+    transform var(--tr-med) var(--tr-ease-standard);
+}
+.v21-choice:active { transform: scale(0.98); }
+.v21-choice.selected {
+  transform: scale(1.01);
+  box-shadow: 0 4px 18px rgba(0,119,182,0.14);
+}
+
+
+/* ══════════════════════════════════════════════════════════
+   TRACENT PREMIUM MOTION SYSTEM — SVP Pass
+   Calm · Exact · Rising · Alive
+   Rule: If it doesn't reinforce trust or progress, cut it.
+══════════════════════════════════════════════════════════ */
+
+/* ── 1. Breathing Pulse — the app is alive ──────────────── */
+@keyframes tr-breathe {
+  0%, 100% { transform: scale(1); opacity: 0.7; }
+  50%      { transform: scale(1.12); opacity: 1; }
+}
+.tr-breathe {
+  animation: tr-breathe 3s ease-in-out infinite;
+  will-change: transform, opacity;
+}
+.wordmark-dot { animation: tr-breathe 3s ease-in-out infinite; display: inline-block; }
+
+/* ── 2. Score Ring Draw — diagnosis unfolds ─────────────── */
+@keyframes tr-ring-draw {
+  from { stroke-dashoffset: 283; }
+  to   { stroke-dashoffset: var(--ring-offset, 70); }
+}
+.score-ring-animated {
+  stroke-dasharray: 283;
+  stroke-dashoffset: 283;
+  animation: tr-ring-draw 1.4s var(--tr-ease-emphasis) 0.3s forwards;
+  transform-origin: center;
+}
+
+/* ── 3. Kinetic Counter — numbers roll, progress felt ───── */
+@keyframes tr-counter-in {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.tr-counter-in {
+  animation: tr-counter-in 0.6s var(--tr-ease-emphasis) 0.5s both;
+}
+
+/* ── 4. Tab Slide Transitions — spatial awareness ───────── */
+.tab-panel {
+  transition: opacity var(--tr-screen) var(--tr-ease-out-soft),
+              transform var(--tr-screen) var(--tr-ease-out-soft);
+}
+.tab-panel:not(.tab-active) {
+  opacity: 0;
+  pointer-events: none;
+  position: absolute;
+  transform: translateY(var(--tr-shift-xs));
+}
+.tab-panel.tab-active {
+  opacity: 1;
+  pointer-events: all;
+  position: relative;
+  transform: translateY(0);
+}
+
+/* ── 5. Card Entrance — staggered precision ─────────────── */
+@keyframes tr-card-in {
+  from { opacity: 0; transform: translateY(var(--tr-shift-sm)); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.tr-stagger { opacity: 0; }
+.tr-stagger.is-visible {
+  animation: tr-card-in var(--tr-slow) var(--tr-ease-emphasis) both;
+}
+.tr-stagger.is-visible:nth-child(1) { animation-delay: 60ms; }
+.tr-stagger.is-visible:nth-child(2) { animation-delay: 130ms; }
+.tr-stagger.is-visible:nth-child(3) { animation-delay: 200ms; }
+.tr-stagger.is-visible:nth-child(4) { animation-delay: 270ms; }
+.tr-stagger.is-visible:nth-child(5) { animation-delay: 340ms; }
+
+/* ── 6. Button Physics — tap & settle ───────────────────── */
+.btn-physics {
+  transition: transform var(--tr-fast) var(--tr-ease-standard),
+              box-shadow var(--tr-fast) var(--tr-ease-standard);
+}
+.btn-physics:active {
+  transform: scale(0.97);
+  box-shadow: none;
+}
+.btn-primary, .btn-cta, .bse-action-cta {
+  transition: transform var(--tr-fast) var(--tr-ease-standard),
+              box-shadow var(--tr-med) var(--tr-ease-standard),
+              background var(--tr-med) var(--tr-ease-standard);
+}
+.btn-primary:active, .btn-cta:active, .bse-action-cta:active {
+  transform: scale(0.97) !important;
+}
+
+/* ── 7. Milestone Fill — vessel filling with water ──────── */
+@keyframes tr-milestone-fill {
+  from { background-size: 100% 0%; }
+  to   { background-size: 100% 100%; }
+}
+.tr-milestone {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  border: 2px solid var(--gray-3);
+  background: transparent;
+  transition: border-color var(--tr-med) var(--tr-ease-standard);
+}
+.tr-milestone.achieved {
+  border-color: var(--teal);
+  background: linear-gradient(to top, var(--teal) 0%, var(--teal) 100%) no-repeat bottom;
+  background-size: 100% 100%;
+  animation: tr-milestone-fill 0.5s var(--tr-ease-emphasis) both;
+}
+
+/* ── 8. Emergency Ambient Shift — calm urgency ──────────── */
+.bse-arch-anxious_overwhelmed #screen-dashboard {
+  transition: background var(--tr-ritual) var(--tr-ease-standard);
+}
+.bse-arch-anxious_overwhelmed .dash-header {
+  background: linear-gradient(180deg, #0D1B2A 0%, #001F33 100%) !important;
+}
+.bse-arch-anxious_overwhelmed .bse-action-card {
+  border-color: rgba(239,68,68,0.15) !important;
+  box-shadow: 0 0 24px rgba(239,68,68,0.06);
+}
+
+/* ── 9. Focus Scroll Dimming — eye always guided ────────── */
+.tr-dim-on-scroll {
+  transition: opacity 0.4s ease;
+}
+.tr-dim-on-scroll.is-dimmed {
+  opacity: 0.4;
+}
+
+/* ── 10. Analysis Screen — Calibration Personality ──────── */
+@keyframes tr-scan-line {
+  0%   { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+@keyframes tr-calibrate-pulse {
+  0%, 100% { opacity: 0.4; }
+  50%      { opacity: 1; }
+}
+.analysis-scan-line {
+  position: absolute; bottom: 0; left: 0;
+  width: 50%; height: 2px;
+  background: linear-gradient(90deg, transparent, var(--sky), transparent);
+  animation: tr-scan-line 2s ease-in-out infinite;
+}
+.analysis-status {
+  animation: tr-calibrate-pulse 2s ease-in-out infinite;
+  font-size: 13px; color: rgba(255,255,255,0.5);
+  letter-spacing: 0.4px;
+}
+
+/* ── 11. Nav item transitions — subtle active indicator ──── */
+.bse-nav-item {
+  transition: color var(--tr-med) var(--tr-ease-standard),
+              transform var(--tr-fast) var(--tr-ease-standard);
+}
+.bse-nav-item:active { transform: scale(0.92); }
+.bse-nav-item.active .bse-nav-label { font-weight: 700; }
+.bse-nav-item.active::after {
+  content: '';
+  position: absolute; bottom: -2px; left: 50%; transform: translateX(-50%);
+  width: 4px; height: 4px;
+  border-radius: 50%;
+  background: var(--sky);
+  animation: tr-breathe 3s ease-in-out infinite;
+}
+
+/* ── 12. Smooth screen transitions ─────────────────────── */
+.screen {
+  transition: opacity var(--tr-screen) var(--tr-ease-out-soft);
+}
+
+/* ── 13. Card hover/focus lift — depth on interaction ───── */
+@media (hover: hover) {
+  .card:hover, .v21-choice:hover {
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-md);
+    transition: transform var(--tr-med) var(--tr-ease-emphasis),
+                box-shadow var(--tr-med) var(--tr-ease-emphasis);
+  }
+}
+.v21-choice {
+  transition: transform var(--tr-med) var(--tr-ease-standard),
+              border-color var(--tr-med) var(--tr-ease-standard),
+              box-shadow var(--tr-med) var(--tr-ease-standard);
+}
+.v21-choice:active { transform: scale(0.98); }
+
+/* ── 14. Progress bar fill animation ──────────────────── */
+.prog-bar-fill {
+  transition: width 0.8s var(--tr-ease-emphasis);
+}
+
+/* ── 15. Frosted Glass Blur for Sensitive Data ──────────── */
+.tr-frosted {
+  filter: blur(6px);
+  transition: filter var(--tr-med) var(--tr-ease-standard);
+  cursor: pointer;
+  user-select: none;
+}
+.tr-frosted:active, .tr-frosted.revealed {
+  filter: blur(0);
+}
+
+/* ── RETIREMENT-SPECIFIC VISUAL TOKENS ─────────────────── */
+.bse-arch-in_retirement .dash-header {
+  background: linear-gradient(180deg, #0A1929 0%, #001525 100%) !important;
+}
+.bse-arch-in_retirement .bse-focus-eyebrow::before {
+  content: '🛡️ '; font-size: 12px;
+}
+.bse-arch-pre_retirement .bse-focus-eyebrow::before {
+  content: '🎯 '; font-size: 12px;
+}
+
+</style>

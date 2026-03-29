@@ -1,0 +1,167 @@
+/* ═══ Tracent Feature Layer: Adaptive Dashboard + Debt Experience ═══
+   Semantic CSS classes for the staged feature layer.
+   Replaces inline-style sprawl in renderAdaptiveDashboard.js
+   and renderDebtExperience.js.
+═══════════════════════════════════════════════ */
+
+/* ── Shared ───────────────────────────────────────────── */
+.tf-card {
+  background: var(--white);
+  border-radius: var(--r-lg);
+  border: 1px solid var(--gray-2);
+  padding: 16px;
+  margin-bottom: 16px;
+}
+.tf-eyebrow {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  margin-bottom: 10px;
+}
+.tf-step-row {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+.tf-step-row + .tf-step-row { margin-top: 10px; }
+.tf-step-n {
+  width: 24px; height: 24px;
+  border-radius: 50%;
+  background: rgba(0,168,232,0.08);
+  border: 1.5px solid rgba(0,168,232,0.25);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 700; color: var(--teal);
+  flex-shrink: 0;
+}
+.tf-step-text {
+  font-size: 13px; color: var(--navy);
+  line-height: 1.50; padding-top: 2px;
+}
+.tf-step-title {
+  font-size: 13px; font-weight: 700; color: var(--navy);
+  margin-bottom: 3px; line-height: 1.3;
+}
+.tf-step-detail {
+  font-size: 12px; color: var(--gray-4); line-height: 1.55;
+}
+.tf-separator {
+  height: 1px; background: var(--gray-2);
+  margin: 8px 0 20px; opacity: 0.5;
+}
+.tf-section-label {
+  font-size: 10px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 1px;
+  color: var(--gray-3); margin-bottom: 12px;
+}
+
+/* ── Adaptive Dashboard ───────────────────────────────── */
+.tad-header {
+  border-radius: var(--r-lg);
+  padding: 24px 20px 20px;
+  margin-bottom: 16px;
+  position: relative; overflow: hidden;
+}
+.tad-header-bar {
+  position: absolute; top: 0; left: 0; right: 0;
+  height: 3px; opacity: 0.4;
+}
+.tad-header-ghost-score {
+  position: absolute; top: 16px; right: 18px;
+  font-family: var(--font-display); font-size: 32px;
+  color: rgba(255,255,255,0.12);
+}
+.tad-header-title {
+  font-family: var(--font-display); font-size: 22px;
+  color: rgba(255,255,255,0.92); line-height: 1.25;
+  margin-bottom: 8px;
+}
+.tad-header-sub {
+  font-size: 14px; color: rgba(255,255,255,0.45); line-height: 1.55;
+}
+.tad-focus {
+  padding: 18px 16px; margin-bottom: 16px;
+}
+.tad-focus-row {
+  display: flex; align-items: center;
+  justify-content: space-between; margin-bottom: 10px;
+}
+.tad-focus-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; }
+.tad-focus-metric { font-family: var(--font-display); font-size: 16px; color: var(--navy); }
+.tad-focus-action { font-size: 14px; color: var(--navy); font-weight: 600; line-height: 1.45; margin-bottom: 14px; }
+.tad-cta {
+  width: 100%; padding: 13px;
+  background: var(--sky); color: #fff; border: none;
+  border-radius: 999px; font-family: var(--font-body);
+  font-size: 14px; font-weight: 700; cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: opacity 0.15s;
+}
+.tad-cta:active { opacity: 0.80; }
+.tad-context {
+  background: var(--gray-1, #F0F4F8);
+  border-radius: var(--r-lg);
+  padding: 14px 16px; margin-bottom: 20px;
+}
+.tad-context-grid {
+  display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px;
+}
+.tad-context-cell { text-align: center; }
+.tad-context-val { font-family: var(--font-display); font-size: 22px; }
+.tad-context-val-sm { font-size: 13px; font-weight: 700; color: var(--navy); }
+.tad-context-label { font-size: 10px; color: var(--gray-3); }
+
+/* ── Debt Experience ──────────────────────────────────── */
+.tde-emotional {
+  border-radius: var(--r-lg);
+  padding: 22px 20px; margin-bottom: 16px;
+  position: relative; overflow: hidden;
+}
+.tde-emotional-bar {
+  position: absolute; top: 0; left: 0; right: 0;
+  height: 3px; background: var(--teal); opacity: 0.3;
+}
+.tde-emotional-text {
+  font-size: 15px; color: rgba(255,255,255,0.82); line-height: 1.65;
+}
+.tde-pressure {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 12px; margin-bottom: 16px;
+}
+.tde-pressure-cell {
+  background: var(--white); border-radius: var(--r-lg);
+  border: 1px solid var(--gray-2); padding: 16px; text-align: center;
+}
+.tde-pressure-val {
+  font-family: var(--font-display); font-size: 26px; color: var(--navy);
+}
+.tde-pressure-val span { font-size: 14px; font-weight: 400; color: var(--gray-3); }
+.tde-pressure-label { font-size: 11px; color: var(--gray-3); margin-top: 3px; }
+.tde-priority { padding: 18px 16px; border-left-width: 4px; border-left-style: solid; border-left-color: var(--teal); }
+.tde-priority-header { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 6px; }
+.tde-priority-name { font-size: 16px; font-weight: 700; color: var(--navy); }
+.tde-priority-bal { font-family: var(--font-display); font-size: 22px; color: var(--navy); }
+.tde-priority-why { font-size: 12px; color: var(--gray-4); line-height: 1.55; margin-bottom: 8px; }
+.tde-priority-stats { display: flex; gap: 16px; font-size: 12px; }
+.tde-relief {
+  border-radius: var(--r-lg); padding: 16px; margin-bottom: 16px;
+}
+.tde-relief-headline { font-size: 14px; font-weight: 700; color: var(--navy); margin-bottom: 5px; line-height: 1.35; }
+.tde-relief-detail { font-size: 13px; color: var(--gray-4); line-height: 1.60; }
+.tde-toggle-btn {
+  display: block; width: 100%; padding: 12px;
+  background: var(--gray-1, #F0F4F8); border: 1px solid var(--gray-2);
+  border-radius: var(--r-sm); font-family: var(--font-body);
+  font-size: 13px; color: var(--gray-4); cursor: pointer;
+  margin-bottom: 16px; text-align: center;
+}
+.tde-debt-row {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 14px; background: var(--white);
+  border: 1px solid var(--gray-2); border-radius: var(--r-sm);
+  margin-bottom: 8px;
+}
+.tde-debt-name { font-size: 13px; font-weight: 600; color: var(--navy); }
+.tde-debt-meta { font-size: 11px; color: var(--gray-3); }
+.tde-debt-bal { font-size: 14px; font-weight: 700; color: var(--navy); text-align: right; }
+.tde-debt-int { font-size: 11px; color: var(--red); text-align: right; }
