@@ -12,6 +12,9 @@
 // ── Onboarding ────────────────────────────────────────────
 var currentStep = 1;
 var housingType = null;
+// true when refine form is opened from Settings ("Update my numbers"), not from onboarding.
+// Controls whether the debt block shows full individual balance fields.
+window._v21_settingsMode = false;
 
 function startOnboarding() {
   currentStep = 1; housingType = null;
@@ -153,12 +156,21 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   }, 0);
 
-  // Load saved state
-  if (typeof _0xf0f2b75 === 'function') _0xf0f2b75();
+  // Load saved state — return value true means a stored session was found in localStorage
+  var _bootLoaded = typeof _0xf0f2b75 === 'function' && _0xf0f2b75();
 
-  // Show splash
-  showScreen('screen-splash');
-  if (typeof _0xbda85bb === 'function') _0xbda85bb();
+  // Guard: returning users with a stored session bypass splash.
+  // #splash-returning is an empty stub — there is no "Continue" path for returning users.
+  // Without this guard, splash stays active and intercepts all dashboard clicks.
+  // Use _bootLoaded (not G.score) — users who onboarded but never scored would have score=0
+  // and get stuck on splash with no path forward.
+  var _bootHasSession = _bootLoaded && typeof G !== 'undefined' && G && G.income && G.housingType;
+  if (_bootHasSession) {
+    if (typeof continueSession === 'function') continueSession();
+  } else {
+    showScreen('screen-splash');
+    if (typeof _0xbda85bb === 'function') _0xbda85bb();
+  }
 
   // Wrap compute after engine is ready
   setTimeout(wrapCompute, 100);
@@ -623,15 +635,28 @@ function v21BuildRefinePhase() {
 
   // ── Intent-specific fields ───────────────────────────────────────
   if (intent === 'debt') {
-    // Annual income · take-home · card debt · monthly debt payments · emergency fund
     out += _row2(
       _money('v21r-income',  '72,000', 'Annual income', 'Before tax'),
       _money('v21r-takehome','4,800',  'Monthly take-home', 'After tax \u2014 or leave blank to estimate')
     );
-    out += _row2(
-      _money('v21r-cc-debt', '0', 'Total credit card debt', 'Combined revolving balance'),
-      _money('v21r-monthly-debt-payments', '0', 'Total monthly debt payments', 'All loans and cards combined')
-    );
+    if (window._v21_settingsMode) {
+      // Settings edit: full individual debt balances so the planner has real data
+      out += _row2(
+        _money('v21r-cc-debt',      '0', 'Credit card balance',  'Total revolving balance'),
+        _money('v21r-car-debt',     '0', 'Car loan balance',     'Outstanding principal')
+      );
+      out += _row2(
+        _money('v21r-student-debt', '0', 'Student loan balance', 'Federal + private combined'),
+        _money('v21r-other-debt',   '0', 'Other debt',           'Personal loans, medical, other')
+      );
+    } else {
+      // Onboarding: keep it light \u2014 just CC debt and a lump monthly payment figure
+      out += _row2(
+        _money('v21r-cc-debt', '0', 'Credit card balance', 'Total revolving balance'),
+        _money('v21r-monthly-debt-payments', '0', 'Other monthly debt payments', 'Car, student, and other loans combined')
+      );
+      out += '<div class="field-hint" style="margin-top:-8px;margin-bottom:4px;">You can add car loans, student loans, and other debts individually in Settings after setup.</div>';
+    }
     out += _sel('v21r-emergency', 'Emergency fund', _efOpts, 'Build this before accelerating payoff');
 
   } else if (intent === 'home') {
@@ -693,9 +718,31 @@ function v21BuildRefinePhase() {
   v21SetPhase('refine');
 }
 
+/* ── PREFILL REFINE FORM FROM EXISTING G ──────────────── */
+// Called by startFreshAnalysis() when user has an existing session.
+// Writes current G values back into the v21r-* fields so the user
+// sees their numbers and can edit them without re-entering everything.
+function _v21_prefillRefineForm() {
+  var g = (typeof G !== 'undefined' && G.income) ? G : (window.G || {});
+  function _setField(id, val) {
+    var el = document.getElementById(id);
+    if (!el || val === undefined || val === null) return;
+    el.value = val;
+  }
+  if (g.income)        _setField('v21r-income',       Math.round(g.income));
+  if (g.takeHome)      _setField('v21r-takehome',      Math.round(g.takeHome));
+  if (g.ccDebt)        _setField('v21r-cc-debt',       Math.round(g.ccDebt));
+  if (g.carDebt)       _setField('v21r-car-debt',      Math.round(g.carDebt));
+  if (g.studentDebt)   _setField('v21r-student-debt',  Math.round(g.studentDebt));
+  if (g.otherDebt)     _setField('v21r-other-debt',    Math.round(g.otherDebt));
+  if (g.emergency)     _setField('v21r-emergency',     g.emergency);
+}
+window._v21_prefillRefineForm = _v21_prefillRefineForm;
+
 /* ── PHASE 4 FINISH: BRIDGE TO ENGINE ─────────────────── */
 function v21FinishOnboarding() {
   console.log('[STEP4] entered v21FinishOnboarding');
+  window._v21_settingsMode = false; // always reset after save
   try {
     window.TRACENT_TELEMETRY.flowState.refinementComplete = true;
     registerMeaningfulAction('onboarding_refinement_completed');
@@ -846,21 +893,38 @@ function v21BridgeToEngine() {
     setVal('student-debt', '0'); setVal('student-payment', '0');
 
   } else if (intent === 'debt') {
-    // CC debt — real
+    // CC debt — always a real field in both onboarding and settings
     var ccVal2 = getNum('v21r-cc-debt');
     setVal('cc-debt', ccVal2); setVal('cc-rate', '21');
     if (ccVal2 > 0) markReal('cc-debt');
     else markInferred('cc-debt (entered as zero)');
 
-    // Monthly debt payments → car-payment proxy
-    var totalPmts = getNum('v21r-monthly-debt-payments');
-    if (totalPmts > 0) {
-      // Split: attribute to car-payment as the generic "other recurring" field engine reads
-      setVal('car-payment', totalPmts);
-      setVal('car-debt', Math.round(totalPmts * 24)); // rough balance estimate
-      markReal('monthly-debt-payments');
+    if (window._v21_settingsMode) {
+      // Settings: individual real balance fields — no estimation
+      var carDebtVal = getNum('v21r-car-debt');
+      setVal('car-debt', carDebtVal);
+      setVal('car-payment', carDebtVal > 0 ? Math.round(carDebtVal / 60) : '0');
+      if (carDebtVal > 0) markReal('car-debt'); else markInferred('car-debt (zero)');
+
+      var stuDebtVal = getNum('v21r-student-debt');
+      setVal('student-debt', stuDebtVal);
+      setVal('student-payment', stuDebtVal > 0 ? Math.max(Math.round(stuDebtVal / 120), 100) : '0');
+      if (stuDebtVal > 0) markReal('student-debt'); else markInferred('student-debt (zero)');
+
+      var othDebtVal = getNum('v21r-other-debt');
+      setVal('other-debt', othDebtVal);
+      setVal('other-payment', othDebtVal > 0 ? Math.max(Math.round(othDebtVal / 60), 50) : '0');
+      if (othDebtVal > 0) markReal('other-debt'); else markInferred('other-debt (zero)');
     } else {
-      setVal('car-payment', '0'); setVal('car-debt', '0');
+      // Onboarding: lumped monthly payments → car-payment proxy for cash flow only.
+      // Do NOT fabricate a debt balance from payments.
+      var totalPmts = getNum('v21r-monthly-debt-payments');
+      setVal('car-payment', totalPmts > 0 ? totalPmts : '0');
+      setVal('car-debt', '0');
+      setVal('student-debt', '0'); setVal('student-payment', '0');
+      setVal('other-debt', '0');   setVal('other-payment', '0');
+      if (totalPmts > 0) markReal('monthly-debt-payments');
+      else markInferred('debt-payments (none entered)');
     }
 
     // Emergency
@@ -878,9 +942,6 @@ function v21BridgeToEngine() {
     if (typeof selectHousing === 'function') selectHousing('renting');
     else if (typeof housingType !== 'undefined') housingType = 'renting';
     markInferred('housing (default renting)');
-
-    setVal('other-debt', '0'); setVal('other-payment', '0');
-    setVal('student-debt', '0'); setVal('student-payment', '0');
 
   } else if (intent === 'home') {
     // Target home price

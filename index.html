@@ -543,10 +543,10 @@
 
         <!-- Score zone — visible for score-showing archetypes only -->
         <!-- BSE suppresses via .bse-score-hidden on #dash-header  -->
-        <div class="bse-score-zone" id="bse-score-zone">
-          <div class="bse-score-ring-wrap" onclick="openScoreBreakdown()" style="cursor:pointer;">
+        <div class="bse-score-zone" id="bse-score-zone" style="display:flex;align-items:center;gap:var(--s2);margin-bottom:var(--s2);">
+          <div class="score-ring-wrap" onclick="openScoreBreakdown()" style="cursor:pointer;">
             <div class="score-ring-glow" id="score-ring-glow"></div>
-            <svg class="score-ring-svg" width="64" height="64" viewBox="0 0 96 96">
+            <svg class="score-ring-svg" width="96" height="96" viewBox="0 0 96 96">
               <circle class="score-ring-track" cx="48" cy="48" r="43" fill="none" stroke-width="7" />
               <circle class="score-ring-arc" id="score-ring-arc" cx="48" cy="48" r="43" fill="none" stroke-width="7"
                 stroke-dasharray="270.2" stroke-dashoffset="270.2" />
@@ -556,7 +556,7 @@
               <div class="score-ring-badge" id="score-badge">SCORE</div>
             </div>
           </div>
-          <div class="bse-score-detail">
+          <div class="bse-score-detail" onclick="openScoreBreakdown()" style="cursor:pointer;">
             <div class="score-title" id="score-title">Your Tracent Score</div>
             <div class="score-sub" id="score-sub">Complete your profile</div>
             <div class="score-disclaimer" id="score-disclaimer">Planning indicator · Not a credit score</div>
@@ -1356,8 +1356,8 @@
           <span class="settings-row-val" id="p-car-debt">—</span>
         </div>
         <div class="settings-row" style="border-bottom:none;">
-          <button onclick="confirmNewAnalysis()"
-            style="width:100%;padding:13px;background:transparent;color:var(--teal);border:1.5px solid var(--sky-border);border-radius:var(--r-pill);font-family:var(--font-body);font-size:14px;font-weight:600;cursor:pointer;">Update
+          <button onclick="openSettingsEdit()"
+            style="width:100%;padding:13px;background:transparent;color:var(--teal);border:1.5px solid var(--sky-border);border-radius:var(--r-pill);font-family:var(--font-body);font-size:14px;font-weight:600;cursor:pointer;">Edit
             my numbers ✏️</button>
         </div>
       </div>
@@ -1803,6 +1803,125 @@
   </div>
 
   <!-- ══════════════════════════════════════════════════════════
+     SETTINGS EDIT SHEET
+     Opened by openSettingsEdit() in modals.js.
+     Completely separate from onboarding. No onboarding screen used.
+══════════════════════════════════════════════════════════ -->
+  <div class="modal-overlay" id="settings-edit-sheet"
+    onclick="if(event.target===this)closeModal('settings-edit-sheet')">
+    <div class="modal-sheet" style="padding:24px 24px 40px;overflow-y:auto;max-height:88vh;">
+      <div class="modal-handle"></div>
+      <div style="font-family:var(--font-display);font-size:20px;color:var(--navy);margin-bottom:4px;">Edit your numbers</div>
+      <div style="font-size:13px;color:var(--gray-3);line-height:1.6;margin-bottom:24px;">Update your numbers anytime — we'll instantly recalculate your plan.</div>
+
+      <div class="field-group">
+        <label class="field-label">Annual income</label>
+        <div class="field-prefix-wrap"><span class="field-prefix-sign">$</span>
+          <input type="text" inputmode="decimal" id="se-income" class="field-input" placeholder="0" autocomplete="off"></div>
+      </div>
+
+      <div class="field-group" style="margin-bottom:24px;">
+        <label class="field-label">Monthly take-home pay <span style="font-weight:400;">— after tax, or leave blank to estimate</span></label>
+        <div class="field-prefix-wrap"><span class="field-prefix-sign">$</span>
+          <input type="text" inputmode="decimal" id="se-takehome" class="field-input" placeholder="0" autocomplete="off"></div>
+      </div>
+
+      <div style="font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--gray-3);margin:0 0 14px;">Debt balances</div>
+
+      <div class="field-group">
+        <label class="field-label">Credit card balance</label>
+        <div class="field-prefix-wrap"><span class="field-prefix-sign">$</span>
+          <input type="text" inputmode="decimal" id="se-cc-debt" class="field-input" placeholder="0" autocomplete="off"></div>
+      </div>
+
+      <div class="field-group">
+        <label class="field-label">Car loan balance</label>
+        <div class="field-prefix-wrap"><span class="field-prefix-sign">$</span>
+          <input type="text" inputmode="decimal" id="se-car-debt" class="field-input" placeholder="0" autocomplete="off"></div>
+      </div>
+
+      <div class="field-group">
+        <label class="field-label">Student loan balance</label>
+        <div class="field-prefix-wrap"><span class="field-prefix-sign">$</span>
+          <input type="text" inputmode="decimal" id="se-student-debt" class="field-input" placeholder="0" autocomplete="off"></div>
+      </div>
+
+      <div class="field-group" style="margin-bottom:24px;">
+        <label class="field-label">Other debt <span style="font-weight:400;">— personal loans, medical, other</span></label>
+        <div class="field-prefix-wrap"><span class="field-prefix-sign">$</span>
+          <input type="text" inputmode="decimal" id="se-other-debt" class="field-input" placeholder="0" autocomplete="off"></div>
+      </div>
+
+      <!-- APR rates + credit score — collapsible, BSE-aware -->
+      <div id="se-apr-section" style="margin-bottom:20px;">
+        <button type="button" id="se-apr-toggle"
+          onclick="var f=document.getElementById('se-apr-fields');var open=f.style.display!=='none';f.style.display=open?'none':'block';document.getElementById('se-apr-chevron').textContent=open?'\u25b8':'\u25be';"
+          style="width:100%;text-align:left;background:none;border:none;padding:10px 0 10px;font-family:var(--font-body);font-size:13px;color:var(--gray-3);cursor:pointer;display:flex;align-items:center;gap:6px;">
+          <span id="se-apr-chevron">&#9656;</span> Advanced details (optional)
+        </button>
+        <div id="se-apr-fields" style="display:none;">
+          <div id="se-apr-helper" style="display:none;font-size:12px;color:var(--teal);line-height:1.5;margin-bottom:14px;">Rates affect how we prioritize your payoff strategy</div>
+          <div class="field-group">
+            <label class="field-label">Credit card APR</label>
+            <div class="field-prefix-wrap" style="max-width:120px;">
+              <input type="text" inputmode="decimal" id="se-cc-rate" class="field-input" placeholder="21" autocomplete="off">
+              <span style="position:absolute;right:12px;top:50%;transform:translateY(-50%);color:var(--gray-3);font-size:14px;">%</span>
+            </div>
+          </div>
+          <div class="field-group">
+            <label class="field-label">Car loan APR</label>
+            <div class="field-prefix-wrap" style="max-width:120px;">
+              <input type="text" inputmode="decimal" id="se-car-rate" class="field-input" placeholder="7.5" autocomplete="off">
+              <span style="position:absolute;right:12px;top:50%;transform:translateY(-50%);color:var(--gray-3);font-size:14px;">%</span>
+            </div>
+          </div>
+          <div class="field-group">
+            <label class="field-label">Student loan APR</label>
+            <div class="field-prefix-wrap" style="max-width:120px;">
+              <input type="text" inputmode="decimal" id="se-student-rate" class="field-input" placeholder="5.5" autocomplete="off">
+              <span style="position:absolute;right:12px;top:50%;transform:translateY(-50%);color:var(--gray-3);font-size:14px;">%</span>
+            </div>
+          </div>
+          <div class="field-group">
+            <label class="field-label">Other debt APR</label>
+            <div class="field-prefix-wrap" style="max-width:120px;">
+              <input type="text" inputmode="decimal" id="se-other-rate" class="field-input" placeholder="9" autocomplete="off">
+              <span style="position:absolute;right:12px;top:50%;transform:translateY(-50%);color:var(--gray-3);font-size:14px;">%</span>
+            </div>
+          </div>
+          <div class="field-group" style="margin-bottom:4px;">
+            <label class="field-label">Credit score <span style="font-weight:400;">— optional</span></label>
+            <div id="se-credit-helper" style="display:none;font-size:12px;color:var(--gray-3);margin-bottom:6px;">Helps us refine future recommendations</div>
+            <select id="se-credit" class="field-input">
+              <option value="">— keep current —</option>
+              <option value="excellent">Excellent (760+)</option>
+              <option value="good">Good (720–759)</option>
+              <option value="fair">Fair (680–719)</option>
+              <option value="below">Below average (620–679)</option>
+              <option value="poor">Poor (below 620)</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="field-group" style="margin-bottom:28px;">
+        <label class="field-label">Emergency fund</label>
+        <select id="se-emergency" class="field-input">
+          <option value="0">None yet</option>
+          <option value="1">Under 1 month</option>
+          <option value="3">1–3 months</option>
+          <option value="6">4–6 months</option>
+          <option value="9">6+ months</option>
+        </select>
+      </div>
+
+      <button onclick="saveSettingsEdit()" class="btn-cta" style="margin-bottom:10px;">Save and recalculate →</button>
+      <button onclick="closeModal('settings-edit-sheet')"
+        style="width:100%;padding:13px;background:transparent;color:var(--gray-3);border:none;font-family:var(--font-body);font-size:13px;cursor:pointer;">Cancel</button>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════
      CONFIRM NEW ANALYSIS SHEET
 ══════════════════════════════════════════════════════════ -->
   <div class="modal-overlay" id="confirm-analysis-sheet"
@@ -2109,6 +2228,9 @@
 
   <!-- Core: BSE — Behavioral State Engine (MUST LOAD LAST) -->
   <script src="js/core/bse.js"></script>
+
+  <!-- Render: Experience Layer — archetype-driven render adaptation (after BSE) -->
+  <script src="js/render/experienceLayer.js"></script>
 
 </body>
 

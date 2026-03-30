@@ -43,7 +43,15 @@
   margin-bottom: 3px; line-height: 1.3;
 }
 .tf-step-detail {
-  font-size: 12px; color: var(--gray-4); line-height: 1.55;
+  font-size: 12px;
+  color: #475569; /* one step stronger than --gray-4 (#64748B); no gray-5 token exists */
+  line-height: 1.65;
+  margin-top: 4px;
+}
+/* Final step — method note; subtle inset to signal it is explanatory, not instructional */
+.tf-step-row:last-child .tf-step-detail {
+  border-left: 2px solid var(--gray-2);
+  padding-left: 8px;
 }
 .tf-separator {
   height: 1px; background: var(--gray-2);
@@ -165,3 +173,159 @@
 .tde-debt-meta { font-size: 11px; color: var(--gray-3); }
 .tde-debt-bal { font-size: 14px; font-weight: 700; color: var(--navy); text-align: right; }
 .tde-debt-int { font-size: 11px; color: var(--red); text-align: right; }
+
+/* ── DEBT RANK CARDS ────────────────────────────────────────
+   Priority list rendered by _0x3e799ba() into #debt-rank-list.
+   Pure CSS — no class renames, no JS changes.
+─────────────────────────────────────────────────────────── */
+.debt-rank-item {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+  padding: 14px 16px;
+  border-radius: var(--r-lg);
+  border: 1px solid var(--gray-2);
+  background: var(--white);
+  margin-bottom: 10px;
+}
+.debt-rank-num {
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  background: var(--gray-2);
+  color: var(--gray-4);
+  font-size: 13px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+  line-height: 1;
+}
+.debt-rank-num.priority-1 { background: var(--teal); color: #fff; }
+.debt-rank-num.priority-2 { background: var(--gray-2); color: var(--navy); }
+.debt-rank-num.priority-3,
+.debt-rank-num.priority-4 { background: var(--gray-1); color: var(--gray-3); }
+.debt-rank-info { flex: 1; min-width: 0; }
+.debt-rank-title {
+  font-size: 14px; font-weight: 700; color: var(--navy);
+  margin-bottom: 4px;
+}
+.debt-rank-desc {
+  font-size: 12px; color: var(--gray-4); line-height: 1.6;
+  margin-bottom: 8px;
+}
+.debt-rank-bar-wrap {
+  height: 4px; background: var(--gray-1);
+  border-radius: 2px; overflow: hidden;
+  margin-bottom: 8px;
+}
+.debt-rank-bar { height: 100%; border-radius: 2px; }
+.debt-rank-bar.red   { background: var(--red); }
+.debt-rank-bar.amber { background: var(--amber); }
+.debt-rank-bar.teal  { background: var(--teal); }
+.debt-rank-meta {
+  display: flex; gap: 16px;
+  font-size: 11px; color: var(--gray-3); font-weight: 600;
+}
+
+/* Priority-1 hero — one clear primary object */
+#debt-rank-list .debt-rank-item:first-child {
+  border-left: 3px solid var(--teal);
+  background: rgba(20, 184, 166, 0.03);
+  padding: 16px 18px;
+}
+#debt-rank-list .debt-rank-item:first-child .debt-rank-title {
+  font-size: 16px;
+}
+#debt-rank-list .debt-rank-item:first-child .debt-rank-desc {
+  color: #475569; /* one step stronger than --gray-4 for priority readability */
+}
+
+/* De-emphasize non-priority items — visible but secondary */
+#debt-rank-list .debt-rank-item:not(:first-child) {
+  opacity: 0.82;
+  transition: opacity 0.25s ease;
+}
+#debt-rank-list .debt-rank-item:not(:first-child):hover {
+  opacity: 1;
+}
+
+/* ── DEBT SAFE ZONE HIERARCHY ──────────────────────────────
+   Visual hierarchy pass only. No JS, no structure changes.
+   Intent: calm entry → one clear priority → secondary context.
+─────────────────────────────────────────────────────────── */
+
+/* 1. Emotional Entry — safe, soft, readable */
+.tde-emotional {
+  padding: 28px 22px;
+  border-radius: 16px;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.07), 0 4px 20px rgba(0,0,0,0.18);
+}
+.tde-emotional-text {
+  line-height: 1.75;
+}
+
+/* 2. Priority Card — hero of the Debt tab */
+.tde-priority {
+  padding: 22px 20px;
+  margin-top: 8px;
+  margin-bottom: 8px;
+  border-left-width: 5px;
+  transform: scale(1.01);
+  transform-origin: center top;
+  box-shadow: 0 6px 24px rgba(0,0,0,0.10), 0 1px 4px rgba(0,0,0,0.06);
+}
+
+/* 3. De-emphasize surrounding sections — visible but secondary */
+.tde-pressure,
+.tf-card:not(.tde-priority),
+.tde-relief {
+  opacity: 0.87;
+  transition: opacity 0.25s ease;
+}
+.tde-pressure:hover,
+.tde-pressure:focus-within,
+.tf-card:not(.tde-priority):hover,
+.tf-card:not(.tde-priority):focus-within,
+.tde-relief:hover,
+.tde-relief:focus-within {
+  opacity: 1;
+}
+
+/* 4. Vertical breathing room between sections */
+.tde-pressure  { margin-bottom: 20px; }
+.tde-relief    { margin-bottom: 20px; }
+.tde-emotional { margin-bottom: 20px; }
+
+
+/* ═══════════════════════════════════════════════════════════
+   EXPERIENCE LAYER — archetype-driven render adaptations
+   Classes applied to document.body by experienceLayer.js
+═══════════════════════════════════════════════════════════ */
+
+/* ── Debt estimation disclaimer ────────────────────────── */
+.bse-dl-disclaimer {
+  font-size: 11px;
+  color: var(--gray-3, #9aa0ad);
+  margin-top: 12px;
+  padding: 0 2px;
+  line-height: 1.5;
+}
+
+/* ── NBM calm note ─────────────────────────────────────── */
+.xp-nbm-calm-note {
+  font-size: 11px;
+  color: var(--text-tertiary, #8a8f9a);
+  letter-spacing: 0.01em;
+  margin: 2px 0 8px;
+  font-style: italic;
+}
+
+/* ── CALM mode: reduce visual density on home ──────────── */
+.xp-mode-calm .bse-metrics-strip,
+.xp-mode-calm .bse-driver-strip,
+.xp-mode-calm .bse-mode-strategy {
+  display: none !important;
+}
+
+/* ── EXPANDED mode: allow additional detail blocks ─────── */
+.xp-mode-expanded .bse-dl-metrics {
+  /* no overrides — base styles apply, full detail visible */
+}

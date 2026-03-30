@@ -2724,12 +2724,17 @@ function setMethod(m) {
 }
 
 function _0x3e799ba() {
+  // Sync method — prefer window.G (authoritative after hydration), fall back to file-scoped G.
+  // window.G is the live object after hydration; file-scoped G may be the default stub.
+  var _gMethod = (window.G && window.G.debtMethod) || (typeof G !== 'undefined' && G.debtMethod);
+  if (_gMethod) debtMethod = _gMethod;
+
   const debts = [];
-  if (G.ccDebt > 0)   debts.push({ name:'Credit Card',  balance:G.ccDebt,    rate:G.ccRate||21,       minPayment:Math.max(25,Math.round(G.ccDebt*0.02)),  icon:'💳', color:'red'  });
-  if (G.carDebt > 0)  debts.push({ name:'Car Loan',     balance:G.carDebt,   rate:7.5,                minPayment:G.carPayment||300,                        icon:'🚗', color:'amber'});
-  if (G.otherDebt>0)  debts.push({ name:'Other Loans',  balance:G.otherDebt, rate:9.0,                minPayment:G.otherPayment||150,                      icon:'📋', color:'amber'});
+  if (G.ccDebt > 0)   debts.push({ name:'Credit Card',  balance:G.ccDebt,    rate:G.ccRate||21,            minPayment:Math.max(25,Math.round(G.ccDebt*0.02)),  icon:'💳', color:'red'  });
+  if (G.carDebt > 0)  debts.push({ name:'Car Loan',     balance:G.carDebt,   rate:G.carRate||7.5,          minPayment:G.carPayment||300,                        icon:'🚗', color:'amber'});
+  if (G.otherDebt>0)  debts.push({ name:'Other Loans',  balance:G.otherDebt, rate:G.otherRate||9.0,        minPayment:G.otherPayment||150,                      icon:'📋', color:'amber'});
   if (G.housingType==='owner'&&G.balance>0) debts.push({ name:'Mortgage', balance:G.balance, rate:G.currentRate, minPayment:G.payment, icon:'🏡', color:'teal'});
-  if (G.studentDebt>0) debts.push({ name:'Student Loan', balance:G.studentDebt, rate:5.5, minPayment:G.idrPayment||Math.max(G.studentDebt*0.01,100), icon:'🎓', color:'amber'});
+  if (G.studentDebt>0) debts.push({ name:'Student Loan', balance:G.studentDebt, rate:G.studentRate||5.5, minPayment:G.idrPayment||Math.max(G.studentDebt*0.01,100), icon:'🎓', color:'amber'});
 
   const rankList   = document.getElementById('debt-rank-list');
   const summaryEl  = document.getElementById('debt-summary');
@@ -2886,6 +2891,14 @@ function _0x3e799ba() {
               : `Snowball gets you debt-free ${monthsDelta} months faster than Avalanche — ${fmt(interestDelta)} more in interest but the quick wins keep momentum going.`}
           </div>
         </div>`;
+    } else if (nonMortgage.length > 1 && interestDelta <= 50) {
+      // Highest-rate debt is also the smallest-balance debt — both methods target it first.
+      // Numbers are identical; make this visible rather than silently showing no callout.
+      comparisonHtml = `
+        <div style="background:rgba(0,168,232,0.06);border:1px solid rgba(0,168,232,0.15);border-radius:12px;padding:12px 14px;margin-bottom:14px;">
+          <div style="font-size:12px;font-weight:700;color:var(--teal);margin-bottom:4px;">Both methods target the same debt first</div>
+          <div style="font-size:12px;color:var(--gray-4);line-height:1.5;">For your current debt mix, Avalanche and Snowball prioritise the same account — the payoff timeline is the same either way. The label reflects your preference.</div>
+        </div>`;
     }
 
     cascadeHtml = `
@@ -2953,6 +2966,24 @@ function _0x3e799ba() {
     </div>`;
   }
   summaryEl.innerHTML = cascadeHtml;
+
+  // ── Countdown banner ─────────────────────────────────────────────
+  const dfMonthsEl = document.getElementById('debt-free-months');
+  const dfDateEl   = document.getElementById('debt-free-date');
+  const dfSubEl    = document.getElementById('debt-free-sub');
+  if (dfMonthsEl) dfMonthsEl.textContent = nonMortgage.length > 0 ? activeResult.months : '—';
+  if (dfSubEl)    dfSubEl.textContent    = nonMortgage.length > 0
+    ? (isAvalanche ? 'Avalanche plan · ' : 'Snowball plan · ') + (extraCash > 0 ? fmt(extraCash) + '/mo extra' : 'minimums only')
+    : 'No consumer debt';
+  if (dfDateEl && nonMortgage.length > 0) {
+    var _dfDate = new Date();
+    _dfDate.setMonth(_dfDate.getMonth() + activeResult.months);
+    dfDateEl.textContent = _dfDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+  } else if (dfDateEl) {
+    dfDateEl.textContent = '—';
+  }
+  const dfBanner = document.getElementById('debt-countdown-banner');
+  if (dfBanner && nonMortgage.length > 0) dfBanner.style.display = '';
 
   // ── Timeline chart ───────────────────────────────────────────────
   const timelineEl = document.getElementById('debt-timeline-chart');
@@ -4360,6 +4391,10 @@ function _0xf0f2b75() {
     if (snap._selectedRaiseRate) window._selectedRaiseRate = snap._selectedRaiseRate;
     if (snap._progressSub) window._progressSub = snap._progressSub;
     if (snap._scoreHistory && typeof G !== 'undefined') G._scoreHistory = snap._scoreHistory;
+    // Sync file-scoped G to window.G immediately on load so BSE/_compute/render modules
+    // read real user data. Without this, window.G stays undefined for returning users
+    // who skip score recomputation, causing BSE to compute wrong archetype (score=0).
+    window.G = G;
     return true;
   } catch(e) { return false; }
 }

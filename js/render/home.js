@@ -1198,6 +1198,29 @@
   /* ── WIRE INTO v21RenderPostAnalysis ───────────────────── */
   var _prevRPA = window.v21RenderPostAnalysis;
   window.v21RenderPostAnalysis = function(){
+    /* [SCORE TRACE] — MutationObserver wired before any render pass */
+    (function(){
+      var hero = document.getElementById('score-hero-wrap');
+      var zone = document.getElementById('bse-score-zone');
+      var dh   = document.getElementById('dash-header');
+      if (!hero && !zone && !dh) return;
+      if (window.__scoreObs) { try { window.__scoreObs.disconnect(); } catch(e){} }
+      var obs = new MutationObserver(function(){
+        console.log('[SCORE MUTATION]', {
+          headerClass: dh ? dh.className : null,
+          zoneStyle:   zone ? zone.getAttribute('style') : null,
+          heroStyle:   hero ? hero.getAttribute('style') : null,
+          heroComputedDisplay:   hero ? getComputedStyle(hero).display    : null,
+          heroComputedOpacity:   hero ? getComputedStyle(hero).opacity    : null,
+          heroComputedMaxHeight: hero ? getComputedStyle(hero).maxHeight  : null
+        });
+      });
+      if (hero) obs.observe(hero, { attributes:true, attributeFilter:['style','class'] });
+      if (zone) obs.observe(zone, { attributes:true, attributeFilter:['style','class'] });
+      if (dh)   obs.observe(dh,   { attributes:true, attributeFilter:['style','class'] });
+      window.__scoreObs = obs;
+    })();
+
     if(typeof _prevRPA === 'function') _prevRPA();
 
     // Build/update dashboard components
@@ -1288,9 +1311,7 @@
     '.v21-score-compact .score-ring-num  { font-size: 22px !important; }',
     '.v21-score-compact .score-title     { font-size: 17px !important; }',
     '.v21-score-compact                  { padding-bottom: 8px !important; }',
-    /* Hide original score hero when compact score row is showing */
-    '#v21-compact-score[style*="block"] ~ .score-hero-wrap,',
-    '#tab-home:has(#v21-compact-score[style*="block"]) #score-hero-wrap { display: none !important; }',
+    /* Score hero remains visible alongside compact score row */
     /* ── Authority card meta bar ── */
     '.v21-auth-meta-bar { margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--gray-1); }',
     '.v21-auth-meta-row { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }',
@@ -2449,11 +2470,37 @@ window.bseApplyScoreHero = function() {
   /* Remove previously-applied classes */
   dh.classList.remove('bse-score-hidden', 'bse-score-deemphasized');
 
-  if (!BSE.showScore) {
+  /* [SCORE TRACE] */
+  console.log('[SCORE TRACE]', {
+    where: 'bseApplyScoreHero',
+    headerClass: dh ? dh.className : null,
+    scoreZoneDisplay: sz ? sz.style.display : null,
+    heroDisplay: (document.getElementById('score-hero-wrap') || {}).style && document.getElementById('score-hero-wrap').style.display,
+    heroComputedDisplay: window.getComputedStyle(document.getElementById('score-hero-wrap') || document.body).display,
+    compactScoreDisplay: (document.getElementById('v21-compact-score') || {}).style && document.getElementById('v21-compact-score').style.display,
+    hasScore: !!((window.G || {}).score || (window.G || {}).score === 0),
+    windowGScore: (window.G || {}).score,
+    BSEshowScore: BSE.showScore,
+    BSEscoreProminent: BSE.scoreProminent,
+    homeActive: (document.getElementById('tab-home') || {}).classList && document.getElementById('tab-home').classList.contains('active')
+  });
+
+  var _g = window.G || {};
+  var hasScore = !!(_g && (_g.score || _g.score === 0));
+
+  if (!BSE.showScore && !hasScore) {
+    /* No computed score yet — hide zone for new/empty sessions */
     dh.classList.add('bse-score-hidden');
+    dh.classList.remove('force-show-score');
     if (sz)    sz.style.display    = 'none';
     if (strip) strip.style.display = 'none';
+  } else if (!BSE.showScore) {
+    /* Score exists but archetype says hide — keep zone visible, hide strip */
+    dh.classList.remove('bse-score-hidden');
+    if (sz)    sz.style.display    = 'flex';
+    if (strip) strip.style.display = 'none';
   } else if (!BSE.scoreProminent) {
+    dh.classList.remove('bse-score-hidden');
     dh.classList.add('bse-score-deemphasized');
     if (sz)    sz.style.display    = 'flex';
     if (strip) strip.style.display = 'none';
@@ -2468,6 +2515,7 @@ window.bseApplyScoreHero = function() {
     }
   } else {
     /* Full score: show zone + strip */
+    dh.classList.remove('bse-score-hidden');
     if (sz)    sz.style.display    = 'flex';
     if (strip) strip.style.display = '';
     /* Trigger score ring draw animation */
@@ -2479,6 +2527,19 @@ window.bseApplyScoreHero = function() {
       ring.classList.add('score-ring-animated');
     }
   }
+
+  /* Guard: if Home tab is active, force score visible regardless of prior render passes */
+  (function () {
+    var homeTab = document.getElementById('tab-home');
+    if (!dh || !homeTab) return;
+    if (homeTab.classList.contains('active')) {
+      dh.classList.remove('compact');
+      dh.classList.remove('bse-score-hidden');
+      dh.classList.add('force-show-score');
+    } else {
+      dh.classList.remove('force-show-score');
+    }
+  })();
 };
 
 /* ═══════════════════════════════════════════════════════════

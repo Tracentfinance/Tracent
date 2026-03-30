@@ -11,15 +11,27 @@
 // ── Debt method ───────────────────────────────────────────
 function setDebtMethod(method, btn) {
   if (typeof G !== 'undefined') G.debtMethod = method;
+  if (window.G) window.G.debtMethod = method;
   document.querySelectorAll('.method-btn').forEach(function (b) { b.classList.remove('active'); });
   if (btn) btn.classList.add('active');
   var _ba = document.getElementById('btn-avalanche'); if (_ba) _ba.className = 'method-btn' + (method === 'avalanche' ? ' active' : '');
   var _bs = document.getElementById('btn-snowball'); if (_bs) _bs.className = 'method-btn' + (method === 'snowball' ? ' active' : '');
   var mi = document.getElementById('method-info');
   if (mi) mi.innerHTML = method === 'avalanche'
-    ? '<strong>Avalanche method:</strong> Pay minimums on all debts, put extra cash toward the highest interest rate first. Mathematically optimal — saves the most money overall.'
-    : '<strong>Snowball method:</strong> Pay minimums on all debts, put extra cash toward the smallest balance first. Psychologically powerful — quick wins keep you motivated.';
-  if (typeof _0x3e799ba === 'function') { try { _0x3e799ba(); } catch (e) { } }
+    ? '<strong>Avalanche:</strong> Extra cash goes to your highest-rate debt first. Saves the most interest overall.'
+    : '<strong>Snowball:</strong> Extra cash goes to your smallest balance first. Faster wins keep you moving.';
+  // setMethod() directly mutates file-scoped debtMethod in legacy-calculations.js,
+  // bypassing the window.G → G object-identity bridge that breaks in hydration paths.
+  if (typeof setMethod === 'function') {
+    try { setMethod(method); } catch (e) {
+      if (typeof _0x3e799ba === 'function') { try { _0x3e799ba(); } catch (e2) { } }
+    }
+  } else if (typeof _0x3e799ba === 'function') {
+    try { _0x3e799ba(); } catch (e) { }
+  }
+  if (typeof TracentRenderDebtExperience !== 'undefined' && typeof TracentRenderDebtExperience.render === 'function') {
+    try { TracentRenderDebtExperience.render(); } catch (e) { }
+  }
 }
 function updateDebtAccelerator(val) {
   var valEl = document.getElementById('debt-accelerator-val');
@@ -65,13 +77,30 @@ window.bseRenderDebtRelief = function () {
   var tot = cc + car + stu + oth;
   if (tot === 0) { el.style.display = 'none'; return; }
   var fcf = g.fcf || 0, layer = BSE.debtLayer || 1;
+  var method = g.debtMethod || 'avalanche';
 
-  var pri = cc > 0 ? { label: 'Credit card', amt: cc, rate: g.ccRate || 21, why: 'highest interest rate' }
-    : car > 0 ? { label: 'Car loan', amt: car, rate: 6, why: 'near-term cash freedom' }
-      : stu > 0 ? { label: 'Student loan', amt: stu, rate: 5.5, why: 'income flexibility' }
-        : { label: 'Other debt', amt: oth, rate: 8, why: 'cash flow' };
+  // Build and sort debt candidates by active method
+  var _priCandidates = [];
+  if (cc > 0)  _priCandidates.push({ label: 'Credit card',  amt: cc,  rate: g.ccRate      || 21  });
+  if (car > 0) _priCandidates.push({ label: 'Car loan',     amt: car, rate: g.carRate     || 7.5 });
+  if (stu > 0) _priCandidates.push({ label: 'Student loan', amt: stu, rate: g.studentRate || 5.5 });
+  if (oth > 0) _priCandidates.push({ label: 'Other debt',   amt: oth, rate: g.otherRate   || 9.0 });
+  if (method === 'snowball') {
+    _priCandidates.sort(function(a, b) { return a.amt - b.amt; });
+  } else {
+    _priCandidates.sort(function(a, b) { return b.rate - a.rate; });
+  }
+  var _pc = _priCandidates[0] || { label: 'Other debt', amt: oth, rate: 8 };
+  var pri = {
+    label: _pc.label,
+    amt:   _pc.amt,
+    rate:  _pc.rate,
+    why:   method === 'snowball' ? 'Smallest balance \u2014 clear it first for the fastest win.' : 'Highest interest rate \u2014 every extra dollar saves the most here.'
+  };
   var extra = fcf > 0 ? Math.min(Math.round(fcf * 0.25), 200) : 0;
   var months = extra > 0 ? Math.round(pri.amt / extra) : 0;
+  // Estimation precision flag — false when user has explicitly provided rates
+  var _ratesDefault = (g.ratesAreDefault !== false);
 
   // Total monthly minimum across all debts (for simplified metrics block)
   var ccMin  = cc  > 0 ? Math.max(25, Math.round(cc * 0.02)) : 0;
@@ -81,16 +110,16 @@ window.bseRenderDebtRelief = function () {
   var totalMin = ccMin + carMin + stuMin + othMin;
 
   var orient = fcf < 0
-    ? 'The most important thing right now isn\u2019t the debt total \u2014 it\u2019s that your spending exceeds your income. Addressing that first makes everything else easier.'
+    ? 'Your spending currently exceeds your income. Fixing that first makes debt payoff possible.'
     : tot > ((g.takeHome || 0) * 12)
-      ? 'You\u2019re carrying significant debt, and that\u2019s okay. There is a clear path through it. One priority at a time is how this gets done.'
-      : 'Your debt is manageable at your income level. One focused priority is all that\u2019s needed right now.';
+      ? 'Significant debt, and a clear path through it. One priority at a time.'
+      : 'Your debt is manageable. One focused target is all that\u2019s needed.';
 
   var h = '<div class="bse-debt-wrap">';
 
   /* 1. HERO — calm, spacious, visually separated */
   h += '<div class="bse-dl bse-dl-hero"><div class="bse-dl-orient">' + orient + '</div>';
-  if (fcf > 0) h += '<div class="bse-dl-capacity">You have <strong>' + fmtMoney(fcf) + '/mo</strong> of free cash flow. That is your tool here.</div>';
+  if (fcf > 0) h += '<div class="bse-dl-capacity"><strong>' + fmtMoney(fcf) + '/mo</strong> free cash flow — that\u2019s your tool.</div>';
   h += '</div>';
 
   /* 2. TARGET FIRST — first actionable element */
@@ -98,8 +127,14 @@ window.bseRenderDebtRelief = function () {
     + '<div class="bse-dp-card">'
     + '<div class="bse-dp-name">' + pri.label + '</div>'
     + '<div class="bse-dp-amt">' + fmtMoney(pri.amt) + '</div>'
-    + '<div class="bse-dp-why">Prioritized for ' + pri.why + '</div>'
-    + (extra > 0 && months > 0 && months < 120 ? '<div class="bse-dp-timeline">Adding ' + fmtMoney(extra) + '/mo clears this in ~' + months + ' months</div>' : '')
+    + (pri.why ? '<div class="bse-dp-why">' + pri.why + '</div>' : '')
+    + (extra > 0 && months > 0 && months < 120
+        ? '<div class="bse-dp-timeline">Adding ' + fmtMoney(extra) + '/mo clears this in '
+          + (_ratesDefault
+            ? '~' + Math.round(months * 0.88) + '\u2013' + Math.round(months * 1.13) + ' months'
+            : '~' + months + ' months')
+          + '</div>'
+        : '')
     + '</div></div>';
 
   /* 3. METRICS — one primary (monthly minimums), total debt as secondary */
@@ -113,11 +148,11 @@ window.bseRenderDebtRelief = function () {
   /* Layer 3: full list */
   if (layer >= 3) {
     var debts = [];
-    if (cc > 0) debts.push({ n: 'Credit card', a: cc, r: g.ccRate || 21 });
-    if (car > 0) debts.push({ n: 'Car loan', a: car, r: 6 });
-    if (stu > 0) debts.push({ n: 'Student', a: stu, r: 5.5 });
-    if (oth > 0) debts.push({ n: 'Other', a: oth, r: 8 });
-    debts.sort(function (a, b) { return b.r - a.r; });
+    if (cc > 0)  debts.push({ n: 'Credit card', a: cc,  r: g.ccRate      || 21  });
+    if (car > 0) debts.push({ n: 'Car loan',    a: car, r: g.carRate     || 7.5 });
+    if (stu > 0) debts.push({ n: 'Student',     a: stu, r: g.studentRate || 5.5 });
+    if (oth > 0) debts.push({ n: 'Other',       a: oth, r: g.otherRate   || 9.0 });
+    debts.sort(function (a, b) { return method === 'snowball' ? a.a - b.a : b.r - a.r; });
     h += '<div class="bse-dl"><div class="bse-dl-label">Your full debt picture</div><div class="bse-debt-list">';
     debts.forEach(function (d) {
       var mo = Math.round(d.a * d.r / 100 / 12);
@@ -135,11 +170,25 @@ window.bseRenderDebtRelief = function () {
   }
   /* Progressive reveal */
   if (layer < 3) h += '<button class="bse-dl-reveal" onclick="bseRevealDebtLayer()">See more detail \u25be</button>';
+  /* Estimation disclaimer — only when rates are defaulted */
+  if (_ratesDefault) {
+    var _arch = (window.BSE && window.BSE.archetype) || '';
+    var _disc = _arch === 'anxious_overwhelmed' || _arch === 'avoider'
+      ? 'We\u2019re estimating based on typical rates \u2014 you can refine this anytime.'
+      : _arch === 'optimizer'
+        ? 'Assuming typical APR ranges. Add exact rates in settings to refine.'
+        : 'Estimates based on typical rates. Add exact APRs for precision.';
+    h += '<div class="bse-dl-disclaimer">' + _disc + '</div>';
+  }
   h += '</div>';
   el.innerHTML = h; el.style.display = 'block';
 
   /* ── Feature layer: re-render debt experience after BSE debt content is built ── */
   if (typeof TracentRenderDebtExperience !== 'undefined') {
     try { TracentRenderDebtExperience.render(); } catch (e) { }
+  }
+  /* ── Experience layer: apply archetype adaptations to debt tab ── */
+  if (typeof TracentExperienceLayer !== 'undefined') {
+    try { TracentExperienceLayer.render(); } catch (e) { }
   }
 };

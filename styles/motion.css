@@ -223,13 +223,13 @@
   transition: opacity var(--tr-screen) var(--tr-ease-out-soft),
               transform var(--tr-screen) var(--tr-ease-out-soft);
 }
-.tab-panel:not(.tab-active) {
+.tab-panel:not(.active) {
   opacity: 0;
   pointer-events: none;
   position: absolute;
   transform: translateY(var(--tr-shift-xs));
 }
-.tab-panel.tab-active {
+.tab-panel.active {
   opacity: 1;
   pointer-events: all;
   position: relative;
@@ -392,6 +392,19 @@
 }
 .bse-arch-pre_retirement .bse-focus-eyebrow::before {
   content: '🎯 '; font-size: 12px;
+}
+
+/* ── Score ring breathing pulse — Focus/Home only ─────────
+   Grounding, not decorative. Very gentle scale (3.5%).
+   Scoped to :not(.compact) = home tab only.
+────────────────────────────────────────────────────────── */
+@keyframes tr-score-breathe {
+  0%, 100% { transform: scale(1); }
+  50%       { transform: scale(1.035); }
+}
+.dash-header:not(.compact) .score-ring-wrap {
+  animation: tr-score-breathe 3.5s ease-in-out infinite;
+  will-change: transform;
 }
 
 </style>

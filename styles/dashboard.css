@@ -113,6 +113,72 @@
   pointer-events: none;
 }
 .dash-header.compact .mini-chip { display: flex; }
+.dash-header.force-show-score .score-hero-wrap {
+  max-height: 400px !important;
+  opacity: 1 !important;
+  padding-top: clamp(16px, 8vh, 48px) !important;
+  padding-bottom: clamp(12px, 6vh, 36px) !important;
+  pointer-events: auto !important;
+}
+
+/* ── SCORE HERO — Focus/Home only ─────────────────────────
+   Scope: #dash-header:not(.compact) activates immediately
+   when switchTab('home') fires — no render-cycle dependency.
+   Ring size uses ID specificity to beat v21-score-compact
+   injected styles (both use !important; ID specificity wins).
+────────────────────────────────────────────────────────── */
+
+/* Breathing room on hero — also applies before force-show-score settles */
+#dash-header:not(.compact) .score-hero-wrap {
+  padding-top: clamp(16px, 8vh, 48px) !important;
+  padding-bottom: clamp(12px, 6vh, 36px) !important;
+}
+
+/* Stack ring above detail text, centered */
+#dash-header:not(.compact) #bse-score-zone {
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: var(--s3);
+  width: 100%;
+}
+#dash-header:not(.compact) .bse-score-detail {
+  text-align: center;
+}
+
+/* Enlarged ring — overrides v21-score-compact injected !important via ID specificity */
+#dash-header:not(.compact) .score-ring-wrap {
+  width: 120px !important;
+  height: 120px !important;
+}
+#dash-header:not(.compact) .score-ring-svg {
+  width: 120px !important;
+  height: 120px !important;
+}
+
+/* More prominent score number */
+#dash-header:not(.compact) .score-ring-num {
+  font-size: 36px !important;
+}
+
+/* ── Lower-module de-emphasis on Focus/Home ───────────────
+   Visible but secondary — opacity restores on interaction.
+   BSE display:none states are unaffected (opacity on hidden = noop).
+────────────────────────────────────────────────────────── */
+#tab-home .v21-nbm-card,
+#tab-home #home-metrics,
+#tab-home #v21-verdict-block {
+  opacity: 0.85;
+  transition: opacity 0.3s ease;
+}
+#tab-home .v21-nbm-card:hover,
+#tab-home .v21-nbm-card:focus-within,
+#tab-home #home-metrics:hover,
+#tab-home #home-metrics:focus-within,
+#tab-home #v21-verdict-block:hover,
+#tab-home #v21-verdict-block:focus-within {
+  opacity: 1;
+}
 .dash-header.compact .dash-topbar { padding-bottom: 12px; }
 
 .score-greeting {

@@ -61,9 +61,139 @@ function closePaywall()        {
   var o = document.getElementById('paywall-overlay');
   if (o) { o.classList.remove('open'); setTimeout(function() { o.style.display = 'none'; }, 380); }
 }
+// ── Settings edit sheet ───────────────────────────────────
+// Completely separate from onboarding. Reads G, opens a modal,
+// writes back to G and hidden engine inputs on save, then reruns.
+function openSettingsEdit() {
+  var g = (typeof G !== 'undefined' && G.income) ? G : (window.G || {});
+  function _prefill(id, val) {
+    var el = document.getElementById(id);
+    if (el && val !== undefined && val !== null && val !== 0 && val !== '') el.value = val;
+  }
+  _prefill('se-income',       g.income       ? Math.round(g.income)       : '');
+  _prefill('se-takehome',     g.takeHome     ? Math.round(g.takeHome)     : '');
+  _prefill('se-cc-debt',      g.ccDebt       ? Math.round(g.ccDebt)       : '');
+  _prefill('se-car-debt',     g.carDebt      ? Math.round(g.carDebt)      : '');
+  _prefill('se-student-debt', g.studentDebt  ? Math.round(g.studentDebt)  : '');
+  _prefill('se-other-debt',   g.otherDebt    ? Math.round(g.otherDebt)    : '');
+  // Rates — only prefill if explicitly stored (not default)
+  if (g.ccRate      && g.ccRate      !== 21)  _prefill('se-cc-rate',      g.ccRate);
+  if (g.carRate     && g.carRate     !== 7.5) _prefill('se-car-rate',     g.carRate);
+  if (g.studentRate && g.studentRate !== 5.5) _prefill('se-student-rate', g.studentRate);
+  if (g.otherRate   && g.otherRate   !== 9.0) _prefill('se-other-rate',   g.otherRate);
+  // Credit score
+  var creditEl = document.getElementById('se-credit');
+  if (creditEl && g.credit) creditEl.value = g.credit;
+  var efEl = document.getElementById('se-emergency');
+  if (efEl && g.emergency) efEl.value = g.emergency;
+  openModal('settings-edit-sheet');
+  // Apply experience layer BSE adaptation to modal state
+  if (typeof TracentExperienceLayer !== 'undefined' && typeof TracentExperienceLayer.applySettingsModal === 'function') {
+    try { TracentExperienceLayer.applySettingsModal(); } catch(e) {}
+  }
+}
+
+function saveSettingsEdit() {
+  function _num(id) {
+    var el = document.getElementById(id);
+    if (!el) return 0;
+    return parseFloat(String(el.value || '').replace(/[^0-9.]/g, '')) || 0;
+  }
+  function _str(id) {
+    var el = document.getElementById(id); return el ? (el.value || '') : '';
+  }
+  function _setInput(id, val) {
+    var el = document.getElementById(id);
+    if (el !== null) el.value = val;
+  }
+
+  var income      = _num('se-income');
+  var takeHome    = _num('se-takehome');
+  var ccDebt      = _num('se-cc-debt');
+  var carDebt     = _num('se-car-debt');
+  var studentDebt = _num('se-student-debt');
+  var otherDebt   = _num('se-other-debt');
+  var emergency   = _str('se-emergency');
+  // Rates — 0 means "not entered", keep existing default
+  var ccRateInput      = _num('se-cc-rate');
+  var carRateInput     = _num('se-car-rate');
+  var studentRateInput = _num('se-student-rate');
+  var otherRateInput   = _num('se-other-rate');
+  var creditInput      = _str('se-credit');
+
+  // Derive minimum payments from balances (same logic as bridge)
+  var carPmt     = carDebt     > 0 ? Math.round(carDebt / 60)                          : 0;
+  var stuPmt     = studentDebt > 0 ? Math.max(Math.round(studentDebt / 120), 100)      : 0;
+  var othPmt     = otherDebt   > 0 ? Math.max(Math.round(otherDebt / 60), 50)          : 0;
+
+  // Write to G
+  var _g = (typeof G !== 'undefined') ? G : (window.G || {});
+  if (income      > 0)  { _g.income      = income;      window.G && (window.G.income      = income); }
+  if (takeHome    > 0)  { _g.takeHome    = takeHome;    window.G && (window.G.takeHome    = takeHome); }
+  _g.ccDebt      = ccDebt;      window.G && (window.G.ccDebt      = ccDebt);
+  _g.carDebt     = carDebt;     window.G && (window.G.carDebt     = carDebt);
+  _g.carPayment  = carPmt;      window.G && (window.G.carPayment  = carPmt);
+  _g.studentDebt = studentDebt; window.G && (window.G.studentDebt = studentDebt);
+  _g.otherDebt   = otherDebt;   window.G && (window.G.otherDebt   = otherDebt);
+  if (emergency)              { _g.emergency = emergency; window.G && (window.G.emergency = emergency); }
+  // Write rates to G — only if user entered a value
+  var anyRateProvided = false;
+  if (ccRateInput      > 0) { _g.ccRate      = ccRateInput;      window.G && (window.G.ccRate      = ccRateInput);      anyRateProvided = true; }
+  if (carRateInput     > 0) { _g.carRate     = carRateInput;     window.G && (window.G.carRate     = carRateInput);     anyRateProvided = true; }
+  if (studentRateInput > 0) { _g.studentRate = studentRateInput; window.G && (window.G.studentRate = studentRateInput); anyRateProvided = true; }
+  if (otherRateInput   > 0) { _g.otherRate   = otherRateInput;   window.G && (window.G.otherRate   = otherRateInput);   anyRateProvided = true; }
+  if (anyRateProvided) { _g.ratesAreDefault = false; window.G && (window.G.ratesAreDefault = false); }
+  // Credit score
+  if (creditInput) {
+    _g.credit = creditInput; window.G && (window.G.credit = creditInput);
+    if (typeof selectedCredit !== 'undefined') { try { selectedCredit = creditInput; } catch(e) {} }
+  }
+
+  // Write to hidden engine inputs so legacy-calculations.js reads correct values
+  if (income   > 0) _setInput('income',          income);
+  if (takeHome > 0) _setInput('takehome',         takeHome);
+  _setInput('cc-debt',         ccDebt);
+  _setInput('cc-rate',         _g.ccRate || 21);
+  _setInput('car-debt',        carDebt);
+  _setInput('car-payment',     carPmt);
+  _setInput('student-debt',    studentDebt);
+  _setInput('student-payment', stuPmt);
+  _setInput('other-debt',      otherDebt);
+  _setInput('other-payment',   othPmt);
+  var efEl = document.getElementById('emergency');
+  if (efEl && emergency) efEl.value = emergency;
+
+  // Close sheet and rerun engine — stays on dashboard, switches to home tab
+  closeModal('settings-edit-sheet');
+  if (typeof window.computeAndShow === 'function') {
+    try { window.computeAndShow(); } catch(e) { console.error('[SE] recompute error:', e); }
+  } else if (typeof _0xf1a6af7 === 'function') {
+    try { _0xf1a6af7(); } catch(e) { console.error('[SE] recompute error:', e); }
+  }
+}
+
 function confirmNewAnalysis()  { openModal('confirm-analysis-sheet'); }
 function startFreshAnalysis()  {
+  // Mark modal completed BEFORE closing so telemetry shows modal_completed, not modal_abandoned
+  try {
+    var _ms = window.TRACENT_TELEMETRY && window.TRACENT_TELEMETRY.modalState['confirm-analysis-sheet'];
+    if (_ms) _ms.completed = true;
+  } catch(e) {}
   closeModal('confirm-analysis-sheet');
+  var _g = (typeof G !== 'undefined') ? G : (window.G || {});
+  var hasSession = !!(_g.income);
+  if (hasSession) {
+    window._v21_settingsMode = true;
+    showScreen('screen-onboarding');
+    if (typeof v21BuildRefinePhase === 'function') {
+      v21BuildRefinePhase();
+      if (typeof _v21_prefillRefineForm === 'function') _v21_prefillRefineForm();
+    } else {
+      console.warn('[SFA] v21BuildRefinePhase NOT FOUND — check script load order');
+    }
+    return;
+  }
+  window._v21_settingsMode = false;
   if (typeof G !== 'undefined') { G = { _scoreHistory: G._scoreHistory || [] }; }
   showScreen('screen-onboarding');
   startOnboarding();
@@ -266,6 +396,8 @@ window.closeScenarios         = closeScenarios;
 window.closePaywall           = closePaywall;
 window.unlockPremium          = unlockPremium;
 window.openWhatIf             = openWhatIf;
+window.openSettingsEdit       = openSettingsEdit;
+window.saveSettingsEdit       = saveSettingsEdit;
 window.confirmNewAnalysis     = confirmNewAnalysis;
 window.startFreshAnalysis     = startFreshAnalysis;
 window.openSalaryNegotiation  = openSalaryNegotiation;

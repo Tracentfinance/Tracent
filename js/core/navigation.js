@@ -179,14 +179,13 @@ function runTabRenderers(tab) {
   if (tab === 'home')      { try { if (typeof _0x80e4d42  === 'function') _0x80e4d42();  } catch(e) { console.error('[DASH] home renderer:',     e); } }
   if (tab === 'simulator') { try { if (typeof _0x52c679f  === 'function') _0x52c679f();  } catch(e) { console.error('[DASH] simulator renderer:', e); } }
   if (tab === 'debtrank')  {
-    console.log('[DASH] debtrank: switching to debt tab');
+    // Re-evaluate BSE module visibility with debtIsActive=true so bse-debt-strategy-hidden
+    // gets removed — it was added during home-tab BSE render when debt tab was not active.
+    try { if (typeof window.bseApplyModuleVis === 'function') window.bseApplyModuleVis(); } catch(e) {}
     try {
       if (typeof _0x3e799ba === 'function') {
-        console.log('[DASH] debtrank: calling _0x3e799ba');
         _0x3e799ba();
-        console.log('[DASH] debtrank: _0x3e799ba completed');
       } else {
-        console.warn('[DASH] debtrank: _0x3e799ba not defined, falling back to TracentRenderDebtExperience');
         if (typeof TracentRenderDebtExperience !== 'undefined' && typeof TracentRenderDebtExperience.render === 'function') {
           TracentRenderDebtExperience.render();
         }
@@ -195,11 +194,12 @@ function runTabRenderers(tab) {
       console.error('[DASH] debt renderer:', e);
       try {
         if (typeof TracentRenderDebtExperience !== 'undefined' && typeof TracentRenderDebtExperience.render === 'function') {
-          console.log('[DASH] debtrank: fallback to TracentRenderDebtExperience.render()');
           TracentRenderDebtExperience.render();
         }
       } catch(e2) { console.error('[DASH] debtrank fallback also failed:', e2); }
     }
+    // Apply experience-layer archetype adaptations after planner renders
+    try { if (typeof TracentExperienceLayer !== 'undefined') TracentExperienceLayer.render(); } catch(e) {}
   }
   if (tab === 'progress')  { try { if (typeof _0x701dc98  === 'function') _0x701dc98();  } catch(e) { console.error('[DASH] progress renderer:',  e); } }
   if (tab === 'settings')  { try { if (typeof _0x47a7c11  === 'function') _0x47a7c11();  } catch(e) { console.error('[DASH] settings renderer:',  e); } }

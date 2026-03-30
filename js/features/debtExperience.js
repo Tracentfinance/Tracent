@@ -18,11 +18,16 @@
   /* ── Build debt items from G ────────────────────────── */
   function _buildDebts(g) {
     var debts = [];
-    if ((g.ccDebt || 0) > 0)      debts.push({ name: 'Credit card',  bal: g.ccDebt,     rate: g.ccRate || 21, minPmt: Math.max(25, Math.round((g.ccDebt || 0) * 0.02)) });
-    if ((g.carDebt || 0) > 0)     debts.push({ name: 'Car loan',     bal: g.carDebt,    rate: 7.5, minPmt: g.carPayment || Math.round((g.carDebt || 0) / 60) });
-    if ((g.studentDebt || 0) > 0) debts.push({ name: 'Student loan', bal: g.studentDebt, rate: 5.5, minPmt: g.studentPayment || Math.round((g.studentDebt || 0) / 120) });
-    if ((g.otherDebt || 0) > 0)   debts.push({ name: 'Other debt',   bal: g.otherDebt,  rate: 9.0, minPmt: g.otherPayment || Math.round((g.otherDebt || 0) / 60) });
-    debts.sort(function(a, b) { return b.rate - a.rate; });
+    if ((g.ccDebt || 0) > 0)      debts.push({ name: 'Credit card',  bal: g.ccDebt,      rate: g.ccRate      || 21,  minPmt: Math.max(25, Math.round((g.ccDebt || 0) * 0.02)) });
+    if ((g.carDebt || 0) > 0)     debts.push({ name: 'Car loan',     bal: g.carDebt,     rate: g.carRate     || 7.5, minPmt: g.carPayment     || Math.round((g.carDebt     || 0) / 60) });
+    if ((g.studentDebt || 0) > 0) debts.push({ name: 'Student loan', bal: g.studentDebt, rate: g.studentRate || 5.5, minPmt: g.studentPayment || Math.round((g.studentDebt || 0) / 120) });
+    if ((g.otherDebt || 0) > 0)   debts.push({ name: 'Other debt',   bal: g.otherDebt,   rate: g.otherRate   || 9.0, minPmt: g.otherPayment   || Math.round((g.otherDebt   || 0) / 60) });
+    var method = (window.G || {}).debtMethod || 'avalanche';
+    if (method === 'snowball') {
+      debts.sort(function(a, b) { return a.bal - b.bal; }); // smallest balance first
+    } else {
+      debts.sort(function(a, b) { return b.rate - a.rate; }); // highest rate first
+    }
     return debts;
   }
 
@@ -51,13 +56,16 @@
   }
 
   /* ── Priority debt ──────────────────────────────────── */
-  function _priorityDebt(debts, fcf) {
+  function _priorityDebt(debts, fcf, method) {
     if (!debts.length) return null;
     var pri = debts[0];
     var monthlyInt = Math.round(pri.bal * (pri.rate / 100) / 12);
     var extra = fcf > 0 ? Math.min(Math.round(fcf * 0.30), 300) : 0;
     var totalPmt = pri.minPmt + extra;
     var monthsToPayoff = totalPmt > 0 ? Math.ceil(pri.bal / totalPmt) : 0;
+    var why = method === 'snowball'
+      ? 'Prioritized because it has the smallest balance (' + fmt(pri.bal) + '). Clearing it first builds momentum and frees up a payment quickly.'
+      : 'Prioritized because it has the highest interest rate (' + pri.rate + '%). Every extra dollar here saves the most money.';
 
     return {
       name:            pri.name,
@@ -67,12 +75,12 @@
       minPayment:      pri.minPmt,
       suggestedExtra:  extra,
       monthsToPayoff:  monthsToPayoff,
-      why:             'Prioritized because it has the highest interest rate (' + pri.rate + '%). Every extra dollar here saves the most money.'
+      why:             why
     };
   }
 
   /* ── 3-step plan ────────────────────────────────────── */
-  function _threeStepPlan(pri, debts, fcf) {
+  function _threeStepPlan(pri, debts, fcf, method) {
     var steps = [];
     if (!pri) return steps;
 
@@ -100,7 +108,9 @@
       steps.push({
         n: 3,
         title: 'When cleared, cascade the payment',
-        detail: 'Your total monthly payment stays the same. The freed amount rolls into the next debt. This is how the debt avalanche works \u2014 each payoff accelerates the next.'
+        detail: method === 'snowball'
+          ? 'Keep rolling the freed payment into the next balance. That\u2019s how the snowball grows.'
+          : 'Keep rolling the freed payment into the next balance. That\u2019s how the avalanche gains speed.'
       });
     } else {
       steps.push({
@@ -151,6 +161,7 @@
   function _getState() {
     var g = _g();
     var bse = _bse();
+    var method = g.debtMethod || 'avalanche';
     var debts = _buildDebts(g);
     var total = debts.reduce(function(sum, d) { return sum + d.bal; }, 0);
     if (total === 0) return null;
@@ -161,8 +172,8 @@
     var monthlyPressure = debts.reduce(function(sum, d) { return sum + d.minPmt; }, 0);
 
     var intro    = _emotionalIntro(total, fcf, stress);
-    var priority = _priorityDebt(debts, fcf);
-    var plan     = _threeStepPlan(priority, debts, fcf);
+    var priority = _priorityDebt(debts, fcf, method);
+    var plan     = _threeStepPlan(priority, debts, fcf, method);
     var relief   = _reliefMessage(priority, debts, total, fcf);
 
     return {
