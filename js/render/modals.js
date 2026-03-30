@@ -38,6 +38,9 @@ function closeModal(id) {
 
 
 // ── Sign-in / sign-out ────────────────────────────────────
+// openLoginPlaceholder: splash "Log in" CTA — auth hook point.
+// Replace body with real Supabase / auth provider flow when backend is ready.
+function openLoginPlaceholder() { openModal('signin-overlay'); }
 function openSignInSheet()  { openModal('signin-overlay'); }
 function closeSignInSheet() { closeModal('signin-overlay'); }
 function openSignup()       { openSignInSheet(); }
@@ -64,7 +67,7 @@ function closePaywall()        {
 // ── Settings edit sheet ───────────────────────────────────
 // Completely separate from onboarding. Reads G, opens a modal,
 // writes back to G and hidden engine inputs on save, then reruns.
-function openSettingsEdit() {
+function openSettingsEdit(section) {
   var g = (typeof G !== 'undefined' && G.income) ? G : (window.G || {});
   function _prefill(id, val) {
     var el = document.getElementById(id);
@@ -72,6 +75,8 @@ function openSettingsEdit() {
   }
   _prefill('se-income',       g.income       ? Math.round(g.income)       : '');
   _prefill('se-takehome',     g.takeHome     ? Math.round(g.takeHome)     : '');
+  _prefill('se-savings',      (g.savingsAmt || g.depositSaved) ? Math.round(g.savingsAmt || g.depositSaved) : '');
+  _prefill('se-home-value',   g.homeValue    ? Math.round(g.homeValue)    : '');
   _prefill('se-cc-debt',      g.ccDebt       ? Math.round(g.ccDebt)       : '');
   _prefill('se-car-debt',     g.carDebt      ? Math.round(g.carDebt)      : '');
   _prefill('se-student-debt', g.studentDebt  ? Math.round(g.studentDebt)  : '');
@@ -87,6 +92,18 @@ function openSettingsEdit() {
   var efEl = document.getElementById('se-emergency');
   if (efEl && g.emergency) efEl.value = g.emergency;
   openModal('settings-edit-sheet');
+  // Scroll to section anchor if requested (e.g. 'assets' → savings field, 'debt' → debt section)
+  if (section) {
+    var _sectionMap = { assets: 'se-assets-section', networth: 'se-assets-section', debt: 'se-cc-debt', apr: 'se-apr-section', emergency: 'se-emergency' };
+    var _anchorId = _sectionMap[section] || 'se-income';
+    setTimeout(function() {
+      var _anchor = document.getElementById(_anchorId);
+      var _sheet  = document.querySelector('#settings-edit-sheet .modal-sheet');
+      if (_anchor && _sheet) {
+        _sheet.scrollTop = Math.max(0, _anchor.offsetTop - 24);
+      }
+    }, 80); // after modal open transition
+  }
   // Apply experience layer BSE adaptation to modal state
   if (typeof TracentExperienceLayer !== 'undefined' && typeof TracentExperienceLayer.applySettingsModal === 'function') {
     try { TracentExperienceLayer.applySettingsModal(); } catch(e) {}
@@ -109,6 +126,8 @@ function saveSettingsEdit() {
 
   var income      = _num('se-income');
   var takeHome    = _num('se-takehome');
+  var savings     = _num('se-savings');
+  var homeValue   = _num('se-home-value');
   var ccDebt      = _num('se-cc-debt');
   var carDebt     = _num('se-car-debt');
   var studentDebt = _num('se-student-debt');
@@ -130,6 +149,8 @@ function saveSettingsEdit() {
   var _g = (typeof G !== 'undefined') ? G : (window.G || {});
   if (income      > 0)  { _g.income      = income;      window.G && (window.G.income      = income); }
   if (takeHome    > 0)  { _g.takeHome    = takeHome;    window.G && (window.G.takeHome    = takeHome); }
+  _g.savingsAmt  = savings;   window.G && (window.G.savingsAmt  = savings);
+  if (homeValue   > 0)  { _g.homeValue   = homeValue;   window.G && (window.G.homeValue   = homeValue); }
   _g.ccDebt      = ccDebt;      window.G && (window.G.ccDebt      = ccDebt);
   _g.carDebt     = carDebt;     window.G && (window.G.carDebt     = carDebt);
   _g.carPayment  = carPmt;      window.G && (window.G.carPayment  = carPmt);
@@ -170,6 +191,103 @@ function saveSettingsEdit() {
   } else if (typeof _0xf1a6af7 === 'function') {
     try { _0xf1a6af7(); } catch(e) { console.error('[SE] recompute error:', e); }
   }
+}
+
+// ── Grow: financial structure editor ─────────────────────
+// Inline form in Grow tab — writes to the same G fields as saveSettingsEdit(),
+// no second data model. Assets, liabilities, and employer match all flow
+// through computeAndShow() the same way as settings saves.
+
+function toggleGrowStructure() {
+  var body    = document.getElementById('grow-fs-body');
+  var chevron = document.getElementById('grow-fs-chevron');
+  if (!body) return;
+  var isOpen = body.style.display !== 'none';
+  if (!isOpen) {
+    // Pre-fill from current G values before expanding
+    var g = (typeof G !== 'undefined' && G.income) ? G : (window.G || {});
+    function _pf(id, val) {
+      var el = document.getElementById(id);
+      if (el && val !== undefined && val !== null && val !== 0 && val !== '') el.value = val;
+    }
+    _pf('ge-savings',      g.savingsAmt   ? Math.round(g.savingsAmt)  : '');
+    _pf('ge-home-value',   g.homeValue    ? Math.round(g.homeValue)   : '');
+    _pf('ge-mortgage',     g.balance      ? Math.round(g.balance)     : '');
+    _pf('ge-cc-debt',      g.ccDebt       ? Math.round(g.ccDebt)      : '');
+    _pf('ge-car-debt',     g.carDebt      ? Math.round(g.carDebt)     : '');
+    _pf('ge-student-debt', g.studentDebt  ? Math.round(g.studentDebt) : '');
+    _pf('ge-other-debt',   g.otherDebt    ? Math.round(g.otherDebt)   : '');
+    var rmEl = document.getElementById('ge-ret-match');
+    if (rmEl && g.retMatch) rmEl.value = g.retMatch;
+    body.style.display = 'block';
+    if (chevron) chevron.innerHTML = '&#9660;';
+  } else {
+    body.style.display = 'none';
+    if (chevron) chevron.innerHTML = '&#9658;';
+  }
+}
+
+function saveGrowStructure() {
+  function _num(id) {
+    var el = document.getElementById(id);
+    if (!el) return 0;
+    return parseFloat(String(el.value || '').replace(/[^0-9.]/g, '')) || 0;
+  }
+  function _str(id) { var el = document.getElementById(id); return el ? (el.value || '') : ''; }
+  function _setInput(id, val) { var el = document.getElementById(id); if (el !== null) el.value = val; }
+
+  var savings     = _num('ge-savings');
+  var homeValue   = _num('ge-home-value');
+  var mortgage    = _num('ge-mortgage');
+  var ccDebt      = _num('ge-cc-debt');
+  var carDebt     = _num('ge-car-debt');
+  var studentDebt = _num('ge-student-debt');
+  var otherDebt   = _num('ge-other-debt');
+  var retMatch    = _str('ge-ret-match');
+
+  var _g = (typeof G !== 'undefined') ? G : (window.G || {});
+
+  // Assets
+  _g.savingsAmt  = savings;   window.G && (window.G.savingsAmt  = savings);
+  if (homeValue > 0) { _g.homeValue = homeValue; window.G && (window.G.homeValue = homeValue); }
+  if (mortgage  >= 0) { _g.balance  = mortgage;  window.G && (window.G.balance  = mortgage); }
+
+  // Liabilities — same write path as saveSettingsEdit()
+  _g.ccDebt      = ccDebt;      window.G && (window.G.ccDebt      = ccDebt);
+  _g.carDebt     = carDebt;     window.G && (window.G.carDebt     = carDebt);
+  _g.studentDebt = studentDebt; window.G && (window.G.studentDebt = studentDebt);
+  _g.otherDebt   = otherDebt;   window.G && (window.G.otherDebt   = otherDebt);
+  var carPmt = carDebt     > 0 ? Math.round(carDebt / 60)                     : 0;
+  var stuPmt = studentDebt > 0 ? Math.max(Math.round(studentDebt / 120), 100) : 0;
+  var othPmt = otherDebt   > 0 ? Math.max(Math.round(otherDebt / 60), 50)     : 0;
+  _g.carPayment = carPmt; window.G && (window.G.carPayment = carPmt);
+
+  // Investments / capacity
+  if (retMatch) { _g.retMatch = retMatch; window.G && (window.G.retMatch = retMatch); }
+
+  // Sync hidden engine inputs (legacy-calculations.js reads these)
+  _setInput('cc-debt',         ccDebt);
+  _setInput('cc-rate',         _g.ccRate || 21);
+  _setInput('car-debt',        carDebt);
+  _setInput('car-payment',     carPmt);
+  _setInput('student-debt',    studentDebt);
+  _setInput('student-payment', stuPmt);
+  _setInput('other-debt',      otherDebt);
+  _setInput('other-payment',   othPmt);
+
+  // Collapse form
+  var body    = document.getElementById('grow-fs-body');
+  var chevron = document.getElementById('grow-fs-chevron');
+  if (body)    body.style.display = 'none';
+  if (chevron) chevron.innerHTML = '&#9658;';
+
+  // Recompute — identical call chain to saveSettingsEdit()
+  if (typeof window.computeAndShow === 'function') {
+    try { window.computeAndShow(); } catch(e) { console.error('[GS] recompute:', e); }
+  } else if (typeof _0xf1a6af7 === 'function') {
+    try { _0xf1a6af7(); } catch(e) { console.error('[GS] recompute:', e); }
+  }
+  if (typeof v21ShowToast === 'function') v21ShowToast('Financial structure updated \u2713');
 }
 
 function confirmNewAnalysis()  { openModal('confirm-analysis-sheet'); }
@@ -375,9 +493,52 @@ function v21ShowToast(msg, duration) {
   }, duration);
 }
 
+// ── Logout ────────────────────────────────────────────────
+function tracentLogout() {
+  // 1. Clear all scoped localStorage keys — do not use .clear() to preserve unrelated keys
+  var _keys = [
+    'tracent_v3', 'tracent_v2', 'tracent_v1',
+    'tracent_bse_mem', 'tracent_pbfde',
+    'tracent_dashboard_seen_count'
+  ];
+  _keys.forEach(function(k) { try { localStorage.removeItem(k); } catch(e) {} });
+
+  // 2. Zero out window.G safely — wipe all properties, leave object intact
+  try {
+    var _wg = window.G;
+    if (_wg && typeof _wg === 'object') {
+      Object.keys(_wg).forEach(function(k) { try { delete _wg[k]; } catch(e) {} });
+    }
+    window.G = {};
+  } catch(e) { window.G = {}; }
+
+  // 3. Reset file-scoped G if accessible (legacy-calculations.js)
+  try { if (typeof G !== 'undefined' && G !== window.G) { Object.keys(G).forEach(function(k) { try { delete G[k]; } catch(e) {} }); } } catch(e) {}
+
+  // 4. Mark BSE as uninitialized so it recomputes cleanly next session
+  try { if (window.BSE) { window.BSE.initialized = false; window.BSE.archetype = 'stable_confident'; } } catch(e) {}
+
+  // 5. Reset pbfdeState
+  try { if (window.pbfdeState && typeof window.pbfdeState === 'object') {
+    Object.keys(window.pbfdeState).forEach(function(k) { try { delete window.pbfdeState[k]; } catch(e) {} });
+  }} catch(e) {}
+
+  // 6. Hide dashboard nav + return to splash
+  try {
+    var nav = document.getElementById('bottom-nav');
+    if (nav) nav.style.display = 'none';
+  } catch(e) {}
+  try {
+    if (typeof showScreen === 'function') showScreen('screen-splash');
+    else if (typeof startOnboarding === 'function') startOnboarding();
+    else location.reload();
+  } catch(e) { location.reload(); }
+}
+
 // ── Window exports ────────────────────────────────────────
 window.openModal              = openModal;
 window.closeModal             = closeModal;
+window.openLoginPlaceholder   = openLoginPlaceholder;
 window.openSignInSheet        = openSignInSheet;
 window.closeSignInSheet       = closeSignInSheet;
 window.openSignup             = openSignup;
@@ -398,6 +559,8 @@ window.unlockPremium          = unlockPremium;
 window.openWhatIf             = openWhatIf;
 window.openSettingsEdit       = openSettingsEdit;
 window.saveSettingsEdit       = saveSettingsEdit;
+window.toggleGrowStructure    = toggleGrowStructure;
+window.saveGrowStructure      = saveGrowStructure;
 window.confirmNewAnalysis     = confirmNewAnalysis;
 window.startFreshAnalysis     = startFreshAnalysis;
 window.openSalaryNegotiation  = openSalaryNegotiation;
@@ -408,6 +571,7 @@ window.saveAlertEmail         = saveAlertEmail;
 window.resetAlertEmail        = resetAlertEmail;
 window.showSignOutSheet       = showSignOutSheet;
 window.hideSignOutSheet       = hideSignOutSheet;
+window.tracentLogout          = tracentLogout;
 window.doSignOut              = doSignOut;
 window.v21ShowToast           = v21ShowToast;
 

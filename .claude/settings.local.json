@@ -6,7 +6,9 @@
       "Bash(2)",
       "Read(//c/Users/damia/OneDrive/My Businesses/2. Tracent Finance/Tracent/**)",
       "Bash(du -sh *)",
-      "Bash(grep -v \"^#\\\\|//\")"
+      "Bash(grep -v \"^#\\\\|//\")",
+      "Bash(grep -n G.w+s*= '/c/Users/damia/OneDrive/My Businesses/2. Tracent Finance/Tracent/js/engine/legacy-calculations.js')",
+      "Bash(xargs grep:*)"
     ]
   }
 }

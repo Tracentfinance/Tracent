@@ -105,8 +105,11 @@
     var retMatch     = g.retMatch || 'unknown';
     var matchCapture = retMatch === 'full' || retMatch === 'maxed';
 
-    // FV formula: monthly pmt compounded at 7% over 30yr
-    function fv(mo){ var r=0.07/12,n=360; return Math.round(mo*((Math.pow(1+r,n)-1)/r)); }
+    // FV formula: monthly pmt compounded at 7% over horizon years
+    var _retAge = g.retirementAge || 65;
+    var _curAge = g.age || 35;
+    var _yrs    = Math.max(10, _retAge - _curAge);
+    function fv(mo){ var r=0.07/12,n=_yrs*12; return Math.round(mo*((Math.pow(1+r,n)-1)/r)); }
 
     var curRate      = 0.06; // assumed 6% default
     var curMoContrib = income>0 ? Math.round(income*curRate/12) : 0;
@@ -139,7 +142,7 @@
     } else {
       if (heroLabel) heroLabel.textContent = 'Retirement trajectory';
       if (projEl)  { projEl.textContent = fmt(fvCurrent); projEl.style.color = trajColor; projEl.style.fontSize = ''; }
-      if (projSub) projSub.textContent = 'At current pace ('+curRate*100+'% of income) \u00b7 7% avg \u00b7 30 years';
+      if (projSub) projSub.textContent = 'At current pace ('+curRate*100+'% of income) \u00b7 7% avg \u00b7 '+_yrs+' years';
     }
 
     // Contribution grid — life-stage aware
@@ -188,7 +191,7 @@
           '<div class="metric-cell">',
             '<div class="metric-cell-lbl">At current rate</div>',
             '<div class="metric-cell-val">'+fmt(fvCurrent)+'</div>',
-            '<div class="metric-cell-sub">'+(isPreRetirement?'Projected at retirement':'30-yr projection')+'</div>',
+            '<div class="metric-cell-sub">'+(isPreRetirement?'Projected at retirement':_yrs+'-yr projection')+'</div>',
           '</div>',
           '<div class="metric-cell">',
             '<div class="metric-cell-lbl">At 15% rate</div>',

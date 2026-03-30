@@ -329,3 +329,152 @@
 .xp-mode-expanded .bse-dl-metrics {
   /* no overrides — base styles apply, full detail visible */
 }
+
+/* ── Retirement hero ────────────────────────────────────── */
+#xp-retirement-hero {
+  margin-bottom: 16px;
+}
+.xp-ret-hero {
+  background: linear-gradient(135deg, var(--sky-dim, rgba(32,178,170,0.06)) 0%, transparent 100%);
+  border: 1px solid var(--sky-border, rgba(32,178,170,0.15));
+  border-radius: var(--r-card, 14px);
+  padding: 20px 20px 18px;
+}
+.xp-ret-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--teal, #20b2aa);
+  margin-bottom: 8px;
+}
+.xp-ret-headline {
+  font-family: var(--font-display, Georgia, serif);
+  font-size: 19px;
+  color: var(--navy, #1a2340);
+  line-height: 1.3;
+  margin-bottom: 6px;
+}
+.xp-ret-sub {
+  font-size: 13px;
+  color: var(--gray-3, #9aa0ad);
+  line-height: 1.5;
+}
+/* Monthly flexibility line — only shown for in_retirement with positive FCF */
+.xp-ret-fcf {
+  font-size: 12px;
+  color: var(--teal, #20b2aa);
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--sky-border, rgba(32,178,170,0.12));
+}
+/* Stability band pill */
+.xp-ret-band {
+  display: inline-flex;
+  align-items: center;
+  margin-top: 12px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  padding: 4px 10px;
+  border-radius: 20px;
+}
+.xp-ret-band--solid {
+  background: rgba(16, 185, 129, 0.10);
+  color: #10B981;
+}
+.xp-ret-band--building {
+  background: rgba(0, 168, 232, 0.10);
+  color: var(--sky, #00A8E8);
+}
+.xp-ret-band--attention {
+  background: rgba(245, 158, 11, 0.10);
+  color: #F59E0B;
+}
+
+/* ── Retirement mode v2: home hierarchy ─────────────────── */
+/* Dense metrics grid replaced by retirement hero for full retirees */
+.bse-arch-in_retirement #home-metrics { display: none !important; }
+/* Verdict block reduced prominence in pre-retirement retirement mode */
+.xp-mode-retirement #v21-verdict-block { opacity: 0.72; }
+
+/* ── Retirement mode v2: NBM softer tone ────────────────── */
+.xp-mode-retirement #v21-nbm-card {
+  border-color: var(--sky-border, rgba(0,168,232,0.15));
+  background: linear-gradient(135deg, rgba(32,178,170,0.03) 0%, transparent 100%);
+}
+
+/* ── Retirement mode v2: debt framing tone ──────────────── */
+/* Orient (context paragraph) shifts to calm/teal — less urgency */
+.xp-mode-retirement .bse-dl-orient {
+  color: var(--teal, #20b2aa);
+}
+/* Section labels softer weight */
+.xp-mode-retirement .bse-dl-label {
+  color: var(--gray-4, #667080);
+  font-weight: 500;
+}
+/* Reveal-more button de-emphasized */
+.xp-mode-retirement .bse-dl-reveal {
+  color: var(--gray-3, #9aa0ad);
+  font-size: 12px;
+}
+
+/* ── Header mode rail: permanently suppressed ──────────── */
+/* The visible rail is #v21-mode-rail-clone inside #v21-mode-rail-home
+   (tab content). The header original is a clone source only and must
+   never render — compat-bridge and BSE detail-mode both try to show it,
+   creating a duplicate nav above the primary bottom-nav. */
+#v21-mode-rail { display: none !important; }
+
+/* ── xp-mode-retirement: suppress growth/career elements ── */
+/* Mirrors bse-arch-in_retirement injection for age-only path */
+.xp-mode-retirement #v21-mode-rail-home { display: none !important; }
+.xp-mode-retirement #v21-premium-teaser { display: none !important; }
+.xp-mode-retirement #ppill-career       { display: none !important; }
+.xp-mode-retirement #prog-sub-career    { display: none !important; }
+.xp-mode-retirement .ppill-growth-context { display: none !important; }
+.xp-mode-retirement #career-compare-card,
+.xp-mode-retirement #career-chart-card,
+.xp-mode-retirement #career-promo-card,
+.xp-mode-retirement #career-log-card,
+.xp-mode-retirement #career-action-btn { display: none !important; }
+.xp-mode-retirement #mode-btn-career   { display: none !important; }
+
+/* ── Suppress internal meta chips from all user-facing views ── */
+/* Data is retained in JS — only the display is suppressed */
+#sbd-meta-chips { display: none !important; }
+
+/* ── Grow: financial structure section labels ───────────── */
+.grow-fs-section-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--gray-3, #9aa0ad);
+  margin-bottom: 12px;
+}
+
+/* ── Net worth tab edit CTA ─────────────────────────────── */
+.nw-edit-cta {
+  margin-top: 16px;
+  text-align: center;
+}
+.nw-edit-btn {
+  width: 100%;
+  padding: 13px 20px;
+  background: transparent;
+  color: var(--teal, #20b2aa);
+  border: 1.5px solid var(--sky-border, rgba(0,168,232,0.2));
+  border-radius: var(--r-pill, 50px);
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+.nw-edit-btn:active {
+  background: rgba(32,178,170,0.06);
+  border-color: var(--teal, #20b2aa);
+}
+

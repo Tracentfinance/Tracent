@@ -109,11 +109,16 @@ window.bseRenderDebtRelief = function () {
   var othMin = oth > 0 ? (g.otherPayment || Math.max(Math.round(oth * 0.02), 50)) : 0;
   var totalMin = ccMin + carMin + stuMin + othMin;
 
-  var orient = fcf < 0
-    ? 'Your spending currently exceeds your income. Fixing that first makes debt payoff possible.'
-    : tot > ((g.takeHome || 0) * 12)
-      ? 'Significant debt, and a clear path through it. One priority at a time.'
-      : 'Your debt is manageable. One focused target is all that\u2019s needed.';
+  // Retirement mode: check BSE navStyle or age-based flag
+  var _retirementMode = (window.BSE && window.BSE.navStyle === 'retirement')
+    || (g.age >= 60) || (g.currentAge >= 60);
+  var orient = _retirementMode
+    ? 'Reducing this debt improves your monthly flexibility \u2014 that matters more now than payoff speed.'
+    : fcf < 0
+      ? 'Your spending currently exceeds your income. Fixing that first makes debt payoff possible.'
+      : tot > ((g.takeHome || 0) * 12)
+        ? 'Significant debt, and a clear path through it. One priority at a time.'
+        : 'Your debt is manageable. One focused target is all that\u2019s needed.';
 
   var h = '<div class="bse-debt-wrap">';
 

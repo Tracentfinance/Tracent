@@ -217,13 +217,13 @@ function v21SetPhase(phase) {
   if (target) target.classList.add('active');
 
   // Progress bar & label
-  var phaseMap = { intent:1, signal:2, range:3, refine:4 }; // range = Position Preview (step 3)
+  var phaseMap = { intent:1, signal:2, age:3, range:4, refine:5 };
+  var total    = 5;
   var n = phaseMap[phase] || 1;
   var fill = document.getElementById('onb-progress');
-  if (fill) fill.style.width = (n / 4 * 100) + '%';
+  if (fill) fill.style.width = (n / total * 100) + '%';
   var lbl  = document.getElementById('onb-step-label');
-  var stepLabels = { 1:'Step 1 of 4', 2:'Step 2 of 4', 3:'Step 3 of 4', 4:'Step 4 of 4' };
-  if (lbl) lbl.textContent = stepLabels[n] || ('Step ' + n + ' of 4');
+  if (lbl) lbl.textContent = 'Step ' + n + ' of ' + total;
 
   // Back button
   var back = document.getElementById('onb-back-btn');
@@ -303,6 +303,28 @@ function v21SelectSignal(signal, el) {
     registerMeaningfulAction('onboarding_resilience_answered', { signal: signal });
     tracentEnterScreen('onboarding:preview');
   } catch(e) {}
+  setTimeout(function() { v21SetPhase('age'); }, 200);
+}
+
+/* ── PHASE 2b: AGE RANGE ───────────────────────────────── */
+function v21SelectAgeRange(range, el) {
+  _v21TapTimes.push(Date.now() - _v21OnbStart);
+
+  document.querySelectorAll('#v21-phase-age .v21-choice').forEach(function(c) {
+    c.classList.remove('selected');
+  });
+  if (el) el.classList.add('selected');
+
+  // Store age range as a soft signal only — does NOT set G.age or trigger retirement mode.
+  // Full retirement mode requires explicit retire intent or BSE.navStyle === 'retirement'.
+  if (typeof G !== 'undefined') {
+    G.ageRange = range;
+  }
+
+  try {
+    registerMeaningfulAction('onboarding_age_range_selected', { range: range });
+  } catch(e) {}
+
   v21ComputeRange();
   setTimeout(function() { v21SetPhase('range'); }, 200);
 }
@@ -1379,10 +1401,6 @@ function v21RenderPostAnalysis() {
   // Populate monthly review card with live data
   v21BuildMonthlyReviewData();
 
-  // Show mode rail
-  var rail = document.getElementById('v21-mode-rail');
-  if (rail) rail.style.display = 'flex';
-
   // Highlight active mode based on intent
   var intent = G.primaryIntent || 'stable';
   var intentToMode = { home:'home', debt:'debt', grow:'grow', retire:'retire' };
@@ -1567,6 +1585,7 @@ window.continueSession = function() {
 /* ── EXPOSE V21 GLOBALS ────────────────────────────────── */
 window.v21SelectIntent       = v21SelectIntent;
 window.v21SelectSignal       = v21SelectSignal;
+window.v21SelectAgeRange     = v21SelectAgeRange;
 window.v21ComputeRange        = v21ComputeRange;
 window.v21BuildPositionPreview = v21BuildPositionPreview;
 window.v21PreviewForIntent     = v21PreviewForIntent;

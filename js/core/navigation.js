@@ -201,7 +201,19 @@ function runTabRenderers(tab) {
     // Apply experience-layer archetype adaptations after planner renders
     try { if (typeof TracentExperienceLayer !== 'undefined') TracentExperienceLayer.render(); } catch(e) {}
   }
-  if (tab === 'progress')  { try { if (typeof _0x701dc98  === 'function') _0x701dc98();  } catch(e) { console.error('[DASH] progress renderer:',  e); } }
+  if (tab === 'progress')  {
+    try { if (typeof _0x701dc98 === 'function') _0x701dc98(); } catch(e) { console.error('[DASH] progress renderer:', e); }
+    // Update net worth tab CTA label based on whether data exists
+    try {
+      var _nwBtn = document.getElementById('nw-edit-btn');
+      if (_nwBtn) {
+        var _gp = window.G || {};
+        var _hasData = (_gp.income > 0) || (_gp.ccDebt > 0) || (_gp.carDebt > 0) ||
+                       (_gp.studentDebt > 0) || (_gp.otherDebt > 0) || (_gp.homeValue > 0);
+        _nwBtn.textContent = _hasData ? 'Edit my numbers \u270F' : 'Add your numbers \u2192';
+      }
+    } catch(e) {}
+  }
   if (tab === 'settings')  { try { if (typeof _0x47a7c11  === 'function') _0x47a7c11();  } catch(e) { console.error('[DASH] settings renderer:',  e); } }
   if (tab === 'recommend') {
     try { if (typeof renderGoalFocus === 'function') renderGoalFocus(); } catch(e) { console.error('[DASH] goalFocus:', e); }

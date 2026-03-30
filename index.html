@@ -73,7 +73,7 @@
       <button class="btn-primary"
         onclick="(window.startOnboarding||window._tracent_startOnboarding||function(){alert('Error: could not start')}).call()">Get
         my financial position →</button>
-      <button class="btn-ghost" onclick="openSignInSheet()">Sign in</button>
+      <button class="btn-ghost" onclick="openLoginPlaceholder()">Log in</button>
       <p class="splash-footnote">No credit check · Data stays on your device · 2 minutes<br>
         <span style="font-size:10px;opacity:0.5;">
           <button onclick="openLegalModal('terms')"
@@ -193,6 +193,50 @@
               <div>
                 <div class="v21-choice-title">Not at all</div>
                 <div class="v21-choice-sub">Any unexpected expense would be a crisis right now</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── PHASE 2b: AGE RANGE ── -->
+        <div class="v21-phase" id="v21-phase-age">
+          <h1 class="onb-step-title">One more thing</h1>
+          <p class="onb-step-sub">Which age range are you in? This helps Tracent set the right priorities for your stage.</p>
+          <div class="v21-choice-grid">
+            <div class="v21-choice" onclick="v21SelectAgeRange('under30',this)">
+              <div>
+                <div class="v21-choice-title">Under 30</div>
+                <div class="v21-choice-sub">Building early momentum</div>
+              </div>
+            </div>
+            <div class="v21-choice" onclick="v21SelectAgeRange('30_44',this)">
+              <div>
+                <div class="v21-choice-title">30–44</div>
+                <div class="v21-choice-sub">Growing and consolidating</div>
+              </div>
+            </div>
+            <div class="v21-choice" onclick="v21SelectAgeRange('45_54',this)">
+              <div>
+                <div class="v21-choice-title">45–54</div>
+                <div class="v21-choice-sub">Peak earning years</div>
+              </div>
+            </div>
+            <div class="v21-choice" onclick="v21SelectAgeRange('55_64',this)">
+              <div>
+                <div class="v21-choice-title">55–64</div>
+                <div class="v21-choice-sub">Planning the transition</div>
+              </div>
+            </div>
+            <div class="v21-choice" onclick="v21SelectAgeRange('65plus',this)">
+              <div>
+                <div class="v21-choice-title">65 or older</div>
+                <div class="v21-choice-sub">In or near retirement</div>
+              </div>
+            </div>
+            <div class="v21-choice" onclick="v21SelectAgeRange('prefer_not',this)">
+              <div>
+                <div class="v21-choice-title">Prefer not to say</div>
+                <div class="v21-choice-sub">Skip this step</div>
               </div>
             </div>
           </div>
@@ -617,6 +661,9 @@
     ══════════════════════════════════════════════ -->
       <div id="tab-home" class="tab-panel active">
 
+        <!-- ── Retirement hero — experience layer populates when navStyle=retirement or G.age≥60 ── -->
+        <div id="xp-retirement-hero" style="display:none;"></div>
+
         <!-- ── BSE Focus Card — injected here by BSE IIFE on DOMContentLoaded ── -->
         <div id="bse-focus-mode" style="display:none;"></div>
 
@@ -813,6 +860,71 @@
 
       <!-- ══ ADVICE TAB ══ -->
       <div id="tab-recommend" class="tab-panel">
+
+        <!-- Financial structure — always-visible direct editor for assets/liabilities/investments -->
+        <div class="card grow-fs-card" id="grow-fs-card" style="margin-bottom:var(--s3);">
+          <div onclick="toggleGrowStructure()"
+            style="display:flex;align-items:center;justify-content:space-between;padding:16px;cursor:pointer;">
+            <div>
+              <div style="font-size:13px;font-weight:700;color:var(--navy);">Your financial structure</div>
+              <div style="font-size:12px;color:var(--gray-3);margin-top:2px;">Assets · Liabilities · Investments</div>
+            </div>
+            <span id="grow-fs-chevron" style="color:var(--gray-3);font-size:12px;padding-left:8px;">&#9658;</span>
+          </div>
+          <div id="grow-fs-body" style="display:none;padding:0 16px 20px;">
+            <div class="grow-fs-section-label">Assets</div>
+            <div class="field-group">
+              <label class="field-label">Cash &amp; savings</label>
+              <div class="field-prefix-wrap"><span class="field-prefix-sign">$</span>
+                <input type="text" inputmode="decimal" id="ge-savings" class="field-input" placeholder="0" autocomplete="off"></div>
+            </div>
+            <div class="field-group">
+              <label class="field-label">Home value (if owner)</label>
+              <div class="field-prefix-wrap"><span class="field-prefix-sign">$</span>
+                <input type="text" inputmode="decimal" id="ge-home-value" class="field-input" placeholder="0" autocomplete="off"></div>
+            </div>
+            <div class="grow-fs-section-label" style="margin-top:14px;">Liabilities</div>
+            <div class="field-group">
+              <label class="field-label">Mortgage balance (if owner)</label>
+              <div class="field-prefix-wrap"><span class="field-prefix-sign">$</span>
+                <input type="text" inputmode="decimal" id="ge-mortgage" class="field-input" placeholder="0" autocomplete="off"></div>
+            </div>
+            <div class="field-group">
+              <label class="field-label">Credit card balance</label>
+              <div class="field-prefix-wrap"><span class="field-prefix-sign">$</span>
+                <input type="text" inputmode="decimal" id="ge-cc-debt" class="field-input" placeholder="0" autocomplete="off"></div>
+            </div>
+            <div class="field-group">
+              <label class="field-label">Car loan balance</label>
+              <div class="field-prefix-wrap"><span class="field-prefix-sign">$</span>
+                <input type="text" inputmode="decimal" id="ge-car-debt" class="field-input" placeholder="0" autocomplete="off"></div>
+            </div>
+            <div class="field-group">
+              <label class="field-label">Student loan balance</label>
+              <div class="field-prefix-wrap"><span class="field-prefix-sign">$</span>
+                <input type="text" inputmode="decimal" id="ge-student-debt" class="field-input" placeholder="0" autocomplete="off"></div>
+            </div>
+            <div class="field-group">
+              <label class="field-label">Other debt</label>
+              <div class="field-prefix-wrap"><span class="field-prefix-sign">$</span>
+                <input type="text" inputmode="decimal" id="ge-other-debt" class="field-input" placeholder="0" autocomplete="off"></div>
+            </div>
+            <div class="grow-fs-section-label" style="margin-top:14px;">Investments &amp; capacity</div>
+            <div class="field-group" style="margin-bottom:20px;">
+              <label class="field-label">Employer match status</label>
+              <select id="ge-ret-match" class="field-input">
+                <option value="">Not sure</option>
+                <option value="none">No employer match</option>
+                <option value="partial">Partial — not fully captured</option>
+                <option value="full">Full — all matched</option>
+                <option value="maxed">Maxed out</option>
+              </select>
+            </div>
+            <button onclick="saveGrowStructure()" class="btn-cta" style="margin-bottom:10px;">Save and update →</button>
+            <button onclick="toggleGrowStructure()"
+              style="width:100%;padding:10px;background:transparent;color:var(--gray-3);border:none;font-family:var(--font-body);font-size:13px;cursor:pointer;">Cancel</button>
+          </div>
+        </div>
 
         <!-- Empty state -->
         <div id="ai-empty" class="empty-state">
@@ -1157,7 +1269,11 @@
           <div id="nw-paywall-card"></div>
           <div id="nw-teaser-val"></div>
           <div id="nw-label"></div>
+        </div>
 
+        <!-- CTA: opens settings modal scrolled to assets section -->
+        <div class="nw-edit-cta">
+          <button id="nw-edit-btn" onclick="openSettingsEdit('assets')" class="nw-edit-btn">Add your numbers →</button>
         </div>
       </div>
 
@@ -1234,6 +1350,7 @@
             <div id="promo-sim-output"
               style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px;"></div>
             <div id="promo-sim-insight" style="font-size:12px;color:var(--gray-4);line-height:1.6;"></div>
+            <div id="promo-system-impact" style="margin-top:16px;"></div>
           </div>
         </div>
 
@@ -1408,6 +1525,14 @@
         </div>
       </div>
 
+      <!-- Log out -->
+      <div class="settings-section" style="border-top:1px solid var(--gray-1);">
+        <button onclick="tracentLogout()"
+          style="width:100%;padding:16px;background:transparent;color:var(--gray-3);border:none;font-family:var(--font-body);font-size:14px;cursor:pointer;text-align:center;letter-spacing:0.01em;">
+          Log out
+        </button>
+      </div>
+
       <div style="text-align:center;font-size:12px;color:var(--gray-3);padding:8px 0 var(--s3);">© 2026 Tracent<span
           style="color:var(--sky);">.</span> Financial Inc.</div>
 
@@ -1497,19 +1622,17 @@
       <div class="modal-handle"></div>
       <div class="signin-sheet-header">
         <div>
-          <div class="signin-title">Sign in to Tracent<span class="signin-dot">.</span></div>
+          <div class="signin-title">Log in<span class="signin-dot">.</span></div>
         </div>
       </div>
-      <p class="signin-sub">Your data is saved locally. Sign in to sync across devices and unlock cloud backup.</p>
+      <p class="signin-sub">Account login will connect your saved plan across sessions once auth is enabled.</p>
       <div class="signin-body">
         <div
           style="background:rgba(0,119,182,0.06);border:1px solid var(--sky-border);border-radius:var(--r-sm);padding:12px 14px;font-size:13px;color:var(--teal);margin-bottom:20px;">
-          This build runs locally on your device. Cloud sync is not enabled in this version, so there is no account
-          requirement yet.</div>
-        <button onclick="closeSignInSheet();startOnboarding()" class="btn-cta" style="margin-bottom:10px;">Start locally
-          →</button>
+          For now, this app runs from your current device session. Your data is stored locally and no account is required.</div>
+        <button onclick="closeSignInSheet();startOnboarding()" class="btn-cta" style="margin-bottom:10px;">Continue on this device →</button>
         <button onclick="closeSignInSheet()" class="btn-ghost"
-          style="color:var(--gray-4);border-color:var(--gray-2);">Cancel</button>
+          style="color:var(--gray-4);border-color:var(--gray-2);">Close</button>
       </div>
     </div>
   </div>
@@ -1824,6 +1947,19 @@
         <label class="field-label">Monthly take-home pay <span style="font-weight:400;">— after tax, or leave blank to estimate</span></label>
         <div class="field-prefix-wrap"><span class="field-prefix-sign">$</span>
           <input type="text" inputmode="decimal" id="se-takehome" class="field-input" placeholder="0" autocomplete="off"></div>
+      </div>
+
+      <div id="se-assets-section" style="font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--gray-3);margin:0 0 14px;">Assets</div>
+
+      <div class="field-group">
+        <label class="field-label">Cash &amp; savings</label>
+        <div class="field-prefix-wrap"><span class="field-prefix-sign">$</span>
+          <input type="text" inputmode="decimal" id="se-savings" class="field-input" placeholder="0" autocomplete="off"></div>
+      </div>
+      <div class="field-group" style="margin-bottom:24px;">
+        <label class="field-label">Home value <span style="font-weight:400;">— if you own your home</span></label>
+        <div class="field-prefix-wrap"><span class="field-prefix-sign">$</span>
+          <input type="text" inputmode="decimal" id="se-home-value" class="field-input" placeholder="0" autocomplete="off"></div>
       </div>
 
       <div style="font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--gray-3);margin:0 0 14px;">Debt balances</div>
@@ -2200,6 +2336,7 @@
 
   <!-- Engine: Calculations + Compatibility Bridge -->
   <script src="js/engine/legacy-calculations.js"></script>
+  <script src="js/engine/career-benchmark.js"></script>
   <script src="js/engine/compat-bridge.js"></script>
 
   <!-- Render: Progress (subtab routing, net worth, goals) -->

@@ -146,11 +146,6 @@
         </div>
         <button onclick="openScoreBreakdown()" style="background:var(--sky-dim);border:1.5px solid var(--sky-border);color:var(--teal);padding:8px 12px;border-radius:999px;font:700 12px var(--font-body);cursor:pointer;white-space:nowrap;">Open score logic</button>
       </div>
-      <div class="tracent-chip-row">
-        <div class="tracent-mini-chip">${getConfidence()}</div>
-        <div class="tracent-mini-chip">${getFreshness()}</div>
-        <div class="tracent-mini-chip">${inferred}</div>
-      </div>
       <div class="tracent-proof-list">${top}</div>
       <div class="tracent-soft-note">This is a Tracent planning score, not a lender credit score. Use it as a decision aid, not a guaranteed approval signal.</div>
     `;
@@ -214,7 +209,7 @@
           ['Investable cash', fmtCurrency(Math.max(0, Math.round((G.fcf||0) * 0.35))) + '/mo', 'Conservative deployable estimate'],
           ['Cash saved', fmtCurrency((G.savingsAmt||0)+(G.depositSaved||0)), 'Current liquid base'],
           ['Employer match', G.retMatch || 'unknown', 'Retirement capture status'],
-          ['Confidence', getConfidence(), 'How complete this picture is']
+          ['Net worth', fmtCurrency((G.savingsAmt||0)+(G.depositSaved||0)+(G.homeValue||0)-(G.balance||0)-(G.ccDebt||0)-(G.carDebt||0)-(G.studentDebt||0)-(G.otherDebt||0)), 'Assets minus liabilities']
         ],
         note:'Grow should feel like capital allocation, not vague encouragement.'
       },
@@ -570,6 +565,11 @@
         '<div class="tracent-grow-tier '+(investable>0&&debtFree&&efSufficient?'active':'locked')+'"><span class="tracent-grow-tier-n">4</span><span>Deploy '+fmt(investable)+'/mo into index fund</span><span class="tracent-grow-tier-status">'+(investable>0&&debtFree&&efSufficient?'Ready to start':'Locked')+'</span></div>' +
       '</div>' +
       '<div class="tracent-mode-insight"><div class="tracent-mode-insight-label">💡 Capital allocation logic</div><div class="tracent-mode-insight-text">'+allocationInsight+'</div></div>' +
+      '<div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--gray-2);">' +
+        '<button onclick="if(typeof openSettingsEdit===\'function\')openSettingsEdit(\'assets\')" style="width:100%;padding:11px;background:var(--navy);color:white;border:none;border-radius:var(--r-sm);font-family:var(--font-body);font-size:13px;font-weight:700;cursor:pointer;letter-spacing:0.01em;">' +
+          (savings > 0 ? 'Edit assets &amp; capacity \u2192' : 'Add assets &amp; capacity \u2192') +
+        '</button>' +
+      '</div>' +
     '</div>';
   }
 

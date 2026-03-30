@@ -773,62 +773,66 @@ function _0xb70f5a4(dti, fcf, credit, emergency, ccDebt, ccRate, housingType, to
   if (typeof _0x5d74b48 === 'function') _0x5d74b48();
   // ── Career hero market badge + bar ──
   try {
-    if (G.income && typeof matchMarketWage === 'function') {
-      var gap2 = calcIncomeGap(G.income, G.jobTitle || '', G.jobtype || 'private', G.state || '');
+    if (G.income) {
+      if (typeof computeCareerBenchmark === 'function') computeCareerBenchmark();
+      var bm = G.careerBenchmark;
+      var _hasConfidence = bm && bm.confidence !== null;
       // Headline
       var hl = document.getElementById('hm-career-headline');
-      if (hl) hl.textContent = gap2.roleTitle ? gap2.roleTitle + ' trajectory' : 'Your income path';
-      // Market badge
+      if (hl) hl.textContent = (bm && bm.roleTitle) ? bm.roleTitle + ' trajectory' : 'Your income path';
+      // Market badge — only shown when benchmark confidence is high or medium
       var mktBadge = document.getElementById('hm-market-badge');
       if (mktBadge) {
-        mktBadge.style.display = 'block';
-        if (gap2.aboveMedian) {
-          mktBadge.style.background = 'rgba(16,185,129,0.2)'; mktBadge.style.color = '#34D399';
-          mktBadge.style.border = '1px solid rgba(16,185,129,0.3)';
-          mktBadge.textContent = '↑ Above market';
-        } else if (gap2.pctOfMedian >= 85) {
-          mktBadge.style.background = 'rgba(248,181,0,0.2)'; mktBadge.style.color = '#F8B500';
-          mktBadge.style.border = '1px solid rgba(248,181,0,0.3)';
-          mktBadge.textContent = 'Near median';
+        if (!_hasConfidence) {
+          mktBadge.style.display = 'none';
         } else {
-          mktBadge.style.background = 'rgba(0,168,232,0.15)'; mktBadge.style.color = '#00A8E8';
-          mktBadge.style.border = '1px solid rgba(0,168,232,0.25)';
-          mktBadge.textContent = '↑ Room to grow';
+          mktBadge.style.display = 'block';
+          if (bm.aboveMedian) {
+            mktBadge.style.background = 'rgba(16,185,129,0.2)'; mktBadge.style.color = '#34D399';
+            mktBadge.style.border = '1px solid rgba(16,185,129,0.3)';
+            mktBadge.textContent = '↑ Above market';
+          } else if (bm.pctOfMedian >= 85) {
+            mktBadge.style.background = 'rgba(248,181,0,0.2)'; mktBadge.style.color = '#F8B500';
+            mktBadge.style.border = '1px solid rgba(248,181,0,0.3)';
+            mktBadge.textContent = 'Near median';
+          } else {
+            mktBadge.style.background = 'rgba(0,168,232,0.15)'; mktBadge.style.color = '#00A8E8';
+            mktBadge.style.border = '1px solid rgba(0,168,232,0.25)';
+            mktBadge.textContent = '↑ Room to grow';
+          }
         }
       }
-      // Bar
+      // Bar — only rendered when confident
       var barWrap = document.getElementById('hm-market-bar-wrap');
       var fill = document.getElementById('hm-market-fill');
       var pctEl = document.getElementById('hm-market-pct');
       var msgEl = document.getElementById('hm-market-msg');
-      if (barWrap) barWrap.style.display = 'block';
-      if (fill) { fill.style.width = Math.min(100, gap2.pctOfMedian) + '%'; fill.style.background = gap2.aboveMedian ? '#10B981' : '#00A8E8'; }
-      if (pctEl) pctEl.textContent = gap2.pctOfMedian + '% of market median';
-      if (msgEl) {
-        if (gap2.aboveMedian) {
-          msgEl.textContent = 'You earn $' + Math.round((G.income - gap2.marketMedian)/1000) + 'k above market — strong negotiating position.';
-        } else {
-          msgEl.textContent = '$' + Math.round(Math.abs(gap2.gapFromMedian)/1000) + 'k below market median. The data supports asking for a raise.';
-        }
+      if (barWrap) barWrap.style.display = _hasConfidence ? 'block' : 'none';
+      if (_hasConfidence) {
+        if (fill) { fill.style.width = Math.min(100, bm.pctOfMedian) + '%'; fill.style.background = bm.aboveMedian ? '#10B981' : '#00A8E8'; }
+        if (pctEl) pctEl.textContent = bm.pctOfMedian + '% of market median';
       }
-      // Update header market gap pill
+      if (msgEl) msgEl.textContent = bm ? bm.lineage : 'Add your job title and location to unlock market positioning.';
+      // Update header market gap pill — only when confident
       var pillMarketWrap = document.getElementById('pill-market-wrap');
       var pillMarketGap  = document.getElementById('pill-market-gap');
       if (pillMarketWrap && pillMarketGap) {
-        if (!gap2.aboveMedian && gap2.gapFromMedian) {
+        if (_hasConfidence && !bm.aboveMedian && bm.gapFromMedian) {
           pillMarketWrap.style.display = 'flex';
-          pillMarketGap.textContent = '-$' + Math.round(Math.abs(gap2.gapFromMedian)/1000) + 'k vs market';
-        } else if (gap2.aboveMedian) {
+          pillMarketGap.textContent = '-$' + Math.round(Math.abs(bm.gapFromMedian)/1000) + 'k vs market';
+        } else if (_hasConfidence && bm.aboveMedian) {
           pillMarketWrap.style.display = 'flex';
           pillMarketGap.style.color = '#10B981';
-          pillMarketGap.textContent = '+$' + Math.round((G.income - gap2.marketMedian)/1000) + 'k vs market';
+          pillMarketGap.textContent = '+$' + Math.round((G.income - bm.median)/1000) + 'k vs market';
+        } else {
+          pillMarketWrap.style.display = 'none';
         }
       }
-      // Store for salary negotiation modal
-      window._marketGapData = gap2;
-      // Show negotiate CTA only when below market
+      // Store for salary negotiation modal (backward compat)
+      if (bm) window._marketGapData = { aboveMedian: bm.aboveMedian, pctOfMedian: bm.pctOfMedian, gapFromMedian: bm.gapFromMedian, marketMedian: bm.median, nextTierSalary: bm.nextTierSalary, nextTierLabel: bm.nextTierLabel, roleTitle: bm.roleTitle };
+      // Show negotiate CTA only when below market and confident
       var negCta = document.getElementById('hm-negotiate-cta');
-      if (negCta) negCta.style.display = gap2.aboveMedian ? 'none' : 'flex';
+      if (negCta) negCta.style.display = (_hasConfidence && !bm.aboveMedian) ? 'flex' : 'none';
     }
   } catch(e) {}
 
@@ -3578,7 +3582,7 @@ function _0x4b08b5e(monthlyIncome) {
     ? G.homeValue
     : (G.balance > 0 ? Math.round(G.balance / (1 - 0.03 * yearsOwned) * 1.03) : G.balance * 1.25);
   const homeEquity = Math.max(0, homeValue - G.balance);
-  const cashSavings = Math.max(0, G.fcf * 4);
+  const cashSavings = G.savingsAmt || G.depositSaved || Math.max(0, G.fcf * 4);
   const totalAssets = homeValue + cashSavings;
   const totalLiabilities = G.balance + G.ccDebt + G.carDebt + G.otherDebt;
   const netWorth = totalAssets - totalLiabilities;
@@ -4020,6 +4024,7 @@ function renderCareerEngine() {
   var raiseRate = G.raiseRate || 0.03;
   var name      = G.firstname || G.name || '';
 
+  if (typeof computeCareerBenchmark === 'function') computeCareerBenchmark();
   var gap = calcIncomeGap(income, jobTitle, jobtype, state);
   // Get human-readable state name
   var STATE_NAMES = {'AL':'Alabama','AK':'Alaska','AZ':'Arizona','AR':'Arkansas','CA':'California','CO':'Colorado','CT':'Connecticut','DC':'Washington DC','DE':'Delaware','FL':'Florida','GA':'Georgia','HI':'Hawaii','ID':'Idaho','IL':'Illinois','IN':'Indiana','IA':'Iowa','KS':'Kansas','KY':'Kentucky','LA':'Louisiana','ME':'Maine','MD':'Maryland','MA':'Massachusetts','MI':'Michigan','MN':'Minnesota','MS':'Mississippi','MO':'Missouri','MT':'Montana','NE':'Nebraska','NV':'Nevada','NH':'New Hampshire','NJ':'New Jersey','NM':'New Mexico','NY':'New York','NC':'North Carolina','ND':'North Dakota','OH':'Ohio','OK':'Oklahoma','OR':'Oregon','PA':'Pennsylvania','RI':'Rhode Island','SC':'South Carolina','SD':'South Dakota','TN':'Tennessee','TX':'Texas','UT':'Utah','VT':'Vermont','VA':'Virginia','WA':'Washington','WV':'West Virginia','WI':'Wisconsin','WY':'Wyoming'};
@@ -4030,9 +4035,10 @@ function renderCareerEngine() {
   // ── Income gap bar ──
   var barPct  = Math.min(100, gap.pctOfMedian);
   var barCol  = gap.aboveMedian ? '#10B981' : income > gap.marketMedian * 0.85 ? '#F8A750' : '#E63946';
-  var gapMsg  = gap.aboveMedian
-    ? (name ? name + ', you' : 'You') + ' earn <strong style="color:#10B981;">$' + Math.round((income - gap.marketMedian)/1000) + 'k above</strong> the market median for your role — strong position.'
-    : 'You have a <strong style="color:#0077B6;">$' + Math.round(Math.abs(gap.gapFromMedian)/1000) + 'k opportunity gap</strong> vs. the market median. Closing it would add $' + Math.round(Math.abs(gap.gapFromMedian)/12).toLocaleString() + '/mo to your take-home.';
+  var _bm = G.careerBenchmark;
+  var gapMsg = (_bm && _bm.confidence !== null)
+    ? _bm.lineage
+    : 'Add or refine your title and work location to unlock market positioning.';
 
   // ── Promotion simulator ──
   var promoSliderVal = 10;
@@ -4079,45 +4085,6 @@ function renderCareerEngine() {
       </div>
     </div>
     <div style="font-size:13px;color:var(--gray-4);line-height:1.6;margin-bottom:18px;">${gapMsg}</div>
-
-    <!-- Promotion What-If Simulator -->
-    <div style="background:linear-gradient(180deg,#003B5C 0%,#001F33 100%);border-radius:14px;padding:18px 16px;margin-bottom:4px;">
-      <div style="font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:rgba(255,255,255,0.45);margin-bottom:16px;">🚀 Promotion What-If Simulator</div>
-
-      <!-- Raise slider -->
-      <div style="margin-bottom:14px;">
-        <div style="display:flex;justify-content:space-between;margin-bottom:5px;">
-          <label style="font-size:12px;font-weight:600;color:rgba(255,255,255,0.8);">Raise / promotion size</label>
-          <span style="font-size:12px;font-weight:700;color:#00A8E8;" id="promo-pct-lbl-rce">+10%</span>
-        </div>
-        <input type="range" id="promo-pct-slider-rce" min="3" max="50" value="10"
-          oninput="updatePromoSim()"
-          style="width:100%;accent-color:#00A8E8;" disabled>
-        <div style="display:flex;justify-content:space-between;font-size:10px;color:rgba(255,255,255,0.3);margin-top:2px;">
-          <span>+3%</span><span>+50%</span>
-        </div>
-      </div>
-
-      <!-- Year slider -->
-      <div style="margin-bottom:16px;">
-        <div style="display:flex;justify-content:space-between;margin-bottom:5px;">
-          <label style="font-size:12px;font-weight:600;color:rgba(255,255,255,0.8);">When does it happen?</label>
-          <span style="font-size:12px;font-weight:700;color:#00A8E8;" id="promo-year-lbl-rce">Year 2</span>
-        </div>
-        <input type="range" id="promo-year-slider-rce" min="1" max="10" value="2"
-          oninput="updatePromoSim()"
-          style="width:100%;accent-color:#00A8E8;" disabled>
-        <div style="display:flex;justify-content:space-between;font-size:10px;color:rgba(255,255,255,0.3);margin-top:2px;">
-          <span>Year 1</span><span>Year 10</span>
-        </div>
-      </div>
-
-      <!-- Sim output -->
-      <div id="promo-sim-output-rce" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;">
-        <!-- populated by updatePromoSim() -->
-      </div>
-      <div id="promo-sim-insight-rce" style="margin-top:12px;font-size:12px;color:rgba(255,255,255,0.55);line-height:1.6;"></div>
-    </div>
 
     <!-- 5-year income chart -->
     <div style="background:white;border-radius:14px;padding:18px 16px;margin-top:14px;box-shadow:var(--card-shadow);border:var(--card-border);">
@@ -4194,6 +4161,74 @@ function updatePromoSim() {
 
   var ins = document.getElementById('promo-sim-insight');
   if (ins) ins.innerHTML = `A <strong style="color:#00A8E8;">+${pct}%</strong> promotion in Year ${yr} adds <strong style="color:#00A8E8;">~$${fcfGain.toLocaleString()}/mo</strong> in extra take-home and compounds to <strong style="color:#00A8E8;">~$${Math.round(lifetimeGain/1000)}k</strong> more over 10 years vs. staying put.`;
+
+  // ── System Impact ─────────────────────────────────────────────────
+  var _si = document.getElementById('promo-system-impact');
+  if (_si && fcfGain > 0) {
+    var _totalDebt = (G.ccDebt||0)+(G.carDebt||0)+(G.studentDebt||0)+(G.otherDebt||0);
+    var _monthlyTH = G.takeHome || Math.round((G.income||72000)/12*0.72);
+    var _curFCF    = G.fcf != null ? G.fcf : 0;
+
+    // Savings rate: current → scenario
+    var _curSR  = _monthlyTH > 0 ? Math.round(_curFCF / _monthlyTH * 100) : 0;
+    var _newSR  = (_monthlyTH + fcfGain) > 0 ? Math.round((_curFCF + fcfGain) / (_monthlyTH + fcfGain) * 100) : 0;
+    var _srDelta = _newSR - _curSR;
+
+    // Debt payoff acceleration (inline simple simulation — does not call scoped simulate())
+    var _debtMoSaved = 0;
+    if (_totalDebt > 0 && fcfGain > 0) {
+      var _wtdRate = 0, _minPmt = 0;
+      if (G.ccDebt > 0)      { _wtdRate += G.ccDebt*(G.ccRate||21);           _minPmt += Math.max(25, G.ccDebt*0.02); }
+      if (G.carDebt > 0)     { _wtdRate += G.carDebt*(G.carRate||7.5);         _minPmt += (G.carPayment||300); }
+      if (G.studentDebt > 0) { _wtdRate += G.studentDebt*(G.studentRate||5.5); _minPmt += (G.idrPayment||Math.max(G.studentDebt*0.01,100)); }
+      if (G.otherDebt > 0)   { _wtdRate += G.otherDebt*(G.otherRate||9.0);     _minPmt += (G.otherPayment||150); }
+      _wtdRate = _wtdRate / _totalDebt;
+      var _pMo = function(bal, pmt, r) {
+        var mo=0, b=bal, rm=r/100/12;
+        while (b > 0.01 && mo < 600) { mo++; b = b*(1+rm) - pmt; if (b < 0) b = 0; }
+        return mo;
+      };
+      _debtMoSaved = Math.max(0, _pMo(_totalDebt, _minPmt, _wtdRate) - _pMo(_totalDebt, _minPmt + fcfGain, _wtdRate));
+    }
+
+    // 5-yr extra wealth: extra monthly compounded at 5%/yr
+    var _nw5k = Math.round(fcfGain * 12 * ((Math.pow(1.05, 5) - 1) / 0.05) / 1000);
+
+    // Row renderer
+    var _row = function(icon, label, val, sub, col) {
+      return '<div style="display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid rgba(255,255,255,0.06);">'
+        + '<span style="font-size:15px;min-width:20px;text-align:center;">'+icon+'</span>'
+        + '<div style="flex:1;">'
+          + '<div style="font-size:10px;color:rgba(255,255,255,0.35);letter-spacing:0.8px;text-transform:uppercase;margin-bottom:1px;">'+label+'</div>'
+          + '<div style="font-size:13px;font-weight:700;color:'+(col||'white')+';">'+val+'</div>'
+        + '</div>'
+        + '<div style="font-size:11px;color:rgba(255,255,255,0.3);text-align:right;max-width:96px;line-height:1.35;">'+sub+'</div>'
+        + '</div>';
+    };
+
+    var _html = '<div style="font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:rgba(255,255,255,0.2);margin-bottom:4px;padding-top:4px;border-top:1px solid rgba(255,255,255,0.08);">System Impact at Raise</div>';
+
+    _html += _row('💰', 'Savings Rate',
+      (_srDelta > 0 ? '+' : '') + _srDelta + ' pts',
+      _curSR + '% → ' + _newSR + '%',
+      _srDelta > 0 ? '#34D399' : '#F8A750');
+
+    if (_totalDebt > 0) {
+      _html += _row('💳', 'Debt Payoff',
+        _debtMoSaved > 0 ? _debtMoSaved + ' mo sooner' : 'accelerated',
+        _debtMoSaved >= 12 ? '~' + Math.round(_debtMoSaved/12*10)/10 + ' yr sooner' : 'extra directed to debt',
+        '#00A8E8');
+    }
+
+    _html += _row('📈', '5-Yr Extra Wealth',
+      '+$' + _nw5k + 'k',
+      'vs. no raise · 5% growth',
+      '#10B981');
+
+    _si.innerHTML = _html;
+  } else if (_si) {
+    _si.innerHTML = '';
+  }
 
   renderCareerProjChart();
 }
@@ -4915,6 +4950,9 @@ function _0x0e84774() {
   var el=function(id){return document.getElementById(id);};
   var fmt=function(n){return '$'+(Math.abs(n)>=1000?(Math.round(Math.abs(n)/1000*10)/10)+'k':Math.round(Math.abs(n)));};
   var income=G.income||72000,state=G.state||'NY',jobTitle=G.jobTitle||'',jobtype=G.jobtype||'private';
+  if (typeof computeCareerBenchmark === 'function') computeCareerBenchmark();
+  var _cbm = G.careerBenchmark;
+  var _cbmConfident = _cbm && _cbm.confidence !== null;
   try{var proj=_0xf114ec9();
     if(el('career-now-income'))el('career-now-income').textContent=fmt(proj[0].total);
     if(el('career-y5-income'))el('career-y5-income').textContent=fmt(proj[5].total);
@@ -4930,30 +4968,38 @@ function _0x0e84774() {
   var gapAmt=Math.abs(gap.gapFromMedian||0),pct=gap.pctOfMedian||100;
   var SN={NY:'New York',CA:'California',TX:'Texas',FL:'Florida',WA:'Washington',MA:'Massachusetts',IL:'Illinois',CO:'Colorado',NJ:'New Jersey',CT:'Connecticut',DC:'Washington DC',GA:'Georgia',NC:'North Carolina',VA:'Virginia',AZ:'Arizona',PA:'Pennsylvania',OH:'Ohio',MN:'Minnesota',MD:'Maryland',OR:'Oregon',MI:'Michigan',TN:'Tennessee',MO:'Missouri',WI:'Wisconsin',IN:'Indiana',NV:'Nevada',LA:'Louisiana',UT:'Utah',KY:'Kentucky',OK:'Oklahoma',SC:'South Carolina',AL:'Alabama',AR:'Arkansas',DE:'Delaware',HI:'Hawaii',ID:'Idaho',IA:'Iowa',KS:'Kansas',ME:'Maine',MT:'Montana',NE:'Nebraska',NH:'New Hampshire',NM:'New Mexico',ND:'North Dakota',RI:'Rhode Island',SD:'South Dakota',VT:'Vermont',WV:'West Virginia',WY:'Wyoming'};
   var sn=SN[state]||state||'your area';
-  if(gap.aboveMedian){
+  if(_cbmConfident && gap.aboveMedian){
     var ah=Math.round((income-gap.marketMedian)/1000),ng=gap.nextTierSalary-income;
     if(vn){vn.textContent='+$'+ah+'k above market';vn.style.color='#34D399';vn.style.fontSize='28px';}
     if(vl)vl.textContent='Strong position \u2014 above the '+gap.roleTitle+' median in '+sn+'.';
     if(mf){mf.style.width=Math.min(100,pct)+'%';mf.style.background='#10B981';}
     if(mp){mp.textContent=pct+'% of median';mp.style.color='#10B981';}
     if(am)am.textContent=ng>0?'$'+Math.round(ng/1000)+'k to '+(gap.nextTierLabel||'').split('/')[0].trim()+'. Your next milestone.':'At or above senior median.';
-    if(ab){ab.textContent='See trajectory \u203a';ab.onclick=function(){var c=el('career-chart-card');if(c)c.scrollIntoView({behavior:'smooth'});};}
-  }else if(pct>=85){
+    if(ab){ab.textContent='See trajectory \u203a';ab.style.display='';ab.onclick=function(){var c=el('career-chart-card');if(c)c.scrollIntoView({behavior:'smooth'});};}
+  }else if(_cbmConfident && pct>=85){
     if(vn){vn.textContent='$'+Math.round(gapAmt/1000)+'k below market';vn.style.color='#F8A750';vn.style.fontSize='28px';}
     if(vl)vl.textContent='Near median \u2014 '+pct+'% of market rate for '+gap.roleTitle+'. Worth a conversation.';
     if(mf){mf.style.width=pct+'%';mf.style.background='#F8A750';}
     if(mp){mp.textContent=pct+'% of median';mp.style.color='#F8A750';}
     if(am)am.textContent='Asking for '+fmt(gap.marketMedian)+' puts you at market. The data backs you up.';
-    if(ab)ab.textContent='Get raise script \u203a';
-  }else{
+    if(ab){ab.textContent='Get raise script \u203a';ab.style.display='';}
+  }else if(_cbmConfident){
     if(vn){vn.textContent='$'+Math.round(gapAmt/1000)+'k below market';vn.style.color='#ff6b7a';vn.style.fontSize='28px';}
     if(vl)vl.textContent='Undervalued. Market median for '+gap.roleTitle+' in '+sn+' is '+fmt(gap.marketMedian)+'.';
     if(mf){mf.style.width=Math.max(5,pct)+'%';mf.style.background='#E63946';}
     if(mp){mp.textContent=pct+'% of median \u2014 undervalued';mp.style.color='#E63946';}
     if(am)am.textContent='Closing this gap = +'+fmt(Math.round(gapAmt/12))+'/mo. Use the AI coach.';
-    if(ab)ab.textContent='Get raise script \u203a';
+    if(ab){ab.textContent='Get raise script \u203a';ab.style.display='';}
+  }else{
+    // No confident benchmark — show neutral state, suppress market claims
+    if(vn){vn.textContent='Add your title & state';vn.style.color='rgba(255,255,255,0.35)';vn.style.fontSize='16px';}
+    if(vl)vl.textContent='Refine your job title and work location to unlock market positioning.';
+    if(mf)mf.style.width='0%';
+    if(mp)mp.textContent='';
+    if(am)am.textContent='';
+    if(ab)ab.style.display='none';
   }
-  if(cc){cc.style.display='block';
+  if(_cbmConfident && cc){cc.style.display='block';
     var ct=el('career-compare-title');if(ct)ct.textContent=(gap.roleTitle||'Your role')+' \u00b7 '+sn+' benchmarks';
     var cols=el('career-compare-cols');
     if(cols){
@@ -4965,14 +5011,17 @@ function _0x0e84774() {
         +'<div style="background:rgba(0,119,182,0.06);border:1.5px solid rgba(0,119,182,0.15);border-radius:12px;padding:14px 10px;text-align:center;"><div style="font-size:11px;color:var(--gray-4);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;">Next level</div><div style="font-family:var(--font-display);font-size:22px;color:var(--teal);">'+fmt(gap.nextTierSalary)+'</div><div style="font-size:11px;color:var(--gray-4);margin-top:2px;">'+(gap.nextTierLabel||'').split('/')[0].trim()+'</div></div>';
     }
     var snEl=el('career-state-note');
-    if(snEl){var adj=(typeof STATE_SALARY_MULT!=='undefined'&&STATE_SALARY_MULT[state])||1.0;snEl.textContent=adj>=1.05?'\ud83d\udccd '+sn+' wages ~'+Math.round((adj-1)*100)+'% above national. Source: BLS OES · AI-verified.':'\ud83d\udcca National BLS benchmarks (2024). '+sn+' near national average.';}
-  }
+    if(snEl){var adj=(typeof STATE_SALARY_MULT!=='undefined'&&STATE_SALARY_MULT[state])||1.0;snEl.textContent=adj>=1.05?'\ud83d\udccd '+sn+' wages ~'+Math.round((adj-1)*100)+'% above national. Source: BLS OES \u00b7 AI-verified.':'\ud83d\udcca National BLS benchmarks (2024). '+sn+' near national average.';}
+  }else if(!_cbmConfident && cc){cc.style.display='none';}
   if(pc)pc.style.display='block';
   if(ch)ch.style.display='block';
-  window._marketGapData=gap;
-  var hl=el('hm-career-headline');if(hl)hl.textContent=gap.aboveMedian?(jobTitle||'Your role')+' \u00b7 above market':(jobTitle||'Your role')+(gapAmt>1000?' \u00b7 $'+Math.round(gapAmt/1000)+'k below market':' \u00b7 near market');
-  var pw=el('pill-market-wrap'),pg=el('pill-market-gap');
-  if(pw&&pg){pw.style.display='flex';if(gap.aboveMedian){pg.textContent='+$'+Math.round(gapAmt/1000)+'k vs market';pg.style.color='#10B981';}else{pg.textContent='-$'+Math.round(gapAmt/1000)+'k vs market';pg.style.color='#F8A750';}}
+  // Only write _marketGapData and home-tab elements when benchmark is confident
+  if(_cbmConfident){
+    window._marketGapData=gap;
+    var hl=el('hm-career-headline');if(hl)hl.textContent=gap.aboveMedian?(jobTitle||'Your role')+' \u00b7 above market':(jobTitle||'Your role')+(gapAmt>1000?' \u00b7 $'+Math.round(gapAmt/1000)+'k below market':' \u00b7 near market');
+    var pw=el('pill-market-wrap'),pg=el('pill-market-gap');
+    if(pw&&pg){pw.style.display='flex';if(gap.aboveMedian){pg.textContent='+$'+Math.round(gapAmt/1000)+'k vs market';pg.style.color='#10B981';}else{pg.textContent='-$'+Math.round(gapAmt/1000)+'k vs market';pg.style.color='#F8A750';}}
+  }
   try{updatePromoSim();}catch(e){}
   try{renderCareerProjChart();}catch(e){}
 }

@@ -156,19 +156,39 @@
       (ps.engagementDepth||0)*0.5 + (ps.nbmClickCount||0)*0.5 + Math.min(4,_mem.sessions*0.5)
     ));
 
-    /* archetype */
+    /* archetype — G.financialResilienceSignal (onboarding Step 2) is the primary baseline;
+       stress/pressure are modifiers only, not first-pass overrides for self-reported confidence */
+    var _sig = g.financialResilienceSignal || '';
+    var _onbBaseline = (_sig==='completely'||_sig==='very_well') ? 'confident'
+                     : (_sig==='very_little'||_sig==='not_at_all') ? 'anxious'
+                     : 'neutral'; // 'somewhat' or missing → neutral preserves original behaviour
+
     var at;
-    if(intent==='retire' && age>=retAge-2)       at='in_retirement';
-    else if(intent==='retire' && age>=retAge-10) at='pre_retirement';
-    else if(BSE.stress>=7)                       at='anxious_overwhelmed';
-    else if(BSE.pressure>=7)                     at='anxious_overwhelmed';
-    else if(ps.avoidance||(ps.ignoredCtas||0)>4||_mem.avoiderCount>3) at='avoider';
-    else if(BSE.engagement>=6&&BSE.stress<4&&score>=60) at='optimizer';
-    else if(score>=70&&BSE.stress<3)             at='stable_confident';
-    else if(BSE.stress>=4||score<55)             at='anxious_overwhelmed';
-    else                                         at='stable_confident';
+    if (intent==='retire' && age>=retAge-2)       at='in_retirement';
+    else if (intent==='retire' && age>=retAge-10) at='pre_retirement';
+    else if (_onbBaseline==='confident') {
+      // Self-reported confident: only collapse on truly extreme stress or severe avoidance.
+      // Debt exists? User still sees the sophisticated app — debt is prioritised, not punished.
+      if (BSE.stress>=9)                                                  at='anxious_overwhelmed';
+      else if (ps.avoidance&&(ps.ignoredCtas||0)>6&&_mem.avoiderCount>5) at='avoider';
+      else if (BSE.engagement>=5&&score>=55)                              at='optimizer';
+      else                                                                at='stable_confident';
+    } else if (_onbBaseline==='anxious') {
+      // Self-reported anxious: honour it; only upgrade if genuinely high engagement + low stress
+      if (BSE.engagement>=7&&BSE.stress<4&&score>=65)                    at='stable_confident';
+      else                                                                at='anxious_overwhelmed';
+    } else {
+      // Neutral / no signal: exact original logic — no behaviour change for returning users
+      if (BSE.stress>=7)                                                  at='anxious_overwhelmed';
+      else if (BSE.pressure>=7)                                           at='anxious_overwhelmed';
+      else if (ps.avoidance||(ps.ignoredCtas||0)>4||_mem.avoiderCount>3) at='avoider';
+      else if (BSE.engagement>=6&&BSE.stress<4&&score>=60)               at='optimizer';
+      else if (score>=70&&BSE.stress<3)                                   at='stable_confident';
+      else if (BSE.stress>=4||score<55)                                   at='anxious_overwhelmed';
+      else                                                                at='stable_confident';
+    }
     /* memory can upgrade density for returning power users */
-    if(_mem.density==='full'&&at!=='in_retirement'&&at!=='anxious_overwhelmed') at='optimizer';
+    if (_mem.density==='full'&&at!=='in_retirement'&&at!=='anxious_overwhelmed') at='optimizer';
     BSE.archetype = at;
 
     /* stage */
@@ -394,7 +414,7 @@
     _detailMode=!_detailMode;
     if(_detailMode){
       _mem.density='full';
-      ['v21-mode-rail','v21-mode-rail-home','home-metrics','v21-verdict-block','v21-compact-score','v21-retention-card'].forEach(function(id){
+      ['v21-mode-rail-home','home-metrics','v21-verdict-block','v21-compact-score','v21-retention-card'].forEach(function(id){
         var el=document.getElementById(id); if(el) el.style.display='';
       });
       var tabHome=document.getElementById('tab-home');
