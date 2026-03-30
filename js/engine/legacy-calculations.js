@@ -972,6 +972,10 @@ function _0x82f61a0() {
     if (G._scoreHistory.length > 24) G._scoreHistory = G._scoreHistory.slice(-24);
   }
 
+  // Sync file-scoped G to window.G so all modules (BSE, render/debt, render/home, etc.) read real user data.
+  // G is declared as `let G` in this file and is NOT automatically window.G.
+  window.G = G;
+
   showScreen('dashboard');
   var nav = document.getElementById('bottom-nav');
   if (nav) nav.style.display = 'flex';

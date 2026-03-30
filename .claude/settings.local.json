@@ -5,7 +5,8 @@
       "Bash(find '/c/Users/damia/OneDrive/My Businesses/2. Tracent Finance/Tracent' -type f -exec ls -lh {})",
       "Bash(2)",
       "Read(//c/Users/damia/OneDrive/My Businesses/2. Tracent Finance/Tracent/**)",
-      "Bash(du -sh *)"
+      "Bash(du -sh *)",
+      "Bash(grep -v \"^#\\\\|//\")"
     ]
   }
 }

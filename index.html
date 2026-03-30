@@ -1,21 +1,25 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>Tracent. V21 — Behavioral Financial Operating System</title>
-<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&display=swap" rel="stylesheet">
 
-<!-- Design System -->
-<link rel="stylesheet" href="styles/tokens.css">
-<link rel="stylesheet" href="styles/base.css">
-<link rel="stylesheet" href="styles/onboarding.css">
-<link rel="stylesheet" href="styles/dashboard.css">
-<link rel="stylesheet" href="styles/motion.css">
-<link rel="stylesheet" href="styles/features.css">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Tracent. V21 — Behavioral Financial Operating System</title>
+  <link
+    href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&display=swap"
+    rel="stylesheet">
+
+  <!-- Design System -->
+  <link rel="stylesheet" href="styles/tokens.css">
+  <link rel="stylesheet" href="styles/base.css">
+  <link rel="stylesheet" href="styles/onboarding.css">
+  <link rel="stylesheet" href="styles/dashboard.css">
+  <link rel="stylesheet" href="styles/motion.css">
+  <link rel="stylesheet" href="styles/features.css">
 </head>
+
 <body>
-<!-- ══════════════════════════════════════════════════════════
+  <!-- ══════════════════════════════════════════════════════════
    TRACENT HTML STRUCTURE MAP (for modularization):
    ─────────────────────────────────────────────────
    1. Domain Guard Script
@@ -35,718 +39,927 @@
    7. Hidden compat stubs (final-stubs)
 ══════════════════════════════════════════════════════════ -->
 
-<!-- ══════════════════════════════════════════════════════════
+  <!-- ══════════════════════════════════════════════════════════
      DOMAIN GUARD
 ══════════════════════════════════════════════════════════ -->
-<!-- Supabase SDK — uncomment when ready to enable backend persistence.
+  <!-- Supabase SDK — uncomment when ready to enable backend persistence.
      The anon key is safe to expose; Row Level Security (RLS) protects data. -->
-<!-- <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script> -->
-<script>
-(function(){
-  var h=window.location.hostname;
-  var ok=["gettracent.app","tracent.app","localhost","127.0.0.1","","file","claude.ai","anthropic"].some(function(x){return x===""||h===x||h.indexOf(x)>-1;});
-  if(!ok){document.body.innerHTML='<div style="display:flex;align-items:center;justify-content:center;min-height:100vh;font-family:sans-serif;text-align:center;padding:40px;"><div><div style="font-size:48px;margin-bottom:16px;">🔒</div><div style="font-size:18px;font-weight:700;color:#001F33;">Tracent.</div><div style="color:#64748B;margin-top:8px;font-size:14px;">This application is not authorised to run on this domain.</div></div></div>';}
-})();
-</script>
+  <!-- <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script> -->
+  <script>
+    (function () {
+      var h = window.location.hostname;
+      var ok = ["gettracent.app", "tracent.app", "localhost", "127.0.0.1", "", "file", "claude.ai", "anthropic"].some(function (x) { return x === "" || h === x || h.indexOf(x) > -1; });
+      if (!ok) { document.body.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;min-height:100vh;font-family:sans-serif;text-align:center;padding:40px;"><div><div style="font-size:48px;margin-bottom:16px;">🔒</div><div style="font-size:18px;font-weight:700;color:#001F33;">Tracent.</div><div style="color:#64748B;margin-top:8px;font-size:14px;">This application is not authorised to run on this domain.</div></div></div>'; }
+    })();
+  </script>
 
-<!-- ══════════════════════════════════════════════════════════
+  <!-- ══════════════════════════════════════════════════════════
      SPLASH SCREEN
 ══════════════════════════════════════════════════════════ -->
-<div id="screen-splash" class="screen active">
-  <div class="splash-hero">
-    <div class="wordmark">
-      <span class="wordmark-text">Tracent<span class="wordmark-dot">.</span></span>
-      <div class="wordmark-line"></div>
+  <div id="screen-splash" class="screen active">
+    <div class="splash-hero">
+      <div class="wordmark">
+        <span class="wordmark-text">Tracent<span class="wordmark-dot">.</span></span>
+        <div class="wordmark-line"></div>
+      </div>
+      <p class="splash-tagline">Transcend your financial position.</p>
+      <div class="splash-trust">
+        <div class="trust-dot"></div>
+        <span class="trust-text">Early access · free to start · no bank login</span>
+      </div>
     </div>
-    <p class="splash-tagline">Transcend your financial position.</p>
-    <div class="splash-trust">
-      <div class="trust-dot"></div>
-      <span class="trust-text">Early access · free to start · no bank login</span>
+
+    <div class="splash-actions">
+      <button class="btn-primary"
+        onclick="(window.startOnboarding||window._tracent_startOnboarding||function(){alert('Error: could not start')}).call()">Get
+        my financial position →</button>
+      <button class="btn-ghost" onclick="openSignInSheet()">Sign in</button>
+      <p class="splash-footnote">No credit check · Data stays on your device · 2 minutes<br>
+        <span style="font-size:10px;opacity:0.5;">
+          <button onclick="openLegalModal('terms')"
+            style="background:none;border:none;color:inherit;font-size:inherit;cursor:pointer;text-decoration:underline;padding:0;">Terms
+            of Use</button>
+          &nbsp;·&nbsp;
+          <button onclick="openLegalModal('privacy')"
+            style="background:none;border:none;color:inherit;font-size:inherit;cursor:pointer;text-decoration:underline;padding:0;">Privacy
+            Policy</button>
+        </span>
+      </p>
     </div>
   </div>
 
-  <div class="splash-actions">
-    <button class="btn-primary" onclick="(window.startOnboarding||window._tracent_startOnboarding||function(){alert('Error: could not start')}).call()">Get my financial position →</button>
-    <button class="btn-ghost" onclick="openSignInSheet()">Sign in</button>
-    <p class="splash-footnote">No credit check · Data stays on your device · 2 minutes<br>
-      <span style="font-size:10px;opacity:0.5;">
-        <button onclick="openLegalModal('terms')" style="background:none;border:none;color:inherit;font-size:inherit;cursor:pointer;text-decoration:underline;padding:0;">Terms of Use</button>
-        &nbsp;·&nbsp;
-        <button onclick="openLegalModal('privacy')" style="background:none;border:none;color:inherit;font-size:inherit;cursor:pointer;text-decoration:underline;padding:0;">Privacy Policy</button>
-      </span>
-    </p>
-  </div>
-</div>
-
-<!-- ══════════════════════════════════════════════════════════
+  <!-- ══════════════════════════════════════════════════════════
      ONBOARDING — V21 BEHAVIORAL FLOW
      Phase 1: Intent → Phase 2: Signal → Phase 3: Score Range
      → Phase 4: Adaptive Refinement → Dashboard
 ══════════════════════════════════════════════════════════ -->
-<div id="screen-onboarding" class="screen">
+  <div id="screen-onboarding" class="screen">
 
-  <!-- Progress header -->
-  <div class="onb-header">
-    <button class="onb-back" id="onb-back-btn" onclick="v21BackPhase()" style="display:none;">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--navy)" stroke-width="2.5" stroke-linecap="round"><path d="M15 18l-6-6 6-6"/></svg>
-    </button>
-    <div class="onb-progress-wrap">
-      <div class="onb-progress-track"><div class="onb-progress-fill" id="onb-progress"></div></div>
-      <div class="onb-step-label" id="onb-step-label">Step 1 of 4</div>
+    <!-- Progress header -->
+    <div class="onb-header">
+      <button class="onb-back" id="onb-back-btn" onclick="v21BackPhase()" style="display:none;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--navy)" stroke-width="2.5"
+          stroke-linecap="round">
+          <path d="M15 18l-6-6 6-6" />
+        </svg>
+      </button>
+      <div class="onb-progress-wrap">
+        <div class="onb-progress-track">
+          <div class="onb-progress-fill" id="onb-progress"></div>
+        </div>
+        <div class="onb-step-label" id="onb-step-label">Step 1 of 4</div>
+      </div>
     </div>
-  </div>
 
-  <div class="scroll-area" id="onboarding-scroll">
-    <div class="onb-content">
+    <div class="scroll-area" id="onboarding-scroll">
+      <div class="onb-content">
 
-      <!-- ── PHASE 1: INTENT ── -->
-      <div class="v21-phase active" id="v21-phase-intent">
-        <h1 class="onb-step-title">What are you here to do first?</h1>
-        <p class="onb-step-sub">This tells Tracent which lens to prioritise first. You'll have access to the full system either way.</p>
-        <div class="v21-choice-grid">
-          <div class="v21-choice" onclick="v21SelectIntent('stable',this)">
-            <div class="v21-choice-icon">🛟</div>
-            <div><div class="v21-choice-title">Get financially stable</div><div class="v21-choice-sub">Create a safer, calmer financial baseline</div></div>
+        <!-- ── PHASE 1: INTENT ── -->
+        <div class="v21-phase active" id="v21-phase-intent">
+          <h1 class="onb-step-title">What are you here to do first?</h1>
+          <p class="onb-step-sub">This tells Tracent which lens to prioritise first. You'll have access to the full
+            system either way.</p>
+          <div class="v21-choice-grid">
+            <div class="v21-choice" onclick="v21SelectIntent('stable',this)">
+              <div class="v21-choice-icon">🛟</div>
+              <div>
+                <div class="v21-choice-title">Get financially stable</div>
+                <div class="v21-choice-sub">Create a safer, calmer financial baseline</div>
+              </div>
+            </div>
+            <div class="v21-choice" onclick="v21SelectIntent('debt',this)">
+              <div class="v21-choice-icon">⚡</div>
+              <div>
+                <div class="v21-choice-title">Pay off debt</div>
+                <div class="v21-choice-sub">Reduce pressure and free up monthly cash flow</div>
+              </div>
+            </div>
+            <div class="v21-choice" onclick="v21SelectIntent('home',this)">
+              <div class="v21-choice-icon">🏠</div>
+              <div>
+                <div class="v21-choice-title">Buy my first home</div>
+                <div class="v21-choice-sub">Understand readiness, deposit gap and timeline</div>
+              </div>
+            </div>
+            <div class="v21-choice" onclick="v21SelectIntent('grow',this)">
+              <div class="v21-choice-icon">📈</div>
+              <div>
+                <div class="v21-choice-title">Grow wealth</div>
+                <div class="v21-choice-sub">Build momentum beyond the basics</div>
+              </div>
+            </div>
+            <div class="v21-choice" onclick="v21SelectIntent('retire',this)">
+              <div class="v21-choice-icon">🌅</div>
+              <div>
+                <div class="v21-choice-title">Plan retirement</div>
+                <div class="v21-choice-sub">Turn today's choices into long-term security</div>
+              </div>
+            </div>
           </div>
-          <div class="v21-choice" onclick="v21SelectIntent('debt',this)">
-            <div class="v21-choice-icon">⚡</div>
-            <div><div class="v21-choice-title">Pay off debt</div><div class="v21-choice-sub">Reduce pressure and free up monthly cash flow</div></div>
-          </div>
-          <div class="v21-choice" onclick="v21SelectIntent('home',this)">
-            <div class="v21-choice-icon">🏠</div>
-            <div><div class="v21-choice-title">Buy my first home</div><div class="v21-choice-sub">Understand readiness, deposit gap and timeline</div></div>
-          </div>
-          <div class="v21-choice" onclick="v21SelectIntent('grow',this)">
-            <div class="v21-choice-icon">📈</div>
-            <div><div class="v21-choice-title">Grow wealth</div><div class="v21-choice-sub">Build momentum beyond the basics</div></div>
-          </div>
-          <div class="v21-choice" onclick="v21SelectIntent('retire',this)">
-            <div class="v21-choice-icon">🌅</div>
-            <div><div class="v21-choice-title">Plan retirement</div><div class="v21-choice-sub">Turn today's choices into long-term security</div></div>
-          </div>
-        </div>
-        <div class="v21-disclaimer">Takes 2 minutes · No credit check · No bank login · Educational only</div>
-      </div>
-
-      <!-- ── PHASE 2: VALIDATED SIGNAL QUESTION ── -->
-      <div class="v21-phase" id="v21-phase-signal">
-        <h1 class="onb-step-title">Quick check</h1>
-        <p class="onb-step-sub">How well does this describe your situation today?</p>
-        <div class="signal-hint">"I could handle a major unexpected expense."</div>
-        <div class="v21-choice-grid">
-          <div class="v21-choice" onclick="v21SelectSignal('completely',this)">
-            <div><div class="v21-choice-title">Completely</div><div class="v21-choice-sub">I have a solid buffer and would be fine</div></div>
-          </div>
-          <div class="v21-choice" onclick="v21SelectSignal('very_well',this)">
-            <div><div class="v21-choice-title">Very well</div><div class="v21-choice-sub">I'd manage — it would sting but not derail me</div></div>
-          </div>
-          <div class="v21-choice" onclick="v21SelectSignal('somewhat',this)">
-            <div><div class="v21-choice-title">Somewhat</div><div class="v21-choice-sub">It depends on the size — some things would hurt</div></div>
-          </div>
-          <div class="v21-choice" onclick="v21SelectSignal('very_little',this)">
-            <div><div class="v21-choice-title">Very little</div><div class="v21-choice-sub">It would cause real stress and financial difficulty</div></div>
-          </div>
-          <div class="v21-choice" onclick="v21SelectSignal('not_at_all',this)">
-            <div><div class="v21-choice-title">Not at all</div><div class="v21-choice-sub">Any unexpected expense would be a crisis right now</div></div>
-          </div>
-        </div>
-      </div>
-
-      <!-- ── PHASE 3: PSYCHOLOGICAL ALIGNMENT ── -->
-      <div class="v21-phase" id="v21-phase-range">
-
-        <!-- Centered content — no scores, numbers, or ranges -->
-        <div class="v21-align-wrap" id="v21-align-screen">
-
-          <!-- Intent icon mark (stagger item 0 — instant) -->
-          <div class="v21-align-mark v21-align-item" id="v21-align-mark">✦</div>
-
-          <!-- Dynamic headline (stagger delay 100ms) -->
-          <h1 class="v21-align-headline v21-align-item" id="v21-align-headline">We hear you.</h1>
-
-          <!-- Supporting text (stagger delay 200ms) -->
-          <p class="v21-align-support v21-align-item" id="v21-align-support">We'll guide you step by step based on where you are today — no pressure, no judgment.</p>
-
-          <!-- Hairline rule -->
-          <div class="v21-align-rule"></div>
-
-          <!-- Reinforcement line (stagger delay 200ms, same group as support) -->
-          <p class="v21-align-final v21-align-item" id="v21-align-final">Let's finish this so we can build your plan.</p>
-
+          <div class="v21-disclaimer">Takes 2 minutes · No credit check · No bank login · Educational only</div>
         </div>
 
-        <!-- CTA (stagger delay 300ms) — outside inner wrap for full-width on narrow screens -->
-        <div class="v21-align-cta-wrap v21-align-item" id="v21-align-cta-wrap">
-          <button
-            class="btn-cta"
-            id="v21-align-cta"
-            onclick="v21AlignContinue()"
-          >Continue</button>
+        <!-- ── PHASE 2: VALIDATED SIGNAL QUESTION ── -->
+        <div class="v21-phase" id="v21-phase-signal">
+          <h1 class="onb-step-title">Quick check</h1>
+          <p class="onb-step-sub">How well does this describe your situation today?</p>
+          <div class="signal-hint">"I could handle a major unexpected expense."</div>
+          <div class="v21-choice-grid">
+            <div class="v21-choice" onclick="v21SelectSignal('completely',this)">
+              <div>
+                <div class="v21-choice-title">Completely</div>
+                <div class="v21-choice-sub">I have a solid buffer and would be fine</div>
+              </div>
+            </div>
+            <div class="v21-choice" onclick="v21SelectSignal('very_well',this)">
+              <div>
+                <div class="v21-choice-title">Very well</div>
+                <div class="v21-choice-sub">I'd manage — it would sting but not derail me</div>
+              </div>
+            </div>
+            <div class="v21-choice" onclick="v21SelectSignal('somewhat',this)">
+              <div>
+                <div class="v21-choice-title">Somewhat</div>
+                <div class="v21-choice-sub">It depends on the size — some things would hurt</div>
+              </div>
+            </div>
+            <div class="v21-choice" onclick="v21SelectSignal('very_little',this)">
+              <div>
+                <div class="v21-choice-title">Very little</div>
+                <div class="v21-choice-sub">It would cause real stress and financial difficulty</div>
+              </div>
+            </div>
+            <div class="v21-choice" onclick="v21SelectSignal('not_at_all',this)">
+              <div>
+                <div class="v21-choice-title">Not at all</div>
+                <div class="v21-choice-sub">Any unexpected expense would be a crisis right now</div>
+              </div>
+            </div>
+          </div>
         </div>
 
-        <!-- Hidden compat stubs — never remove; existing engine reads these IDs -->
-        <div style="display:none;" aria-hidden="true">
-          <span id="v21-preview-title"></span>
-          <span id="v21-preview-sub"></span>
-          <div id="v21-preview-hero">
-            <span id="v21-preview-hero-label"></span>
-            <span id="v21-preview-hero-value"></span>
-            <span id="v21-preview-hero-desc"></span>
+        <!-- ── PHASE 3: PSYCHOLOGICAL ALIGNMENT ── -->
+        <div class="v21-phase" id="v21-phase-range">
+
+          <!-- Centered content — no scores, numbers, or ranges -->
+          <div class="v21-align-wrap" id="v21-align-screen">
+
+            <!-- Intent icon mark (stagger item 0 — instant) -->
+            <div class="v21-align-mark v21-align-item" id="v21-align-mark">✦</div>
+
+            <!-- Dynamic headline (stagger delay 100ms) -->
+            <h1 class="v21-align-headline v21-align-item" id="v21-align-headline">We hear you.</h1>
+
+            <!-- Supporting text (stagger delay 200ms) -->
+            <p class="v21-align-support v21-align-item" id="v21-align-support">We'll guide you step by step based on
+              where you are today — no pressure, no judgment.</p>
+
+            <!-- Hairline rule -->
+            <div class="v21-align-rule"></div>
+
+            <!-- Reinforcement line (stagger delay 200ms, same group as support) -->
+            <p class="v21-align-final v21-align-item" id="v21-align-final">Let's finish this so we can build your plan.
+            </p>
+
           </div>
-          <div id="v21-preview-helping">
-            <span id="v21-preview-helping-text"></span>
+
+          <!-- CTA (stagger delay 300ms) — outside inner wrap for full-width on narrow screens -->
+          <div class="v21-align-cta-wrap v21-align-item" id="v21-align-cta-wrap">
+            <button class="btn-cta" id="v21-align-cta" onclick="v21AlignContinue()">Continue</button>
           </div>
-          <div id="v21-preview-holding">
-            <span id="v21-preview-holding-text"></span>
+
+          <!-- Hidden compat stubs — never remove; existing engine reads these IDs -->
+          <div style="display:none;" aria-hidden="true">
+            <span id="v21-preview-title"></span>
+            <span id="v21-preview-sub"></span>
+            <div id="v21-preview-hero">
+              <span id="v21-preview-hero-label"></span>
+              <span id="v21-preview-hero-value"></span>
+              <span id="v21-preview-hero-desc"></span>
+            </div>
+            <div id="v21-preview-helping">
+              <span id="v21-preview-helping-text"></span>
+            </div>
+            <div id="v21-preview-holding">
+              <span id="v21-preview-holding-text"></span>
+            </div>
+            <span id="v21-range-num"></span>
+            <span id="v21-band-pill"></span>
+            <span id="v21-diag-text"></span>
+            <span id="v21-next-move-text"></span>
+            <span id="v21-future-text"></span>
+            <!-- disclaimer stub so board-pass querySelector doesn't break -->
+            <p class="v21-disclaimer" id="v21-align-disclaimer"></p>
           </div>
-          <span id="v21-range-num"></span>
-          <span id="v21-band-pill"></span>
-          <span id="v21-diag-text"></span>
-          <span id="v21-next-move-text"></span>
-          <span id="v21-future-text"></span>
-          <!-- disclaimer stub so board-pass querySelector doesn't break -->
-          <p class="v21-disclaimer" id="v21-align-disclaimer"></p>
+
         </div>
 
-      </div>
-
-      <!-- ── PHASE 4: ADAPTIVE REFINEMENT ── -->
-      <div class="v21-phase" id="v21-phase-refine">
-        <h1 class="onb-step-title" id="v21-refine-title">Let's tighten your range</h1>
-        <p class="onb-step-sub" id="v21-refine-sub">Just the minimum inputs needed to sharpen your position and open your dashboard.</p>
-        <div class="v21-archetype-badge" id="v21-archetype-badge">⚡ Adaptive path</div>
-        <div id="v21-refine-form"></div>
-        <div class="onb-cta" style="margin-top:var(--s2);">
-          <button class="btn-cta" onclick="v21FinishOnboarding()">Open my dashboard →</button>
-          <div class="v21-disclaimer" style="margin-top:8px;">For educational purposes only. Not financial advice.<br>Your data stays on your device.</div>
+        <!-- ── PHASE 4: ADAPTIVE REFINEMENT ── -->
+        <div class="v21-phase" id="v21-phase-refine">
+          <h1 class="onb-step-title" id="v21-refine-title">Let's tighten your range</h1>
+          <p class="onb-step-sub" id="v21-refine-sub">Just the minimum inputs needed to sharpen your position and open
+            your dashboard.</p>
+          <div class="v21-archetype-badge" id="v21-archetype-badge">⚡ Adaptive path</div>
+          <div id="v21-refine-form"></div>
+          <div class="onb-cta" style="margin-top:var(--s2);">
+            <button class="btn-cta" onclick="v21FinishOnboarding()">Open my dashboard →</button>
+            <div class="v21-disclaimer" style="margin-top:8px;">For educational purposes only. Not financial
+              advice.<br>Your data stays on your device.</div>
+          </div>
         </div>
-      </div>
 
-    </div><!-- end onb-content -->
+      </div><!-- end onb-content -->
 
-    <!-- ── LEGACY ENGINE INPUTS (hidden — engine reads these DOM IDs) ── -->
-    <!-- v21BridgeToEngine() populates these before calling _0x82f61a0() -->
-    <div id="v21-legacy-inputs" style="display:none!important;position:absolute;pointer-events:none;opacity:0;" aria-hidden="true">
-      <input type="text" id="firstname" value="">
-      <input type="text" inputmode="decimal" id="income" value="72000">
-      <select id="state"><option value="NY" selected>New York</option><option value="CA">California</option><option value="TX">Texas</option><option value="FL">Florida</option><option value="WA">Washington</option><option value="MA">Massachusetts</option><option value="IL">Illinois</option><option value="CO">Colorado</option><option value="NJ">New Jersey</option><option value="CT">Connecticut</option><option value="GA">Georgia</option><option value="NC">North Carolina</option><option value="VA">Virginia</option><option value="AZ">Arizona</option><option value="PA">Pennsylvania</option><option value="OH">Ohio</option><option value="MN">Minnesota</option><option value="MD">Maryland</option><option value="OR">Oregon</option><option value="MI">Michigan</option><option value="TN">Tennessee</option><option value="MO">Missouri</option><option value="WI">Wisconsin</option><option value="IN">Indiana</option><option value="NV">Nevada</option><option value="LA">Louisiana</option><option value="UT">Utah</option><option value="KY">Kentucky</option><option value="OK">Oklahoma</option><option value="SC">South Carolina</option><option value="AL">Alabama</option><option value="AR">Arkansas</option><option value="DE">Delaware</option><option value="HI">Hawaii</option><option value="ID">Idaho</option><option value="IA">Iowa</option><option value="KS">Kansas</option><option value="ME">Maine</option><option value="MT">Montana</option><option value="NE">Nebraska</option><option value="NH">New Hampshire</option><option value="NM">New Mexico</option><option value="ND">North Dakota</option><option value="RI">Rhode Island</option><option value="SD">South Dakota</option><option value="VT">Vermont</option><option value="WV">West Virginia</option><option value="WY">Wyoming</option><option value="DC">Washington DC</option><option value="AK">Alaska</option></select>
-      <select id="jobtype"><option value="private" selected>Private Sector</option><option value="teacher">Teacher</option><option value="public">Government</option><option value="selfemployed">Self-Employed</option><option value="military">Military</option><option value="parttime">Part-time</option></select>
-      <input type="text" inputmode="decimal" id="takehome" value="">
-      <input type="text" id="job-title" value="">
-      <select id="career-stage"><option value="growing" selected>Growing</option><option value="early">Early</option><option value="established">Established</option><option value="senior">Senior</option></select>
-      <select id="filing-status"><option value="single" selected>Single</option><option value="mfj">Married Joint</option><option value="hoh">Head of Household</option></select>
-      <input type="text" id="work-state" value="">
-      <select id="goal"><option value="build_savings" selected>Build savings</option><option value="pay_off_debt">Pay off debt</option><option value="buy_home">Buy home</option><option value="invest_more">Invest more</option><option value="retire_early">Retire early</option><option value="property_invest">Property invest</option></select>
-      <select id="emergency"><option value="0" selected>None</option><option value="1">1 month</option><option value="3">3 months</option><option value="6">6 months</option><option value="9">9 months</option></select>
-      <select id="life-event"><option value="none" selected>None</option></select>
-      <select id="retirement-match"><option value="none" selected>None</option><option value="partial">Partial</option><option value="full">Full</option><option value="maxed">Maxed</option></select>
-      <input type="text" inputmode="decimal" id="expenses" value="800">
-      <input type="text" inputmode="decimal" id="cc-debt" value="0">
-      <input type="text" inputmode="decimal" id="cc-rate" value="21">
-      <input type="text" inputmode="decimal" id="student-debt" value="0">
-      <input type="text" inputmode="decimal" id="student-payment" value="">
-      <input type="checkbox" id="student-idr">
-      <input type="text" inputmode="decimal" id="car-debt" value="0">
-      <input type="text" inputmode="decimal" id="car-payment" value="0">
-      <input type="text" inputmode="decimal" id="other-debt" value="0">
-      <input type="text" inputmode="decimal" id="other-payment" value="0">
-      <div id="housing-warning" class="field-warning"></div>
-      <input type="text" inputmode="decimal" id="purchase-price" value="400000">
-      <input type="text" inputmode="decimal" id="currentrate" value="7.1">
-      <input type="text" inputmode="decimal" id="yearsleft" value="25">
-      <input type="text" inputmode="decimal" id="down-payment" value="52000">
-      <input type="hidden" id="balance" value="342000">
-      <input type="hidden" id="payment" value="2380">
-      <input type="hidden" id="home-insurance" value="1800">
-      <input type="hidden" id="prop-tax" value="">
-      <input type="hidden" id="home-value" value="">
-      <input type="hidden" id="balance-override" value="">
-      <input type="text" inputmode="decimal" id="home-price" value="350000">
-      <input type="text" inputmode="decimal" id="deposit-saved" value="35000">
-      <input type="text" inputmode="decimal" id="current-rent" value="1500">
-      <input type="hidden" id="deposit-pct" value="10">
-      <input type="hidden" id="loan-type" value="conventional">
-      <input type="text" inputmode="decimal" id="rent-amount" value="1800">
-      <input type="text" inputmode="decimal" id="renter-savings" value="12000">
-      <input type="text" inputmode="decimal" id="renter-target-price" value="400000">
-      <input type="hidden" id="renter-goal" value="yes">
-      <input type="text" inputmode="decimal" id="co-homevalue" value="420000">
-      <input type="text" inputmode="decimal" id="co-balance" value="280000">
-      <input type="text" inputmode="decimal" id="co-rate" value="6.5">
-      <input type="text" inputmode="decimal" id="co-years" value="24">
-      <input type="text" inputmode="decimal" id="co-cashwant" value="50000">
-      <input type="hidden" id="co-proptax" value="4800">
-      <input type="hidden" id="co-insurance" value="1600">
-      <input type="hidden" id="stayduration" value="5">
-      <input type="hidden" id="bonus-type" value="none">
-      <div id="takehome-breakdown"></div><div id="takehome-hint"></div>
-      <div id="work-state-note"></div><div id="state-note"></div>
-      <div id="jobtype-note"></div><div id="tax-help"></div>
-      <div id="expenses-split-hint"></div><div id="life-event-note"></div>
-      <div id="retirement-note"></div><div id="dp-pct-badge"></div>
-      <div id="calc-pmi-note"></div><div id="owner-overrides"></div>
-      <div id="split-costs-btn"><span id="split-btn-label"></span></div><div id="split-note"></div>
-          <div id="job-market-preview" style="display:none;"><div id="job-market-title"></div><div id="job-market-range"></div><div id="job-market-median"></div></div>
-      <input type="hidden" id="job-title-status">
-    </div><!-- end v21-legacy-inputs -->
+      <!-- ── LEGACY ENGINE INPUTS (hidden — engine reads these DOM IDs) ── -->
+      <!-- v21BridgeToEngine() populates these before calling _0x82f61a0() -->
+      <div id="v21-legacy-inputs" style="display:none!important;position:absolute;pointer-events:none;opacity:0;"
+        aria-hidden="true">
+        <input type="text" id="firstname" value="">
+        <input type="text" inputmode="decimal" id="income" value="72000">
+        <select id="state">
+          <option value="NY" selected>New York</option>
+          <option value="CA">California</option>
+          <option value="TX">Texas</option>
+          <option value="FL">Florida</option>
+          <option value="WA">Washington</option>
+          <option value="MA">Massachusetts</option>
+          <option value="IL">Illinois</option>
+          <option value="CO">Colorado</option>
+          <option value="NJ">New Jersey</option>
+          <option value="CT">Connecticut</option>
+          <option value="GA">Georgia</option>
+          <option value="NC">North Carolina</option>
+          <option value="VA">Virginia</option>
+          <option value="AZ">Arizona</option>
+          <option value="PA">Pennsylvania</option>
+          <option value="OH">Ohio</option>
+          <option value="MN">Minnesota</option>
+          <option value="MD">Maryland</option>
+          <option value="OR">Oregon</option>
+          <option value="MI">Michigan</option>
+          <option value="TN">Tennessee</option>
+          <option value="MO">Missouri</option>
+          <option value="WI">Wisconsin</option>
+          <option value="IN">Indiana</option>
+          <option value="NV">Nevada</option>
+          <option value="LA">Louisiana</option>
+          <option value="UT">Utah</option>
+          <option value="KY">Kentucky</option>
+          <option value="OK">Oklahoma</option>
+          <option value="SC">South Carolina</option>
+          <option value="AL">Alabama</option>
+          <option value="AR">Arkansas</option>
+          <option value="DE">Delaware</option>
+          <option value="HI">Hawaii</option>
+          <option value="ID">Idaho</option>
+          <option value="IA">Iowa</option>
+          <option value="KS">Kansas</option>
+          <option value="ME">Maine</option>
+          <option value="MT">Montana</option>
+          <option value="NE">Nebraska</option>
+          <option value="NH">New Hampshire</option>
+          <option value="NM">New Mexico</option>
+          <option value="ND">North Dakota</option>
+          <option value="RI">Rhode Island</option>
+          <option value="SD">South Dakota</option>
+          <option value="VT">Vermont</option>
+          <option value="WV">West Virginia</option>
+          <option value="WY">Wyoming</option>
+          <option value="DC">Washington DC</option>
+          <option value="AK">Alaska</option>
+        </select>
+        <select id="jobtype">
+          <option value="private" selected>Private Sector</option>
+          <option value="teacher">Teacher</option>
+          <option value="public">Government</option>
+          <option value="selfemployed">Self-Employed</option>
+          <option value="military">Military</option>
+          <option value="parttime">Part-time</option>
+        </select>
+        <input type="text" inputmode="decimal" id="takehome" value="">
+        <input type="text" id="job-title" value="">
+        <select id="career-stage">
+          <option value="growing" selected>Growing</option>
+          <option value="early">Early</option>
+          <option value="established">Established</option>
+          <option value="senior">Senior</option>
+        </select>
+        <select id="filing-status">
+          <option value="single" selected>Single</option>
+          <option value="mfj">Married Joint</option>
+          <option value="hoh">Head of Household</option>
+        </select>
+        <input type="text" id="work-state" value="">
+        <select id="goal">
+          <option value="build_savings" selected>Build savings</option>
+          <option value="pay_off_debt">Pay off debt</option>
+          <option value="buy_home">Buy home</option>
+          <option value="invest_more">Invest more</option>
+          <option value="retire_early">Retire early</option>
+          <option value="property_invest">Property invest</option>
+        </select>
+        <select id="emergency">
+          <option value="0" selected>None</option>
+          <option value="1">1 month</option>
+          <option value="3">3 months</option>
+          <option value="6">6 months</option>
+          <option value="9">9 months</option>
+        </select>
+        <select id="life-event">
+          <option value="none" selected>None</option>
+        </select>
+        <select id="retirement-match">
+          <option value="none" selected>None</option>
+          <option value="partial">Partial</option>
+          <option value="full">Full</option>
+          <option value="maxed">Maxed</option>
+        </select>
+        <input type="text" inputmode="decimal" id="expenses" value="800">
+        <input type="text" inputmode="decimal" id="cc-debt" value="0">
+        <input type="text" inputmode="decimal" id="cc-rate" value="21">
+        <input type="text" inputmode="decimal" id="student-debt" value="0">
+        <input type="text" inputmode="decimal" id="student-payment" value="">
+        <input type="checkbox" id="student-idr">
+        <input type="text" inputmode="decimal" id="car-debt" value="0">
+        <input type="text" inputmode="decimal" id="car-payment" value="0">
+        <input type="text" inputmode="decimal" id="other-debt" value="0">
+        <input type="text" inputmode="decimal" id="other-payment" value="0">
+        <div id="housing-warning" class="field-warning"></div>
+        <input type="text" inputmode="decimal" id="purchase-price" value="400000">
+        <input type="text" inputmode="decimal" id="currentrate" value="7.1">
+        <input type="text" inputmode="decimal" id="yearsleft" value="25">
+        <input type="text" inputmode="decimal" id="down-payment" value="52000">
+        <input type="hidden" id="balance" value="342000">
+        <input type="hidden" id="payment" value="2380">
+        <input type="hidden" id="home-insurance" value="1800">
+        <input type="hidden" id="prop-tax" value="">
+        <input type="hidden" id="home-value" value="">
+        <input type="hidden" id="balance-override" value="">
+        <input type="text" inputmode="decimal" id="home-price" value="350000">
+        <input type="text" inputmode="decimal" id="deposit-saved" value="35000">
+        <input type="text" inputmode="decimal" id="current-rent" value="1500">
+        <input type="hidden" id="deposit-pct" value="10">
+        <input type="hidden" id="loan-type" value="conventional">
+        <input type="text" inputmode="decimal" id="rent-amount" value="1800">
+        <input type="text" inputmode="decimal" id="renter-savings" value="12000">
+        <input type="text" inputmode="decimal" id="renter-target-price" value="400000">
+        <input type="hidden" id="renter-goal" value="yes">
+        <input type="text" inputmode="decimal" id="co-homevalue" value="420000">
+        <input type="text" inputmode="decimal" id="co-balance" value="280000">
+        <input type="text" inputmode="decimal" id="co-rate" value="6.5">
+        <input type="text" inputmode="decimal" id="co-years" value="24">
+        <input type="text" inputmode="decimal" id="co-cashwant" value="50000">
+        <input type="hidden" id="co-proptax" value="4800">
+        <input type="hidden" id="co-insurance" value="1600">
+        <input type="hidden" id="stayduration" value="5">
+        <input type="hidden" id="bonus-type" value="none">
+        <div id="takehome-breakdown"></div>
+        <div id="takehome-hint"></div>
+        <div id="work-state-note"></div>
+        <div id="state-note"></div>
+        <div id="jobtype-note"></div>
+        <div id="tax-help"></div>
+        <div id="expenses-split-hint"></div>
+        <div id="life-event-note"></div>
+        <div id="retirement-note"></div>
+        <div id="dp-pct-badge"></div>
+        <div id="calc-pmi-note"></div>
+        <div id="owner-overrides"></div>
+        <div id="split-costs-btn"><span id="split-btn-label"></span></div>
+        <div id="split-note"></div>
+        <div id="job-market-preview" style="display:none;">
+          <div id="job-market-title"></div>
+          <div id="job-market-range"></div>
+          <div id="job-market-median"></div>
+        </div>
+        <input type="hidden" id="job-title-status">
+      </div><!-- end v21-legacy-inputs -->
 
-  </div><!-- end scroll-area -->
-</div><!-- end onboarding -->
+    </div><!-- end scroll-area -->
+  </div><!-- end onboarding -->
 
-<!-- ══════════════════════════════════════════════════════════
+  <!-- ══════════════════════════════════════════════════════════
      ANALYSIS LOADING
 ══════════════════════════════════════════════════════════ -->
-<div id="screen-analysis" class="screen" style="position:relative;">
-  <div class="analysis-inner">
-    <div class="analysis-ring-wrap">
-      <svg class="analysis-ring-svg" width="100" height="100" viewBox="0 0 100 100">
-        <circle cx="50" cy="50" r="40" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="6"/>
-        <circle id="analysis-ring" cx="50" cy="50" r="40" fill="none" stroke="var(--sky)" stroke-width="6"
-          stroke-dasharray="251" stroke-dashoffset="251" stroke-linecap="round"
-          style="transition:stroke-dashoffset 0.6s ease; transform-origin:center; transform:rotate(-90deg);animation:none;"/>
-      </svg>
-      <div class="analysis-icon">
-        <svg width="28" height="28" viewBox="0 0 120 120" fill="none">
-          <defs><linearGradient id="ag" x1="0" y1="0" x2="120" y2="120"><stop offset="0%" stop-color="#004E7C"/><stop offset="100%" stop-color="#000D1A"/></linearGradient></defs>
-          <rect width="120" height="120" rx="26" fill="url(#ag)"/>
-          <text x="10" y="91" font-family="DM Serif Display,Georgia,serif" font-size="86" fill="white" letter-spacing="-2">T</text>
-          <circle cx="90" cy="88" r="9" fill="#00A8E8"/>
-          <rect x="10" y="97" width="66" height="6" rx="3" fill="#00A8E8"/>
+  <div id="screen-analysis" class="screen" style="position:relative;">
+    <div class="analysis-inner">
+      <div class="analysis-ring-wrap">
+        <svg class="analysis-ring-svg" width="100" height="100" viewBox="0 0 100 100">
+          <circle cx="50" cy="50" r="40" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="6" />
+          <circle id="analysis-ring" cx="50" cy="50" r="40" fill="none" stroke="var(--sky)" stroke-width="6"
+            stroke-dasharray="251" stroke-dashoffset="251" stroke-linecap="round"
+            style="transition:stroke-dashoffset 0.6s ease; transform-origin:center; transform:rotate(-90deg);animation:none;" />
         </svg>
+        <div class="analysis-icon">
+          <svg width="28" height="28" viewBox="0 0 120 120" fill="none">
+            <defs>
+              <linearGradient id="ag" x1="0" y1="0" x2="120" y2="120">
+                <stop offset="0%" stop-color="#004E7C" />
+                <stop offset="100%" stop-color="#000D1A" />
+              </linearGradient>
+            </defs>
+            <rect width="120" height="120" rx="26" fill="url(#ag)" />
+            <text x="10" y="91" font-family="DM Serif Display,Georgia,serif" font-size="86" fill="white"
+              letter-spacing="-2">T</text>
+            <circle cx="90" cy="88" r="9" fill="#00A8E8" />
+            <rect x="10" y="97" width="66" height="6" rx="3" fill="#00A8E8" />
+          </svg>
+        </div>
       </div>
-    </div>
 
-    <div class="analysis-title" id="analysis-greeting">Calibrating your position</div>
+      <div class="analysis-title" id="analysis-greeting">Calibrating your position</div>
 
-    <div class="analysis-steps">
-      <div class="analysis-step" id="as-1">
-        <div class="analysis-step-icon">📊</div>
-        <span>Scoring your financial health</span>
+      <div class="analysis-steps">
+        <div class="analysis-step" id="as-1">
+          <div class="analysis-step-icon">📊</div>
+          <span>Scoring your financial health</span>
+        </div>
+        <div class="analysis-step" id="as-2">
+          <div class="analysis-step-icon">🏠</div>
+          <span>Calculating housing position</span>
+        </div>
+        <div class="analysis-step" id="as-3">
+          <div class="analysis-step-icon">💼</div>
+          <span>Benchmarking your market rate</span>
+        </div>
+        <div class="analysis-step" id="as-4">
+          <div class="analysis-step-icon">🎯</div>
+          <span>Building your action plan</span>
+        </div>
       </div>
-      <div class="analysis-step" id="as-2">
-        <div class="analysis-step-icon">🏠</div>
-        <span>Calculating housing position</span>
-      </div>
-      <div class="analysis-step" id="as-3">
-        <div class="analysis-step-icon">💼</div>
-        <span>Benchmarking your market rate</span>
-      </div>
-      <div class="analysis-step" id="as-4">
-        <div class="analysis-step-icon">🎯</div>
-        <span>Building your action plan</span>
-      </div>
-    </div>
 
-    <div class="analysis-bar-wrap" style="position:relative;overflow:hidden;">
-      <div class="analysis-bar-fill" id="analysis-progress-bar"></div>
-      <div class="analysis-scan-line"></div>
+      <div class="analysis-bar-wrap" style="position:relative;overflow:hidden;">
+        <div class="analysis-bar-fill" id="analysis-progress-bar"></div>
+        <div class="analysis-scan-line"></div>
+      </div>
+      <div class="analysis-status" id="analysis-status-text">Building your picture…</div>
     </div>
-    <div class="analysis-status" id="analysis-status-text">Building your picture…</div>
   </div>
-</div>
 
-<!-- ══════════════════════════════════════════════════════════
+  <!-- ══════════════════════════════════════════════════════════
      DASHBOARD
 ══════════════════════════════════════════════════════════ -->
-<div id="screen-dashboard" class="screen">
-  <!-- Fixed header -->
-  <div class="dash-header" id="dash-header">
-    <div class="dash-topbar">
-      <div class="dash-wordmark" onclick="switchTab('home');setNav(document.getElementById('nav-home'))">
-        <span class="dash-wordmark-text">Tracent<span class="dash-wordmark-dot">.</span></span>
-        <div class="dash-wordmark-line"></div>
-      </div>
-
-      <div class="dash-topbar-actions">
-        <!-- Mini score chip — only visible when compact -->
-        <div class="mini-chip" id="mini-chip" onclick="switchTab('home');setNav(document.getElementById('nav-home'))">
-          <svg class="mini-chip-ring" viewBox="0 0 32 32" fill="none">
-            <circle cx="16" cy="16" r="12" stroke="rgba(255,255,255,0.15)" stroke-width="3"/>
-            <circle id="mini-score-arc" cx="16" cy="16" r="12" stroke="var(--sky)" stroke-width="3"
-              stroke-dasharray="75.4" stroke-dashoffset="75.4" stroke-linecap="round"
-              style="transform:rotate(-90deg);transform-origin:center;transition:stroke-dashoffset 0.6s var(--spring);"/>
-          </svg>
-          <span class="mini-chip-score" id="mini-score-num">—</span>
+  <div id="screen-dashboard" class="screen">
+    <!-- Fixed header -->
+    <div class="dash-header" id="dash-header">
+      <div class="dash-topbar">
+        <div class="dash-wordmark" onclick="switchTab('home');setNav(document.getElementById('nav-home'))">
+          <span class="dash-wordmark-text">Tracent<span class="dash-wordmark-dot">.</span></span>
+          <div class="dash-wordmark-line"></div>
         </div>
 
-        <button class="dash-settings-btn" onclick="switchTab('settings');setNav(document.getElementById('nav-settings'))" title="Settings">⚙️</button>
-      </div>
-    </div>
+        <div class="dash-topbar-actions">
+          <!-- Mini score chip — only visible when compact -->
+          <div class="mini-chip" id="mini-chip" onclick="switchTab('home');setNav(document.getElementById('nav-home'))">
+            <svg class="mini-chip-ring" viewBox="0 0 32 32" fill="none">
+              <circle cx="16" cy="16" r="12" stroke="rgba(255,255,255,0.15)" stroke-width="3" />
+              <circle id="mini-score-arc" cx="16" cy="16" r="12" stroke="var(--sky)" stroke-width="3"
+                stroke-dasharray="75.4" stroke-dashoffset="75.4" stroke-linecap="round"
+                style="transform:rotate(-90deg);transform-origin:center;transition:stroke-dashoffset 0.6s var(--spring);" />
+            </svg>
+            <span class="mini-chip-score" id="mini-score-num">—</span>
+          </div>
 
-    <!-- Score hero -->
-    <!-- ════════════════════════════════════════════════════════
+          <button class="dash-settings-btn"
+            onclick="switchTab('settings');setNav(document.getElementById('nav-settings'))" title="Settings">⚙️</button>
+        </div>
+      </div>
+
+      <!-- Score hero -->
+      <!-- ════════════════════════════════════════════════════════
          BSE-ADAPTIVE HEADER
          BSE controls what shows here via #dash-header class.
          bse-score-hidden / bse-score-deemphasized CSS classes
          suppress or reduce the score zone accordingly.
          All engine IDs are preserved in hidden compat layer.
     ════════════════════════════════════════════════════════ -->
-    <div class="score-hero-wrap" id="score-hero-wrap">
+      <div class="score-hero-wrap" id="score-hero-wrap">
 
-      <!-- Greeting + date — always visible for all archetypes -->
-      <div class="bse-header-greeting">
-        <div class="score-greeting" id="home-greeting">Good morning</div>
-        <div class="bse-header-date" id="home-date"></div>
-      </div>
+        <!-- Greeting + date — always visible for all archetypes -->
+        <div class="bse-header-greeting">
+          <div class="score-greeting" id="home-greeting">Good morning</div>
+          <div class="bse-header-date" id="home-date"></div>
+        </div>
 
-      <!-- Score zone — visible for score-showing archetypes only -->
-      <!-- BSE suppresses via .bse-score-hidden on #dash-header  -->
-      <div class="bse-score-zone" id="bse-score-zone">
-        <div class="bse-score-ring-wrap" onclick="openScoreBreakdown()" style="cursor:pointer;">
-          <div class="score-ring-glow" id="score-ring-glow"></div>
-          <svg class="score-ring-svg" width="64" height="64" viewBox="0 0 96 96">
-            <circle class="score-ring-track" cx="48" cy="48" r="43" fill="none" stroke-width="7"/>
-            <circle class="score-ring-arc"   id="score-ring-arc" cx="48" cy="48" r="43" fill="none" stroke-width="7"
-              stroke-dasharray="270.2" stroke-dashoffset="270.2"/>
-          </svg>
-          <div class="score-ring-center">
-            <div class="score-ring-num"   id="score-ring-num">—</div>
-            <div class="score-ring-badge" id="score-badge">SCORE</div>
+        <!-- Score zone — visible for score-showing archetypes only -->
+        <!-- BSE suppresses via .bse-score-hidden on #dash-header  -->
+        <div class="bse-score-zone" id="bse-score-zone">
+          <div class="bse-score-ring-wrap" onclick="openScoreBreakdown()" style="cursor:pointer;">
+            <div class="score-ring-glow" id="score-ring-glow"></div>
+            <svg class="score-ring-svg" width="64" height="64" viewBox="0 0 96 96">
+              <circle class="score-ring-track" cx="48" cy="48" r="43" fill="none" stroke-width="7" />
+              <circle class="score-ring-arc" id="score-ring-arc" cx="48" cy="48" r="43" fill="none" stroke-width="7"
+                stroke-dasharray="270.2" stroke-dashoffset="270.2" />
+            </svg>
+            <div class="score-ring-center">
+              <div class="score-ring-num" id="score-ring-num">—</div>
+              <div class="score-ring-badge" id="score-badge">SCORE</div>
+            </div>
+          </div>
+          <div class="bse-score-detail">
+            <div class="score-title" id="score-title">Your Tracent Score</div>
+            <div class="score-sub" id="score-sub">Complete your profile</div>
+            <div class="score-disclaimer" id="score-disclaimer">Planning indicator · Not a credit score</div>
           </div>
         </div>
-        <div class="bse-score-detail">
-          <div class="score-title"      id="score-title">Your Tracent Score</div>
-          <div class="score-sub"        id="score-sub">Complete your profile</div>
-          <div class="score-disclaimer" id="score-disclaimer">Planning indicator · Not a credit score</div>
-        </div>
-      </div>
 
-      <!-- Stat strip — visible for stable/optimizer, hidden for stressed -->
-      <div class="stat-strip" id="bse-stat-strip">
-        <div class="stat-cell" onclick="switchTab('debtrank');setNav(document.getElementById('nav-debt'))">
-          <div class="stat-val" id="hdr-fcf">—</div><div class="stat-lbl">Cash/mo</div>
+        <!-- Stat strip — visible for stable/optimizer, hidden for stressed -->
+        <div class="stat-strip" id="bse-stat-strip">
+          <div class="stat-cell" onclick="switchTab('debtrank');setNav(document.getElementById('nav-debt'))">
+            <div class="stat-val" id="hdr-fcf">—</div>
+            <div class="stat-lbl">Cash/mo</div>
+          </div>
+          <div class="stat-cell" onclick="switchTab('debtrank');setNav(document.getElementById('nav-debt'))">
+            <div class="stat-val" id="hdr-dti">—</div>
+            <div class="stat-lbl">DTI</div>
+          </div>
+          <div class="stat-cell" onclick="switchTab('debtrank');setNav(document.getElementById('nav-debt'))">
+            <div class="stat-val" id="hdr-debt">—</div>
+            <div class="stat-lbl">Debt</div>
+          </div>
+          <div class="stat-cell" onclick="switchTab('progress');setNav(document.getElementById('nav-progress'))">
+            <div class="stat-val" id="hdr-nw">—</div>
+            <div class="stat-lbl">Net Worth</div>
+          </div>
         </div>
-        <div class="stat-cell" onclick="switchTab('debtrank');setNav(document.getElementById('nav-debt'))">
-          <div class="stat-val" id="hdr-dti">—</div><div class="stat-lbl">DTI</div>
-        </div>
-        <div class="stat-cell" onclick="switchTab('debtrank');setNav(document.getElementById('nav-debt'))">
-          <div class="stat-val" id="hdr-debt">—</div><div class="stat-lbl">Debt</div>
-        </div>
-        <div class="stat-cell" onclick="switchTab('progress');setNav(document.getElementById('nav-progress'))">
-          <div class="stat-val" id="hdr-nw">—</div><div class="stat-lbl">Net Worth</div>
-        </div>
-      </div>
 
-      <!-- Mode rail — BSE controls visibility -->
-      <div class="v21-mode-rail" id="v21-mode-rail" style="display:none;">
-        <button class="v21-mode-btn active" id="mode-btn-today"  onclick="v21SetMode('today',this)">Focus</button>
-        <button class="v21-mode-btn"        id="mode-btn-debt"   onclick="v21SetMode('debt',this)">Debt</button>
-        <button class="v21-mode-btn"        id="mode-btn-grow"   onclick="v21SetMode('grow',this)">Grow</button>
-        <button class="v21-mode-btn"        id="mode-btn-retire" onclick="v21SetMode('retire',this)">Retire</button>
-      </div>
-
-      <!-- Hidden compat IDs for engine compatibility -->
-      <div style="display:none!important" aria-hidden="true">
-        <div id="v21-score-reveal-eyebrow"></div>
-        <div id="preview-pills">
-          <div id="pill-networth"></div>
-          <div id="pill-career-y10"></div>
-          <div id="pill-market-wrap"><div id="pill-market-gap"></div></div>
+        <!-- Mode rail — BSE controls visibility -->
+        <div class="v21-mode-rail" id="v21-mode-rail" style="display:none;">
+          <button class="v21-mode-btn active" id="mode-btn-today" onclick="v21SetMode('today',this)">Focus</button>
+          <button class="v21-mode-btn" id="mode-btn-debt" onclick="v21SetMode('debt',this)">Debt</button>
+          <button class="v21-mode-btn" id="mode-btn-grow" onclick="v21SetMode('grow',this)">Grow</button>
+          <button class="v21-mode-btn" id="mode-btn-retire" onclick="v21SetMode('retire',this)">Retire</button>
         </div>
-      </div>
 
+        <!-- Hidden compat IDs for engine compatibility -->
+        <div style="display:none!important" aria-hidden="true">
+          <div id="v21-score-reveal-eyebrow"></div>
+          <div id="preview-pills">
+            <div id="pill-networth"></div>
+            <div id="pill-career-y10"></div>
+            <div id="pill-market-wrap">
+              <div id="pill-market-gap"></div>
+            </div>
+          </div>
+        </div>
+
+      </div>
     </div>
-  </div>
 
-  <!-- Scrollable tab content -->
-  <div class="dash-content" id="dash-content">
+    <!-- Scrollable tab content -->
+    <div class="dash-content" id="dash-content">
 
-    <!-- ══ HOME TAB ══ -->
-    <!-- ══ HOME TAB — BSE Focus Shell ══
+      <!-- ══ HOME TAB ══ -->
+      <!-- ══ HOME TAB — BSE Focus Shell ══
          BSE is the rendering authority for this tab.
          Focus card is the primary experience.
          Old dashboard modules are demoted to secondary/suppressed.
     ══════════════════════════════════════════════ -->
-    <div id="tab-home" class="tab-panel active">
+      <div id="tab-home" class="tab-panel active">
 
-      <!-- ── BSE Focus Card — injected here by BSE IIFE on DOMContentLoaded ── -->
-      <div id="bse-focus-mode" style="display:none;"></div>
+        <!-- ── BSE Focus Card — injected here by BSE IIFE on DOMContentLoaded ── -->
+        <div id="bse-focus-mode" style="display:none;"></div>
 
-      <!-- ── Verdict + verdict sub (injected by dashboard-pass, controlled by BSE) ── -->
-      <div id="v21-verdict-block" style="display:none;"></div>
+        <!-- ── Verdict + verdict sub (injected by dashboard-pass, controlled by BSE) ── -->
+        <div id="v21-verdict-block" style="display:none;"></div>
 
-      <!-- ── Compact score row (injected by dashboard-pass, suppressed for stressed archetypes) ── -->
-      <div id="v21-compact-score" style="display:none;"></div>
+        <!-- ── Compact score row (injected by dashboard-pass, suppressed for stressed archetypes) ── -->
+        <div id="v21-compact-score" style="display:none;"></div>
 
-      <!-- ── NBM card — BSE controls tone and visibility ── -->
-      <div class="v21-nbm-card v21-nbm-elevated" id="v21-nbm-card" style="display:none;">
-        <div class="v21-nbm-bar"></div>
-        <div class="v21-nbm-body">
-          <div class="v21-nbm-eyebrow">
-            <span class="v21-live-dot"></span>Your next best move
-          </div>
-          <div class="v21-nbm-title" id="v21-nbm-title">Build a 1-month cash buffer</div>
-          <div class="v21-nbm-why" id="v21-nbm-why">This creates the fastest improvement in resilience.</div>
-          <div class="v21-nbm-action-label">What to do</div>
-          <div class="v21-nbm-desc" id="v21-nbm-desc">Set a target and automate a transfer.</div>
-          <div class="v21-nbm-meta">
-            <div class="v21-nbm-meta-cell">
-              <div class="v21-nbm-meta-val" id="v21-nbm-impact">+5</div>
-              <div class="v21-nbm-meta-lbl">Score impact</div>
+        <!-- ── NBM card — BSE controls tone and visibility ── -->
+        <div class="v21-nbm-card v21-nbm-elevated" id="v21-nbm-card" style="display:none;">
+          <div class="v21-nbm-bar"></div>
+          <div class="v21-nbm-body">
+            <div class="v21-nbm-eyebrow">
+              <span class="v21-live-dot"></span>Your next best move
             </div>
-            <div class="v21-nbm-meta-cell">
-              <div class="v21-nbm-meta-val" id="v21-nbm-cash">—</div>
-              <div class="v21-nbm-meta-lbl">Cash effect</div>
+            <div class="v21-nbm-title" id="v21-nbm-title">Build a 1-month cash buffer</div>
+            <div class="v21-nbm-why" id="v21-nbm-why">This creates the fastest improvement in resilience.</div>
+            <div class="v21-nbm-action-label">What to do</div>
+            <div class="v21-nbm-desc" id="v21-nbm-desc">Set a target and automate a transfer.</div>
+            <div class="v21-nbm-meta">
+              <div class="v21-nbm-meta-cell">
+                <div class="v21-nbm-meta-val" id="v21-nbm-impact">+5</div>
+                <div class="v21-nbm-meta-lbl">Score impact</div>
+              </div>
+              <div class="v21-nbm-meta-cell">
+                <div class="v21-nbm-meta-val" id="v21-nbm-cash">—</div>
+                <div class="v21-nbm-meta-lbl">Cash effect</div>
+              </div>
+              <div class="v21-nbm-meta-cell">
+                <div class="v21-nbm-meta-val" id="v21-nbm-time">—</div>
+                <div class="v21-nbm-meta-lbl">Start</div>
+              </div>
             </div>
-            <div class="v21-nbm-meta-cell">
-              <div class="v21-nbm-meta-val" id="v21-nbm-time">—</div>
-              <div class="v21-nbm-meta-lbl">Start</div>
+            <div class="v21-nbm-confidence" id="v21-nbm-confidence"></div>
+            <div class="v21-nbm-actions">
+              <button class="v21-nbm-btn" onclick="openWhatIf()">What if? →</button>
+              <button class="v21-nbm-btn v21-nbm-why-btn" id="v21-nbm-why-btn" onclick="v21ToggleNBMDisclosure()">Why
+                this?</button>
+              <button class="v21-nbm-btn" id="v21-nbm-easier-btn" onclick="v21ShowNextMove(1)">Next option</button>
             </div>
-          </div>
-          <div class="v21-nbm-confidence" id="v21-nbm-confidence"></div>
-          <div class="v21-nbm-actions">
-            <button class="v21-nbm-btn" onclick="openWhatIf()">What if? →</button>
-            <button class="v21-nbm-btn v21-nbm-why-btn" id="v21-nbm-why-btn" onclick="v21ToggleNBMDisclosure()">Why this?</button>
-            <button class="v21-nbm-btn" id="v21-nbm-easier-btn" onclick="v21ShowNextMove(1)">Next option</button>
-          </div>
-          <div class="v21-nbm-disclosure" id="v21-nbm-disclosure" style="display:none;">
-            <div class="v21-nbm-disc-section">
-              <div class="v21-nbm-disc-heading">Why this ranked highest</div>
-              <div class="v21-nbm-disc-body" id="v21-nbm-disc-ranking"></div>
+            <div class="v21-nbm-disclosure" id="v21-nbm-disclosure" style="display:none;">
+              <div class="v21-nbm-disc-section">
+                <div class="v21-nbm-disc-heading">Why this ranked highest</div>
+                <div class="v21-nbm-disc-body" id="v21-nbm-disc-ranking"></div>
+              </div>
+              <div class="v21-nbm-disc-section">
+                <div class="v21-nbm-disc-heading">Alternatives considered</div>
+                <div id="v21-nbm-disc-alts"></div>
+              </div>
             </div>
-            <div class="v21-nbm-disc-section">
-              <div class="v21-nbm-disc-heading">Alternatives considered</div>
-              <div id="v21-nbm-disc-alts"></div>
-            </div>
-          </div>
-          <div style="font-size:10px;color:var(--gray-3);margin-top:10px;padding-top:10px;border-top:1px solid var(--gray-1);">For planning purposes only · Not financial advice</div>
-        </div>
-      </div>
-
-      <!-- ── Secondary modules — BSE decides visibility ── -->
-      <div id="v21-mode-rail-home" style="display:none;"></div>
-      <div id="v21-driver-strip" style="display:none;"></div>
-      <div id="v21-mode-strategy" style="display:none;"></div>
-
-      <!-- Metrics grid — suppressed for focused users, shown for stable/optimizer -->
-      <div class="home-metrics" id="home-metrics" style="display:none;">
-        <div class="home-metric" id="hm-cashflow" onclick="switchTab('debtrank');setNav(document.getElementById('nav-debt'))">
-          <div class="home-metric-lbl">Free cash flow</div>
-          <div class="home-metric-val" id="hm-cashflow-val">—</div>
-          <div class="home-metric-sub" id="hm-cashflow-sub">per month</div>
-        </div>
-        <div class="home-metric" id="hm-dti" onclick="switchTab('debtrank');setNav(document.getElementById('nav-debt'))">
-          <div class="home-metric-lbl">DTI ratio</div>
-          <div class="home-metric-val" id="hm-dti-val">—</div>
-          <div class="home-metric-sub" id="hm-dti-sub">debt to income</div>
-        </div>
-        <div class="home-metric" id="hm-debt" onclick="switchTab('debtrank');setNav(document.getElementById('nav-debt'))">
-          <div class="home-metric-lbl">Total debt</div>
-          <div class="home-metric-val" id="hm-debt-val">—</div>
-          <div class="home-metric-sub" id="hm-debt-sub">outstanding</div>
-        </div>
-        <div class="home-metric" id="hm-networth" onclick="switchTab('progress');showProgressSub('networth');setNav(document.getElementById('nav-progress'))">
-          <div class="home-metric-lbl">Net worth</div>
-          <div class="home-metric-val" id="hm-networth-val">—</div>
-          <div class="home-metric-sub" id="hm-networth-sub">est. total</div>
-        </div>
-      </div>
-
-      <!-- Retention — shown for engaged users -->
-      <div class="card" id="v21-retention-card" style="display:none;margin-bottom:var(--s3);">
-        <div class="card-eyebrow navy" style="margin-bottom:8px;">Stay in motion</div>
-        <div class="card-title" style="font-size:18px;margin-bottom:4px;">Your check-in hub</div>
-        <div class="card-sub" style="margin-bottom:14px;">Quick updates keep your plan current.</div>
-        <div class="v21-retention-chips">
-          <button class="v21-retention-chip" onclick="v21OpenCheckin()">📊 Weekly check-in</button>
-          <button class="v21-retention-chip" onclick="v21OpenMonthlyReview()">📅 Monthly review</button>
-          <button class="v21-retention-chip" onclick="v21OpenLifeEvents()">⚡ Life event</button>
-        </div>
-      </div>
-
-      <!-- Premium — shown only for eligible users per BSE -->
-      <div class="v21-premium-teaser" id="v21-premium-teaser" style="display:none;">
-        <div class="v21-premium-tag">✦ Tracent Edge</div>
-        <div class="v21-premium-title">Keep your plan moving</div>
-        <div class="v21-premium-sub">Tracent Edge extends your free plan with deeper reviews, saved scenarios, and contextual guidance.</div>
-        <div class="v21-premium-bullets">
-          <div class="v21-premium-bullet">Track how your position changes month to month</div>
-          <div class="v21-premium-bullet">Model decisions before you make them</div>
-          <div class="v21-premium-bullet">Get contextual AI guidance when life changes</div>
-          <div class="v21-premium-bullet">Save scenarios and compare your best path forward</div>
-        </div>
-        <button class="btn-cta" onclick="showPaywall('edge')" style="margin-top:16px;position:relative;z-index:1;">Unlock Edge →</button>
-        <div class="v21-disclaimer" style="position:relative;z-index:1;margin-top:10px;">Cancel anytime · Not financial advice</div>
-      </div>
-
-      <!-- Empty state before analysis -->
-      <div id="home-empty" style="text-align:center;padding:48px 24px 24px;">
-        <div style="width:72px;height:72px;background:linear-gradient(160deg,var(--navy-mid),var(--navy));border-radius:20px;display:flex;align-items:center;justify-content:center;margin:0 auto 20px;">
-          <svg width="32" height="32" viewBox="0 0 120 120" fill="none">
-            <defs><linearGradient id="eg" x1="0" y1="0" x2="120" y2="120"><stop offset="0%" stop-color="#004E7C"/><stop offset="100%" stop-color="#001F33"/></linearGradient></defs>
-            <rect width="120" height="120" rx="26" fill="url(#eg)"/>
-            <text x="10" y="91" font-family="DM Serif Display,serif" font-size="86" fill="white" letter-spacing="-4">T.</text>
-            <circle cx="90" cy="88" r="9" fill="#00A8E8"/>
-            <rect x="10" y="97" width="66" height="6" rx="3" fill="#00A8E8"/>
-          </svg>
-        </div>
-        <div style="font-family:var(--font-display);font-size:22px;color:var(--navy);margin-bottom:8px;">Your financial position</div>
-        <div style="font-size:14px;color:var(--gray-4);line-height:1.65;max-width:260px;margin:0 auto 24px;">Tell Tracent about your finances to see your plan.</div>
-        <button class="btn-cta" onclick="confirmNewAnalysis()" style="max-width:260px;">Get my Tracent score →</button>
-      </div>
-
-      <!-- Position label slot -->
-      <div id="v21-position-label" style="display:none;"></div>
-
-      <!-- Compat stubs: IDs the engine needs, kept hidden -->
-      <div style="display:none!important" aria-hidden="true">
-        <!-- [CLEANED] Dead readiness-old compat IDs removed -->
-        <!-- Readiness card (v2) — kept hidden; BSE focus card supersedes this -->
-        <div class="readiness-card" id="hm-readiness-card" onclick="openScoreBreakdown()">
-          <div class="readiness-inner">
-            <div class="readiness-ring-wrap">
-              <svg class="readiness-arc-svg" width="72" height="72" viewBox="0 0 72 72">
-                <circle class="readiness-track" cx="36" cy="36" r="26" fill="none" stroke-width="5"/>
-                <circle class="readiness-arc" id="readiness-arc" cx="36" cy="36" r="26" fill="none" stroke-width="5"/>
-              </svg>
-              <div class="readiness-pct-text" id="readiness-pct">—</div>
-            </div>
-            <div class="readiness-text">
-              <div class="readiness-label" id="readiness-label">Financial Readiness</div>
-              <div class="readiness-sub" id="readiness-sub">Tap to see full breakdown</div>
-              <div id="state-median-home-note"></div>
-            </div>
-          </div>
-          <div class="readiness-prog-wrap">
-            <div class="prog-bar-wrap">
-              <div class="prog-bar-fill" id="readiness-bar" style="background:var(--sky);width:0%;"></div>
-            </div>
+            <div
+              style="font-size:10px;color:var(--gray-3);margin-top:10px;padding-top:10px;border-top:1px solid var(--gray-1);">
+              For planning purposes only · Not financial advice</div>
           </div>
         </div>
-        <!-- Other compat IDs -->
-        <div id="hm-market-bar-wrap"></div><div id="hm-market-pct"></div>
-        <div id="hm-market-fill"></div><div id="hm-market-msg"></div>
-        <div id="hm-score-factors"></div><div id="hm-score-factors-list"></div>
-        <div id="hm-teaser-strip"></div><div id="hm-nw-val-blur"></div>
-        <div id="dynamic-bottom-cards"></div>
-        <!-- Legacy NBM compat -->
-        <div class="nbm-card" id="next-best-moves-section">
-          <div class="nbm-body" id="next-best-moves-container"></div>
+
+        <!-- ── Secondary modules — BSE decides visibility ── -->
+        <div id="v21-mode-rail-home" style="display:none;"></div>
+        <div id="v21-driver-strip" style="display:none;"></div>
+        <div id="v21-mode-strategy" style="display:none;"></div>
+
+        <!-- Metrics grid — suppressed for focused users, shown for stable/optimizer -->
+        <div class="home-metrics" id="home-metrics" style="display:none;">
+          <div class="home-metric" id="hm-cashflow"
+            onclick="switchTab('debtrank');setNav(document.getElementById('nav-debt'))">
+            <div class="home-metric-lbl">Free cash flow</div>
+            <div class="home-metric-val" id="hm-cashflow-val">—</div>
+            <div class="home-metric-sub" id="hm-cashflow-sub">per month</div>
+          </div>
+          <div class="home-metric" id="hm-dti"
+            onclick="switchTab('debtrank');setNav(document.getElementById('nav-debt'))">
+            <div class="home-metric-lbl">DTI ratio</div>
+            <div class="home-metric-val" id="hm-dti-val">—</div>
+            <div class="home-metric-sub" id="hm-dti-sub">debt to income</div>
+          </div>
+          <div class="home-metric" id="hm-debt"
+            onclick="switchTab('debtrank');setNav(document.getElementById('nav-debt'))">
+            <div class="home-metric-lbl">Total debt</div>
+            <div class="home-metric-val" id="hm-debt-val">—</div>
+            <div class="home-metric-sub" id="hm-debt-sub">outstanding</div>
+          </div>
+          <div class="home-metric" id="hm-networth"
+            onclick="switchTab('progress');showProgressSub('networth');setNav(document.getElementById('nav-progress'))">
+            <div class="home-metric-lbl">Net worth</div>
+            <div class="home-metric-val" id="hm-networth-val">—</div>
+            <div class="home-metric-sub" id="hm-networth-sub">est. total</div>
+          </div>
         </div>
-      </div>
 
-    </div><!-- end tab-home -->
+        <!-- Retention — shown for engaged users -->
+        <div class="card" id="v21-retention-card" style="display:none;margin-bottom:var(--s3);">
+          <div class="card-eyebrow navy" style="margin-bottom:8px;">Stay in motion</div>
+          <div class="card-title" style="font-size:18px;margin-bottom:4px;">Your check-in hub</div>
+          <div class="card-sub" style="margin-bottom:14px;">Quick updates keep your plan current.</div>
+          <div class="v21-retention-chips">
+            <button class="v21-retention-chip" onclick="v21OpenCheckin()">📊 Weekly check-in</button>
+            <button class="v21-retention-chip" onclick="v21OpenMonthlyReview()">📅 Monthly review</button>
+            <button class="v21-retention-chip" onclick="v21OpenLifeEvents()">⚡ Life event</button>
+          </div>
+        </div>
+
+        <!-- Premium — shown only for eligible users per BSE -->
+        <div class="v21-premium-teaser" id="v21-premium-teaser" style="display:none;">
+          <div class="v21-premium-tag">✦ Tracent Edge</div>
+          <div class="v21-premium-title">Keep your plan moving</div>
+          <div class="v21-premium-sub">Tracent Edge extends your free plan with deeper reviews, saved scenarios, and
+            contextual guidance.</div>
+          <div class="v21-premium-bullets">
+            <div class="v21-premium-bullet">Track how your position changes month to month</div>
+            <div class="v21-premium-bullet">Model decisions before you make them</div>
+            <div class="v21-premium-bullet">Get contextual AI guidance when life changes</div>
+            <div class="v21-premium-bullet">Save scenarios and compare your best path forward</div>
+          </div>
+          <button class="btn-cta" onclick="showPaywall('edge')"
+            style="margin-top:16px;position:relative;z-index:1;">Unlock Edge →</button>
+          <div class="v21-disclaimer" style="position:relative;z-index:1;margin-top:10px;">Cancel anytime · Not
+            financial advice</div>
+        </div>
+
+        <!-- Empty state before analysis -->
+        <div id="home-empty" style="text-align:center;padding:48px 24px 24px;">
+          <div
+            style="width:72px;height:72px;background:linear-gradient(160deg,var(--navy-mid),var(--navy));border-radius:20px;display:flex;align-items:center;justify-content:center;margin:0 auto 20px;">
+            <svg width="32" height="32" viewBox="0 0 120 120" fill="none">
+              <defs>
+                <linearGradient id="eg" x1="0" y1="0" x2="120" y2="120">
+                  <stop offset="0%" stop-color="#004E7C" />
+                  <stop offset="100%" stop-color="#001F33" />
+                </linearGradient>
+              </defs>
+              <rect width="120" height="120" rx="26" fill="url(#eg)" />
+              <text x="10" y="91" font-family="DM Serif Display,serif" font-size="86" fill="white"
+                letter-spacing="-4">T.</text>
+              <circle cx="90" cy="88" r="9" fill="#00A8E8" />
+              <rect x="10" y="97" width="66" height="6" rx="3" fill="#00A8E8" />
+            </svg>
+          </div>
+          <div style="font-family:var(--font-display);font-size:22px;color:var(--navy);margin-bottom:8px;">Your
+            financial position</div>
+          <div style="font-size:14px;color:var(--gray-4);line-height:1.65;max-width:260px;margin:0 auto 24px;">Tell
+            Tracent about your finances to see your plan.</div>
+          <button class="btn-cta" onclick="confirmNewAnalysis()" style="max-width:260px;">Get my Tracent score
+            →</button>
+        </div>
+
+        <!-- Position label slot -->
+        <div id="v21-position-label" style="display:none;"></div>
+
+        <!-- Compat stubs: IDs the engine needs, kept hidden -->
+        <div style="display:none!important" aria-hidden="true">
+          <!-- [CLEANED] Dead readiness-old compat IDs removed -->
+          <!-- Readiness card (v2) — kept hidden; BSE focus card supersedes this -->
+          <div class="readiness-card" id="hm-readiness-card" onclick="openScoreBreakdown()">
+            <div class="readiness-inner">
+              <div class="readiness-ring-wrap">
+                <svg class="readiness-arc-svg" width="72" height="72" viewBox="0 0 72 72">
+                  <circle class="readiness-track" cx="36" cy="36" r="26" fill="none" stroke-width="5" />
+                  <circle class="readiness-arc" id="readiness-arc" cx="36" cy="36" r="26" fill="none"
+                    stroke-width="5" />
+                </svg>
+                <div class="readiness-pct-text" id="readiness-pct">—</div>
+              </div>
+              <div class="readiness-text">
+                <div class="readiness-label" id="readiness-label">Financial Readiness</div>
+                <div class="readiness-sub" id="readiness-sub">Tap to see full breakdown</div>
+                <div id="state-median-home-note"></div>
+              </div>
+            </div>
+            <div class="readiness-prog-wrap">
+              <div class="prog-bar-wrap">
+                <div class="prog-bar-fill" id="readiness-bar" style="background:var(--sky);width:0%;"></div>
+              </div>
+            </div>
+          </div>
+          <!-- Other compat IDs -->
+          <div id="hm-market-bar-wrap"></div>
+          <div id="hm-market-pct"></div>
+          <div id="hm-market-fill"></div>
+          <div id="hm-market-msg"></div>
+          <div id="hm-score-factors"></div>
+          <div id="hm-score-factors-list"></div>
+          <div id="hm-teaser-strip"></div>
+          <div id="hm-nw-val-blur"></div>
+          <div id="dynamic-bottom-cards"></div>
+          <!-- Legacy NBM compat -->
+          <div class="nbm-card" id="next-best-moves-section">
+            <div class="nbm-body" id="next-best-moves-container"></div>
+          </div>
+        </div>
+
+      </div><!-- end tab-home -->
 
 
-    <!-- ══ ADVICE TAB ══ -->
-    <div id="tab-recommend" class="tab-panel">
+      <!-- ══ ADVICE TAB ══ -->
+      <div id="tab-recommend" class="tab-panel">
 
-      <!-- Empty state -->
-      <div id="ai-empty" class="empty-state">
-        <div class="empty-icon">💡</div>
-        <div class="empty-title">Your advice is waiting</div>
-        <div class="empty-sub">Complete your profile on the Score tab and your personalised goal-led recommendations appear instantly.</div>
-        <button class="btn-cta" onclick="switchTab('home');setNav(document.getElementById('nav-home'))" style="max-width:240px;">Go to Score tab →</button>
-      </div>
+        <!-- Empty state -->
+        <div id="ai-empty" class="empty-state">
+          <div class="empty-icon">💡</div>
+          <div class="empty-title">Your advice is waiting</div>
+          <div class="empty-sub">Complete your profile on the Score tab and your personalised goal-led recommendations
+            appear instantly.</div>
+          <button class="btn-cta" onclick="switchTab('home');setNav(document.getElementById('nav-home'))"
+            style="max-width:240px;">Go to Score tab →</button>
+        </div>
 
-      <!-- Content after analysis -->
-      <div id="advice-content" style="display:none;">
+        <!-- Content after analysis -->
+        <div id="advice-content" style="display:none;">
 
-        <!-- Goal hero -->
-        <div class="goal-hero" id="goal-focus-card" style="display:none;">
-          <div class="goal-hero-inner">
-            <div class="goal-hero-label">Your main focus</div>
-            <div class="goal-hero-row">
-              <div class="goal-hero-icon" id="goal-focus-icon"></div>
+          <!-- Goal hero -->
+          <div class="goal-hero" id="goal-focus-card" style="display:none;">
+            <div class="goal-hero-inner">
+              <div class="goal-hero-label">Your main focus</div>
+              <div class="goal-hero-row">
+                <div class="goal-hero-icon" id="goal-focus-icon"></div>
+                <div>
+                  <div class="goal-hero-title" id="goal-focus-title"></div>
+                </div>
+              </div>
+              <div class="goal-hero-sub" id="goal-focus-sub"></div>
+              <div class="goal-milestone" id="goal-focus-milestone" style="display:none;">
+                Next milestone: <span id="goal-focus-milestone-text"></span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Main rec card -->
+          <div class="card" id="main-rec-card" style="margin-bottom:var(--s3);">
+            <div id="main-rec-status" style="height:4px;background:var(--sky);"></div>
+            <div class="card-body">
+              <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+                <div class="card-eyebrow navy" id="rec-eyebrow">📊 Your position</div>
+              </div>
+              <div class="card-title" id="rec-headline" style="font-size:18px;margin-bottom:8px;"></div>
+              <div id="rec-why" style="font-size:13px;color:var(--gray-4);line-height:1.7;margin-bottom:16px;"></div>
+              <div class="metric-grid-3">
+                <div class="metric-cell">
+                  <div class="metric-val" id="metric-dti">—</div>
+                  <div class="metric-lbl">DTI</div>
+                </div>
+                <div class="metric-cell">
+                  <div class="metric-val" id="metric-savings">—</div>
+                  <div class="metric-lbl" id="metric-savings-label">Cash left</div>
+                </div>
+                <div class="metric-cell">
+                  <div class="metric-val" id="metric-breakeven">—</div>
+                  <div class="metric-lbl" id="metric-breakeven-label">Total debt</div>
+                </div>
+              </div>
+              <div id="rec-recheck-bar" style="font-size:11px;color:var(--gray-3);text-align:center;padding-top:12px;">
+              </div>
+            </div>
+          </div>
+
+          <!-- AI section -->
+          <div style="margin-bottom:6px;">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
               <div>
-                <div class="goal-hero-title" id="goal-focus-title"></div>
+                <div style="font-size:15px;font-weight:700;color:var(--navy);">AI Advice</div>
+                <div style="font-size:11px;color:var(--gray-3);margin-top:2px;display:flex;align-items:center;gap:5px;">
+                  <span id="ai-advice-goal-label">Personalised to your numbers</span>
+                  <span
+                    style="background:linear-gradient(135deg,var(--navy-mid),var(--navy));color:var(--sky);font-size:10px;font-weight:700;letter-spacing:1px;padding:2px 8px;border-radius:var(--r-pill);">EDGE</span>
+                </div>
+                <div style="font-size:10px;color:var(--gray-3);margin-top:3px;">AI-generated · Not financial advice ·
+                  Educational only</div>
               </div>
-            </div>
-            <div class="goal-hero-sub" id="goal-focus-sub"></div>
-            <div class="goal-milestone" id="goal-focus-milestone" style="display:none;">
-              Next milestone: <span id="goal-focus-milestone-text"></span>
-            </div>
-          </div>
-        </div>
-
-        <!-- Main rec card -->
-        <div class="card" id="main-rec-card" style="margin-bottom:var(--s3);">
-          <div id="main-rec-status" style="height:4px;background:var(--sky);"></div>
-          <div class="card-body">
-            <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
-              <div class="card-eyebrow navy" id="rec-eyebrow">📊 Your position</div>
-            </div>
-            <div class="card-title" id="rec-headline" style="font-size:18px;margin-bottom:8px;"></div>
-            <div id="rec-why" style="font-size:13px;color:var(--gray-4);line-height:1.7;margin-bottom:16px;"></div>
-            <div class="metric-grid-3">
-              <div class="metric-cell">
-                <div class="metric-val" id="metric-dti">—</div>
-                <div class="metric-lbl">DTI</div>
-              </div>
-              <div class="metric-cell">
-                <div class="metric-val" id="metric-savings">—</div>
-                <div class="metric-lbl" id="metric-savings-label">Cash left</div>
-              </div>
-              <div class="metric-cell">
-                <div class="metric-val" id="metric-breakeven">—</div>
-                <div class="metric-lbl" id="metric-breakeven-label">Total debt</div>
-              </div>
-            </div>
-            <div id="rec-recheck-bar" style="font-size:11px;color:var(--gray-3);text-align:center;padding-top:12px;"></div>
-          </div>
-        </div>
-
-        <!-- AI section -->
-        <div style="margin-bottom:6px;">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
-            <div>
-              <div style="font-size:15px;font-weight:700;color:var(--navy);">AI Advice</div>
-              <div style="font-size:11px;color:var(--gray-3);margin-top:2px;display:flex;align-items:center;gap:5px;">
-                <span id="ai-advice-goal-label">Personalised to your numbers</span>
-                <span style="background:linear-gradient(135deg,var(--navy-mid),var(--navy));color:var(--sky);font-size:10px;font-weight:700;letter-spacing:1px;padding:2px 8px;border-radius:var(--r-pill);">EDGE</span>
-              </div>
-              <div style="font-size:10px;color:var(--gray-3);margin-top:3px;">AI-generated · Not financial advice · Educational only</div>
-            </div>
-            <button onclick="refreshAIAdvice()" id="ai-refresh-btn" style="display:flex;align-items:center;gap:4px;background:var(--sky-dim);border:1.5px solid var(--sky-border);color:var(--teal);padding:7px 13px;border-radius:var(--r-pill);font-family:var(--font-body);font-size:11px;font-weight:700;cursor:pointer;">
-              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M23 4v6h-6"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
-              Refresh
-            </button>
-          </div>
-
-          <!-- Loading -->
-          <div id="ai-loading" style="display:none;" class="card">
-            <div class="card-body" style="text-align:center;padding:32px 20px;">
-              <div style="width:36px;height:36px;border:2.5px solid var(--gray-2);border-top-color:var(--teal);border-radius:50%;animation:tracentSpin 0.75s linear infinite;margin:0 auto 14px;"></div>
-              <div style="font-size:13px;font-weight:600;color:var(--navy);margin-bottom:4px;">Building your advice</div>
-              <div style="font-size:12px;color:var(--gray-3);" id="ai-load-status">Reviewing your goal and numbers…</div>
-            </div>
-          </div>
-
-          <!-- Rec cards -->
-          <div id="ai-recs-wrap" style="display:none;">
-            <div id="ai-rec-1" class="rec-card"></div>
-            <div id="ai-rec-2"></div>
-            <div id="ai-rec-3"></div>
-          </div>
-        </div>
-
-        <!-- AI chat -->
-        <div id="ai-chat-wrap" style="display:none;">
-          <div class="chat-card">
-            <div class="chat-header">
-              <div class="chat-header-icon">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--sky)" stroke-width="2" stroke-linecap="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-              </div>
-              <div class="chat-header-title">Ask anything about your finances</div>
-            </div>
-            <div class="chat-messages" id="ai-msgs">
-              <div class="chat-bubble-ai" id="ai-chat-intro">I've reviewed your profile. Ask me anything about reaching your goal.</div>
-            </div>
-            <div class="chat-input-row">
-              <textarea id="ai-input" class="chat-textarea" placeholder="e.g. Should I pay off debt or save?" rows="1"
-                onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendAIChat();}"
-                onfocus="this.style.borderColor='var(--sky)'" onblur="this.style.borderColor='var(--gray-2)'"></textarea>
-              <button class="chat-send-btn" onclick="sendAIChat()">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+              <button onclick="refreshAIAdvice()" id="ai-refresh-btn"
+                style="display:flex;align-items:center;gap:4px;background:var(--sky-dim);border:1.5px solid var(--sky-border);color:var(--teal);padding:7px 13px;border-radius:var(--r-pill);font-family:var(--font-body);font-size:11px;font-weight:700;cursor:pointer;">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                  stroke-linecap="round">
+                  <path d="M23 4v6h-6" />
+                  <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10" />
+                </svg>
+                Refresh
               </button>
             </div>
-          </div>
-          <div id="ai-quick-chips" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:var(--s3);padding:0 2px;"></div>
-        </div>
 
-        <!-- Hidden compat -->
-        <div style="display:none!important">
-          <div id="ai-why-panel"><div id="ai-why-body"></div><div id="ai-action-box"></div><div id="ai-projection"><div id="ai-projection-txt"></div></div></div>
+            <!-- Loading -->
+            <div id="ai-loading" style="display:none;" class="card">
+              <div class="card-body" style="text-align:center;padding:32px 20px;">
+                <div
+                  style="width:36px;height:36px;border:2.5px solid var(--gray-2);border-top-color:var(--teal);border-radius:50%;animation:tracentSpin 0.75s linear infinite;margin:0 auto 14px;">
+                </div>
+                <div style="font-size:13px;font-weight:600;color:var(--navy);margin-bottom:4px;">Building your advice
+                </div>
+                <div style="font-size:12px;color:var(--gray-3);" id="ai-load-status">Reviewing your goal and numbers…
+                </div>
+              </div>
+            </div>
+
+            <!-- Rec cards -->
+            <div id="ai-recs-wrap" style="display:none;">
+              <div id="ai-rec-1" class="rec-card"></div>
+              <div id="ai-rec-2"></div>
+              <div id="ai-rec-3"></div>
+            </div>
+          </div>
+
+          <!-- AI chat -->
+          <div id="ai-chat-wrap" style="display:none;">
+            <div class="chat-card">
+              <div class="chat-header">
+                <div class="chat-header-icon">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--sky)" stroke-width="2"
+                    stroke-linecap="round">
+                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                  </svg>
+                </div>
+                <div class="chat-header-title">Ask anything about your finances</div>
+              </div>
+              <div class="chat-messages" id="ai-msgs">
+                <div class="chat-bubble-ai" id="ai-chat-intro">I've reviewed your profile. Ask me anything about
+                  reaching your goal.</div>
+              </div>
+              <div class="chat-input-row">
+                <textarea id="ai-input" class="chat-textarea" placeholder="e.g. Should I pay off debt or save?" rows="1"
+                  onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendAIChat();}"
+                  onfocus="this.style.borderColor='var(--sky)'"
+                  onblur="this.style.borderColor='var(--gray-2)'"></textarea>
+                <button class="chat-send-btn" onclick="sendAIChat()">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"
+                    stroke-linecap="round">
+                    <line x1="22" y1="2" x2="11" y2="13" />
+                    <polygon points="22 2 15 22 11 13 2 9 22 2" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+            <div id="ai-quick-chips" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:var(--s3);padding:0 2px;">
+            </div>
+          </div>
+
+          <!-- Hidden compat -->
+          <div style="display:none!important">
+            <div id="ai-why-panel">
+              <div id="ai-why-body"></div>
+              <div id="ai-action-box"></div>
+              <div id="ai-projection">
+                <div id="ai-projection-txt"></div>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -761,24 +974,39 @@
             <div class="card-eyebrow navy">Rate Simulator</div>
             <div class="card-title" style="font-size:20px;margin-bottom:6px;">Test any mortgage rate</div>
             <div class="card-sub">See instantly how a rate change affects your monthly payment and total interest.</div>
-            <div style="font-size:10px;color:var(--gray-3);margin-top:6px;padding:6px 0;border-top:1px solid var(--gray-1);">Projections are estimates based on your inputs · Not financial advice · Rates and costs may vary</div>
+            <div
+              style="font-size:10px;color:var(--gray-3);margin-top:6px;padding:6px 0;border-top:1px solid var(--gray-1);">
+              Projections are estimates based on your inputs · Not financial advice · Rates and costs may vary</div>
           </div>
           <div style="padding:0 var(--s3) var(--s3);" id="sim-rate-area">
             <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
-              <div style="font-size:28px;font-family:var(--font-display);color:var(--navy);" id="sim-rate-display">7.10%</div>
+              <div style="font-size:28px;font-family:var(--font-display);color:var(--navy);" id="sim-rate-display">7.10%
+              </div>
               <div id="rate-preset-today" style="font-size:11px;color:var(--gray-3);"></div>
             </div>
             <input type="range" id="rate-slider" min="3" max="12" step="0.05" value="7.1"
               oninput="updateSimulator(this.value)"
               style="width:100%;accent-color:var(--teal);height:6px;cursor:pointer;">
-            <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--gray-3);margin-top:4px;"><span>3%</span><span>12%</span></div>
+            <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--gray-3);margin-top:4px;">
+              <span>3%</span><span>12%</span>
+            </div>
           </div>
           <div class="metric-grid-3" style="margin:0 var(--s3) var(--s3);">
-            <div class="metric-cell"><div class="metric-val" id="sim-result-payment">—</div><div class="metric-lbl">Monthly P&I</div></div>
-            <div class="metric-cell"><div class="metric-val" id="sim-result-savings" style="color:var(--green);">—</div><div class="metric-lbl">vs current</div></div>
-            <div class="metric-cell"><div class="metric-val" id="sim-result-total">—</div><div class="metric-lbl">Total interest</div></div>
+            <div class="metric-cell">
+              <div class="metric-val" id="sim-result-payment">—</div>
+              <div class="metric-lbl">Monthly P&I</div>
+            </div>
+            <div class="metric-cell">
+              <div class="metric-val" id="sim-result-savings" style="color:var(--green);">—</div>
+              <div class="metric-lbl">vs current</div>
+            </div>
+            <div class="metric-cell">
+              <div class="metric-val" id="sim-result-total">—</div>
+              <div class="metric-lbl">Total interest</div>
+            </div>
           </div>
-          <div style="padding:0 var(--s3) var(--s3);font-size:13px;color:var(--gray-4);line-height:1.7;" id="sim-rec-text"></div>
+          <div style="padding:0 var(--s3) var(--s3);font-size:13px;color:var(--gray-4);line-height:1.7;"
+            id="sim-rec-text"></div>
         </div>
 
         <!-- Rate watch / alert -->
@@ -812,7 +1040,7 @@
           <div class="debt-countdown-left">
             <div class="debt-countdown-label">🏁 Debt-free date</div>
             <div class="debt-countdown-date" id="debt-free-date">Calculating…</div>
-            <div class="debt-countdown-sub"  id="debt-free-sub">Pay minimums on all debts</div>
+            <div class="debt-countdown-sub" id="debt-free-sub">Pay minimums on all debts</div>
           </div>
           <div class="debt-countdown-right">
             <div class="debt-countdown-months" id="debt-free-months">—</div>
@@ -826,10 +1054,12 @@
             <div class="card-eyebrow navy" style="margin-bottom:10px;">Your payoff strategy</div>
             <div class="method-toggle" style="margin-bottom:0;">
               <button class="method-btn active" id="method-avalanche" onclick="setDebtMethod('avalanche',this)">
-                ⚡ Avalanche<br><span style="font-weight:400;font-size:10px;color:inherit;opacity:0.6;">Highest rate first · saves the most interest</span>
+                ⚡ Avalanche<br><span style="font-weight:400;font-size:10px;color:inherit;opacity:0.6;">Highest rate
+                  first · saves the most interest</span>
               </button>
               <button class="method-btn" id="method-snowball" onclick="setDebtMethod('snowball',this)">
-                ❄️ Snowball<br><span style="font-weight:400;font-size:10px;color:inherit;opacity:0.6;">Smallest balance first · builds momentum</span>
+                ❄️ Snowball<br><span style="font-weight:400;font-size:10px;color:inherit;opacity:0.6;">Smallest balance
+                  first · builds momentum</span>
               </button>
             </div>
           </div>
@@ -838,22 +1068,29 @@
         <!-- Ranked debt list (populated by engine) -->
         <div id="debt-rank-list" style="margin-bottom:var(--s3);"></div>
 
+        <!-- Cascade summary card (populated by engine) -->
+        <div id="debt-summary" style="margin-bottom:var(--s3);"></div>
+
         <!-- Extra payments accelerator -->
         <div class="card" id="bse-debt-accelerator-card">
           <div class="card-body-sm">
             <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
               <div class="card-eyebrow navy">Extra monthly payment</div>
-              <div style="font-family:var(--font-display);font-size:18px;color:var(--teal);" id="debt-accelerator-val">$0</div>
+              <div style="font-family:var(--font-display);font-size:18px;color:var(--teal);" id="debt-accelerator-val">
+                $0</div>
             </div>
             <input type="range" id="debt-accelerator" min="0" max="1000" step="25" value="0"
               oninput="updateDebtAccelerator(this.value)"
               style="width:100%;accent-color:var(--teal);height:6px;cursor:pointer;margin-bottom:6px;">
-            <div style="font-size:12px;color:var(--gray-3);" id="debt-accelerator-impact">Drag to see how extra payments reduce your payoff time</div>
+            <div style="font-size:12px;color:var(--gray-3);" id="debt-accelerator-impact">Drag to see how extra payments
+              reduce your payoff time</div>
           </div>
         </div>
 
         <!-- Hidden compat -->
-        <div style="display:none!important"><div id="debt-timeline-chart"></div></div>
+        <div style="display:none!important">
+          <div id="debt-timeline-chart"></div>
+        </div>
 
       </div><!-- end bse-debt-strategy -->
 
@@ -864,10 +1101,10 @@
 
       <!-- Sub-nav -->
       <div class="prog-subnav">
-        <button class="prog-pill active" id="ppill-networth"    onclick="showProgressSub('networth')">Net Worth</button>
-        <button class="prog-pill"        id="ppill-retirement"  onclick="showProgressSub('retirement')">Retirement</button>
-        <button class="prog-pill"        id="ppill-career"      onclick="showProgressSub('career')">Career</button>
-        <button class="prog-pill"        id="ppill-goals"       onclick="showProgressSub('goals')">Goals</button>
+        <button class="prog-pill active" id="ppill-networth" onclick="showProgressSub('networth')">Net Worth</button>
+        <button class="prog-pill" id="ppill-retirement" onclick="showProgressSub('retirement')">Retirement</button>
+        <button class="prog-pill" id="ppill-career" onclick="showProgressSub('career')">Career</button>
+        <button class="prog-pill" id="ppill-goals" onclick="showProgressSub('goals')">Goals</button>
       </div>
 
       <!-- NET WORTH -->
@@ -885,30 +1122,40 @@
           <div class="nw-bar-card">
             <div class="nw-bar-lbl">Assets</div>
             <div class="nw-bar-val" id="nw-assets-val">—</div>
-            <div class="prog-bar-wrap"><div class="prog-bar-fill" id="nw-assets-bar" style="background:var(--teal);width:0%;"></div></div>
+            <div class="prog-bar-wrap">
+              <div class="prog-bar-fill" id="nw-assets-bar" style="background:var(--teal);width:0%;"></div>
+            </div>
           </div>
           <div class="nw-bar-card">
             <div class="nw-bar-lbl">Liabilities</div>
             <div class="nw-bar-val" id="nw-liab-val">—</div>
-            <div class="prog-bar-wrap"><div class="prog-bar-fill" id="nw-liab-bar" style="background:var(--red);width:0%;"></div></div>
+            <div class="prog-bar-wrap">
+              <div class="prog-bar-fill" id="nw-liab-bar" style="background:var(--red);width:0%;"></div>
+            </div>
           </div>
         </div>
 
         <!-- Breakdown -->
         <div class="card" id="nw-breakdown-unlocked">
           <div class="card-body">
-            <div style="font-size:11px;font-weight:700;color:var(--gray-3);text-transform:uppercase;letter-spacing:1px;margin-bottom:14px;">Assets</div>
+            <div
+              style="font-size:11px;font-weight:700;color:var(--gray-3);text-transform:uppercase;letter-spacing:1px;margin-bottom:14px;">
+              Assets</div>
             <div id="nw-asset-rows-unlocked"></div>
             <div class="divider" style="margin:14px 0;"></div>
-            <div style="font-size:11px;font-weight:700;color:var(--gray-3);text-transform:uppercase;letter-spacing:1px;margin-bottom:14px;">Liabilities</div>
+            <div
+              style="font-size:11px;font-weight:700;color:var(--gray-3);text-transform:uppercase;letter-spacing:1px;margin-bottom:14px;">
+              Liabilities</div>
             <div id="nw-liability-rows-unlocked"></div>
           </div>
         </div>
 
         <!-- Compat IDs -->
         <div style="display:none!important">
-          <div id="nw-asset-rows"></div><div id="nw-liability-rows"></div>
-          <div id="nw-paywall-card"></div><div id="nw-teaser-val"></div>
+          <div id="nw-asset-rows"></div>
+          <div id="nw-liability-rows"></div>
+          <div id="nw-paywall-card"></div>
+          <div id="nw-teaser-val"></div>
           <div id="nw-label"></div>
 
         </div>
@@ -922,7 +1169,8 @@
           <div class="career-verdict-inner">
             <div class="career-verdict-label">Market position · <span id="career-state-note"></span></div>
             <div class="career-verdict-num" id="career-verdict-number">—</div>
-            <div style="font-size:13px;color:rgba(255,255,255,0.45);margin-bottom:14px;" id="career-verdict-label"></div>
+            <div style="font-size:13px;color:rgba(255,255,255,0.45);margin-bottom:14px;" id="career-verdict-label">
+            </div>
             <div class="prog-bar-wrap">
               <div class="prog-bar-fill" id="career-market-fill" style="background:var(--sky);width:0%;"></div>
             </div>
@@ -931,7 +1179,9 @@
               <div style="font-size:12px;color:rgba(255,255,255,0.45);" id="career-action-msg"></div>
             </div>
             <div style="margin-top:14px;">
-              <button id="career-action-btn" onclick="openSalaryNegotiation()" style="background:rgba(0,168,232,0.15);border:1px solid rgba(0,168,232,0.3);color:rgba(255,255,255,0.8);padding:9px 18px;border-radius:var(--r-pill);font-family:var(--font-body);font-size:12px;font-weight:700;cursor:pointer;">Get salary script →</button>
+              <button id="career-action-btn" onclick="openSalaryNegotiation()"
+                style="background:rgba(0,168,232,0.15);border:1px solid rgba(0,168,232,0.3);color:rgba(255,255,255,0.8);padding:9px 18px;border-radius:var(--r-pill);font-family:var(--font-body);font-size:12px;font-weight:700;cursor:pointer;">Get
+                salary script →</button>
             </div>
           </div>
         </div>
@@ -940,7 +1190,8 @@
         <div class="card" id="career-compare-card" style="display:none;">
           <div class="card-body">
             <div class="card-eyebrow navy" id="career-compare-title">Market benchmarks</div>
-            <div class="metric-grid-3" id="career-compare-cols" style="margin-top:12px;border-radius:var(--r-sm);overflow:hidden;"></div>
+            <div class="metric-grid-3" id="career-compare-cols"
+              style="margin-top:12px;border-radius:var(--r-sm);overflow:hidden;"></div>
           </div>
         </div>
 
@@ -949,8 +1200,11 @@
           <div class="card-body">
             <div class="card-eyebrow navy">10-Year Income Projection</div>
             <div style="display:flex;gap:16px;margin:10px 0 8px;flex-wrap:wrap;" id="career-proj-legend"></div>
-            <svg id="career-proj-chart" width="100%" height="110" viewBox="0 0 300 110" preserveAspectRatio="none" style="display:block;overflow:visible;"></svg>
-            <div id="career-proj-labels" style="display:flex;justify-content:space-between;font-size:11px;color:var(--gray-3);margin-top:4px;"></div>
+            <svg id="career-proj-chart" width="100%" height="110" viewBox="0 0 300 110" preserveAspectRatio="none"
+              style="display:block;overflow:visible;"></svg>
+            <div id="career-proj-labels"
+              style="display:flex;justify-content:space-between;font-size:11px;color:var(--gray-3);margin-top:4px;">
+            </div>
           </div>
         </div>
 
@@ -965,17 +1219,20 @@
                   <span style="font-size:12px;color:var(--gray-4);">Raise size</span>
                   <span style="font-size:12px;font-weight:700;color:var(--sky);" id="promo-pct-lbl">+10%</span>
                 </div>
-                <input type="range" id="promo-pct-slider" min="3" max="50" value="10" oninput="updatePromoSim()" style="width:100%;accent-color:var(--sky);">
+                <input type="range" id="promo-pct-slider" min="3" max="50" value="10" oninput="updatePromoSim()"
+                  style="width:100%;accent-color:var(--sky);">
               </div>
               <div>
                 <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
                   <span style="font-size:12px;color:var(--gray-4);">When</span>
                   <span style="font-size:12px;font-weight:700;color:var(--sky);" id="promo-year-lbl">Year 2</span>
                 </div>
-                <input type="range" id="promo-year-slider" min="1" max="10" value="2" oninput="updatePromoSim()" style="width:100%;accent-color:var(--sky);">
+                <input type="range" id="promo-year-slider" min="1" max="10" value="2" oninput="updatePromoSim()"
+                  style="width:100%;accent-color:var(--sky);">
               </div>
             </div>
-            <div id="promo-sim-output" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px;"></div>
+            <div id="promo-sim-output"
+              style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px;"></div>
             <div id="promo-sim-insight" style="font-size:12px;color:var(--gray-4);line-height:1.6;"></div>
           </div>
         </div>
@@ -988,22 +1245,34 @@
             <div class="card-sub muted" style="margin-bottom:16px;">Record it and see how your trajectory changes.</div>
             <!-- type pills -->
             <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;">
-              <button class="promo-type-pill" onclick="selectPromoType(this,'promo')" style="background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.20);color:rgba(255,255,255,0.8);padding:7px 14px;border-radius:var(--r-pill);font-family:var(--font-body);font-size:12px;font-weight:600;cursor:pointer;">🏆 Promotion</button>
-              <button class="promo-type-pill" onclick="selectPromoType(this,'raise')" style="background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.12);color:rgba(255,255,255,0.55);padding:7px 14px;border-radius:var(--r-pill);font-family:var(--font-body);font-size:12px;font-weight:600;cursor:pointer;">📈 Raise</button>
-              <button class="promo-type-pill" onclick="selectPromoType(this,'newjob')" style="background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.12);color:rgba(255,255,255,0.55);padding:7px 14px;border-radius:var(--r-pill);font-family:var(--font-body);font-size:12px;font-weight:600;cursor:pointer;">🚀 New job</button>
-              <button class="promo-type-pill" onclick="selectPromoType(this,'bonus')" style="background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.12);color:rgba(255,255,255,0.55);padding:7px 14px;border-radius:var(--r-pill);font-family:var(--font-body);font-size:12px;font-weight:600;cursor:pointer;">💰 Bonus</button>
+              <button class="promo-type-pill" onclick="selectPromoType(this,'promo')"
+                style="background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.20);color:rgba(255,255,255,0.8);padding:7px 14px;border-radius:var(--r-pill);font-family:var(--font-body);font-size:12px;font-weight:600;cursor:pointer;">🏆
+                Promotion</button>
+              <button class="promo-type-pill" onclick="selectPromoType(this,'raise')"
+                style="background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.12);color:rgba(255,255,255,0.55);padding:7px 14px;border-radius:var(--r-pill);font-family:var(--font-body);font-size:12px;font-weight:600;cursor:pointer;">📈
+                Raise</button>
+              <button class="promo-type-pill" onclick="selectPromoType(this,'newjob')"
+                style="background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.12);color:rgba(255,255,255,0.55);padding:7px 14px;border-radius:var(--r-pill);font-family:var(--font-body);font-size:12px;font-weight:600;cursor:pointer;">🚀
+                New job</button>
+              <button class="promo-type-pill" onclick="selectPromoType(this,'bonus')"
+                style="background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.12);color:rgba(255,255,255,0.55);padding:7px 14px;border-radius:var(--r-pill);font-family:var(--font-body);font-size:12px;font-weight:600;cursor:pointer;">💰
+                Bonus</button>
             </div>
             <input type="hidden" id="promo-type" value="promo">
             <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:14px;">
-              <input type="text" id="promo-title" class="field-input" placeholder="e.g. Senior Manager" autocomplete="off">
+              <input type="text" id="promo-title" class="field-input" placeholder="e.g. Senior Manager"
+                autocomplete="off">
               <div class="field-prefix-wrap">
                 <span class="field-prefix-sign" aria-hidden="true">$</span>
-                <input type="text" inputmode="decimal" id="promo-income" class="field-input" placeholder="New annual salary" autocomplete="off">
+                <input type="text" inputmode="decimal" id="promo-income" class="field-input"
+                  placeholder="New annual salary" autocomplete="off">
               </div>
             </div>
             <button class="btn-cta" onclick="logCareerEvent()">Log achievement →</button>
             <div id="career-history-wrap" style="display:none;margin-top:16px;">
-              <div style="font-size:11px;font-weight:700;color:rgba(255,255,255,0.35);letter-spacing:1px;text-transform:uppercase;margin-bottom:10px;">History</div>
+              <div
+                style="font-size:11px;font-weight:700;color:rgba(255,255,255,0.35);letter-spacing:1px;text-transform:uppercase;margin-bottom:10px;">
+                History</div>
               <div id="career-history-list"></div>
             </div>
           </div>
@@ -1026,21 +1295,25 @@
           <div class="card-body-sm">
             <div class="card-eyebrow navy" style="margin-bottom:10px;">Add a goal</div>
             <div style="display:flex;flex-direction:column;gap:10px;">
-              <input type="text" id="goal-name-input" class="field-input" placeholder="Goal name e.g. Emergency fund" autocomplete="off">
+              <input type="text" id="goal-name-input" class="field-input" placeholder="Goal name e.g. Emergency fund"
+                autocomplete="off">
               <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
                 <div class="field-prefix-wrap">
                   <span class="field-prefix-sign" aria-hidden="true">$</span>
-                  <input type="text" inputmode="decimal" id="goal-target-input" class="field-input" placeholder="Target" autocomplete="off">
+                  <input type="text" inputmode="decimal" id="goal-target-input" class="field-input" placeholder="Target"
+                    autocomplete="off">
                 </div>
                 <div class="field-prefix-wrap">
                   <span class="field-prefix-sign" aria-hidden="true">$</span>
-                  <input type="text" inputmode="decimal" id="goal-current-input" class="field-input" placeholder="Saved" autocomplete="off">
+                  <input type="text" inputmode="decimal" id="goal-current-input" class="field-input" placeholder="Saved"
+                    autocomplete="off">
                 </div>
               </div>
               <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
                 <div class="field-prefix-wrap">
                   <span class="field-prefix-sign" aria-hidden="true">$</span>
-                  <input type="text" inputmode="decimal" id="goal-monthly-input" class="field-input" placeholder="Monthly" autocomplete="off">
+                  <input type="text" inputmode="decimal" id="goal-monthly-input" class="field-input"
+                    placeholder="Monthly" autocomplete="off">
                 </div>
                 <select id="goal-reminder-input" class="field-input">
                   <option value="none">No reminder</option>
@@ -1083,7 +1356,9 @@
           <span class="settings-row-val" id="p-car-debt">—</span>
         </div>
         <div class="settings-row" style="border-bottom:none;">
-          <button onclick="confirmNewAnalysis()" style="width:100%;padding:13px;background:transparent;color:var(--teal);border:1.5px solid var(--sky-border);border-radius:var(--r-pill);font-family:var(--font-body);font-size:14px;font-weight:600;cursor:pointer;">Update my numbers ✏️</button>
+          <button onclick="confirmNewAnalysis()"
+            style="width:100%;padding:13px;background:transparent;color:var(--teal);border:1.5px solid var(--sky-border);border-radius:var(--r-pill);font-family:var(--font-body);font-size:14px;font-weight:600;cursor:pointer;">Update
+            my numbers ✏️</button>
         </div>
       </div>
 
@@ -1091,16 +1366,20 @@
       <div class="settings-section">
         <div class="settings-header">🔔 Rate Alerts</div>
         <div id="settings-email-free" style="padding:16px 20px;">
-          <div style="font-size:13px;color:var(--navy);margin-bottom:10px;">Get notified when rates drop to your target</div>
+          <div style="font-size:13px;color:var(--navy);margin-bottom:10px;">Get notified when rates drop to your target
+          </div>
           <div style="display:flex;gap:8px;">
-            <input type="email" id="settings-email-input" class="field-input" placeholder="your@email.com" style="flex:1;height:46px;">
-            <button onclick="saveAlertEmail()" style="padding:0 18px;background:var(--teal);color:white;border:none;border-radius:var(--r-sm);font-family:var(--font-body);font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap;">Save</button>
+            <input type="email" id="settings-email-input" class="field-input" placeholder="your@email.com"
+              style="flex:1;height:46px;">
+            <button onclick="saveAlertEmail()"
+              style="padding:0 18px;background:var(--teal);color:white;border:none;border-radius:var(--r-sm);font-family:var(--font-body);font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap;">Save</button>
           </div>
         </div>
         <div id="settings-email-confirmed" style="display:none;padding:16px 20px;">
           <div style="font-size:13px;color:var(--green);font-weight:600;margin-bottom:4px;">✓ Alert active</div>
           <div style="font-size:12px;color:var(--gray-3);">Notifying: <span id="settings-email-display"></span></div>
-          <button onclick="resetAlertEmail()" style="margin-top:8px;font-size:12px;color:var(--gray-3);background:none;border:none;cursor:pointer;padding:0;">Remove</button>
+          <button onclick="resetAlertEmail()"
+            style="margin-top:8px;font-size:12px;color:var(--gray-3);background:none;border:none;cursor:pointer;padding:0;">Remove</button>
         </div>
       </div>
 
@@ -1108,8 +1387,10 @@
       <div class="settings-section">
         <div class="settings-header">Tracent<span style="color:var(--sky);">.</span> Edge</div>
         <div style="padding:16px 20px;">
-          <div style="font-size:13px;color:var(--gray-4);line-height:1.65;margin-bottom:6px;">Keep your plan moving with deeper reviews, saved scenarios, and contextual guidance built around your numbers.</div>
-          <div style="font-size:12px;color:var(--gray-3);line-height:1.55;margin-bottom:14px;">Track changes month to month · Model decisions before making them · AI guidance when life changes</div>
+          <div style="font-size:13px;color:var(--gray-4);line-height:1.65;margin-bottom:6px;">Keep your plan moving with
+            deeper reviews, saved scenarios, and contextual guidance built around your numbers.</div>
+          <div style="font-size:12px;color:var(--gray-3);line-height:1.55;margin-bottom:14px;">Track changes month to
+            month · Model decisions before making them · AI guidance when life changes</div>
           <button onclick="showPaywall('settings')" class="btn-cta">Unlock Edge →</button>
         </div>
       </div>
@@ -1122,11 +1403,13 @@
           <span class="settings-row-val">Beta</span>
         </div>
         <div class="settings-row" style="border-bottom:none;">
-          <span class="settings-row-label" style="font-size:12px;color:var(--gray-3);">Not financial advice. For educational purposes only.</span>
+          <span class="settings-row-label" style="font-size:12px;color:var(--gray-3);">Not financial advice. For
+            educational purposes only.</span>
         </div>
       </div>
 
-      <div style="text-align:center;font-size:12px;color:var(--gray-3);padding:8px 0 var(--s3);">© 2026 Tracent<span style="color:var(--sky);">.</span> Financial Inc.</div>
+      <div style="text-align:center;font-size:12px;color:var(--gray-3);padding:8px 0 var(--s3);">© 2026 Tracent<span
+          style="color:var(--sky);">.</span> Financial Inc.</div>
 
     </div><!-- end tab-settings -->
 
@@ -1136,37 +1419,45 @@
   <nav class="bottom-nav bse-nav" id="bottom-nav" style="display:none;" role="navigation" aria-label="Main navigation">
 
     <!-- Focus — BSE home shell -->
-    <button class="bse-nav-item active" id="nav-home"
-      onclick="haptic('light');switchTab('home');setNav(this)" aria-label="Focus">
-      <svg class="bse-nav-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
-        <circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3" fill="currentColor" stroke="none"/>
+    <button class="bse-nav-item active" id="nav-home" onclick="haptic('light');switchTab('home');setNav(this)"
+      aria-label="Focus">
+      <svg class="bse-nav-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+        stroke-width="1.8" stroke-linecap="round">
+        <circle cx="12" cy="12" r="9" />
+        <circle cx="12" cy="12" r="3" fill="currentColor" stroke="none" />
       </svg>
       <span class="bse-nav-label">Focus</span>
     </button>
 
     <!-- Plan — debt + strategy -->
-    <button class="bse-nav-item" id="nav-debt"
-      onclick="haptic('light');switchTab('debtrank');setNav(this)" aria-label="Plan">
-      <svg class="bse-nav-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
-        <rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/>
+    <button class="bse-nav-item" id="nav-debt" onclick="haptic('light');switchTab('debtrank');setNav(this)"
+      aria-label="Debt">
+      <svg class="bse-nav-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+        stroke-width="1.8" stroke-linecap="round">
+        <rect x="2" y="3" width="20" height="14" rx="2" />
+        <line x1="8" y1="21" x2="16" y2="21" />
+        <line x1="12" y1="17" x2="12" y2="21" />
       </svg>
-      <span class="bse-nav-label">Plan</span>
+      <span class="bse-nav-label">Debt</span>
     </button>
 
     <!-- Explore — advice/AI -->
-    <button class="bse-nav-item" id="nav-advice"
-      onclick="haptic('light');switchTab('recommend');setNav(this)" aria-label="Explore">
-      <svg class="bse-nav-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
-        <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+    <button class="bse-nav-item" id="nav-advice" onclick="haptic('light');switchTab('recommend');setNav(this)"
+      aria-label="Explore">
+      <svg class="bse-nav-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+        stroke-width="1.8" stroke-linecap="round">
+        <circle cx="11" cy="11" r="8" />
+        <line x1="21" y1="21" x2="16.65" y2="16.65" />
       </svg>
       <span class="bse-nav-label">Explore</span>
     </button>
 
     <!-- Progress -->
-    <button class="bse-nav-item" id="nav-progress"
-      onclick="haptic('light');switchTab('progress');setNav(this)" aria-label="Progress">
-      <svg class="bse-nav-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
-        <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+    <button class="bse-nav-item" id="nav-progress" onclick="haptic('light');switchTab('progress');setNav(this)"
+      aria-label="Progress">
+      <svg class="bse-nav-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+        stroke-width="1.8" stroke-linecap="round">
+        <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
       </svg>
       <span class="bse-nav-label">Progress</span>
     </button>
@@ -1174,8 +1465,11 @@
     <!-- Settings — contextual -->
     <button class="bse-nav-item" id="nav-settings" style="display:none;"
       onclick="haptic('light');switchTab('settings');setNav(this)" aria-label="Settings">
-      <svg class="bse-nav-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
-        <circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+      <svg class="bse-nav-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+        stroke-width="1.8" stroke-linecap="round">
+        <circle cx="12" cy="12" r="3" />
+        <path
+          d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
       </svg>
       <span class="bse-nav-label">Settings</span>
     </button>
@@ -1183,516 +1477,639 @@
     <!-- Compat: rates — hidden unless BSE enables -->
     <button class="bse-nav-item" id="nav-rates" style="display:none;"
       onclick="haptic('light');switchTab('simulator');setNav(this)" aria-label="Rates">
-      <svg class="bse-nav-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
-        <path d="M3 3v18h18"/><path d="M7 16l4-4 4 4 5-5"/>
+      <svg class="bse-nav-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+        stroke-width="1.8" stroke-linecap="round">
+        <path d="M3 3v18h18" />
+        <path d="M7 16l4-4 4 4 5-5" />
       </svg>
       <span class="bse-nav-label" id="nav-rates-label">Rates</span>
     </button>
 
   </nav>
 
-</div><!-- end screen-dashboard -->
+  </div><!-- end screen-dashboard -->
 
-<!-- ══════════════════════════════════════════════════════════
+  <!-- ══════════════════════════════════════════════════════════
      SIGN-IN SHEET
 ══════════════════════════════════════════════════════════ -->
-<div class="modal-overlay" id="signin-overlay" onclick="if(event.target===this)closeSignInSheet()">
-  <div class="modal-sheet">
-    <div class="modal-handle"></div>
-    <div class="signin-sheet-header">
-      <div>
-        <div class="signin-title">Sign in to Tracent<span class="signin-dot">.</span></div>
+  <div class="modal-overlay" id="signin-overlay" onclick="if(event.target===this)closeSignInSheet()">
+    <div class="modal-sheet">
+      <div class="modal-handle"></div>
+      <div class="signin-sheet-header">
+        <div>
+          <div class="signin-title">Sign in to Tracent<span class="signin-dot">.</span></div>
+        </div>
+      </div>
+      <p class="signin-sub">Your data is saved locally. Sign in to sync across devices and unlock cloud backup.</p>
+      <div class="signin-body">
+        <div
+          style="background:rgba(0,119,182,0.06);border:1px solid var(--sky-border);border-radius:var(--r-sm);padding:12px 14px;font-size:13px;color:var(--teal);margin-bottom:20px;">
+          This build runs locally on your device. Cloud sync is not enabled in this version, so there is no account
+          requirement yet.</div>
+        <button onclick="closeSignInSheet();startOnboarding()" class="btn-cta" style="margin-bottom:10px;">Start locally
+          →</button>
+        <button onclick="closeSignInSheet()" class="btn-ghost"
+          style="color:var(--gray-4);border-color:var(--gray-2);">Cancel</button>
       </div>
     </div>
-    <p class="signin-sub">Your data is saved locally. Sign in to sync across devices and unlock cloud backup.</p>
-    <div class="signin-body">
-      <div style="background:rgba(0,119,182,0.06);border:1px solid var(--sky-border);border-radius:var(--r-sm);padding:12px 14px;font-size:13px;color:var(--teal);margin-bottom:20px;">This build runs locally on your device. Cloud sync is not enabled in this version, so there is no account requirement yet.</div>
-      <button onclick="closeSignInSheet();startOnboarding()" class="btn-cta" style="margin-bottom:10px;">Start locally →</button>
-      <button onclick="closeSignInSheet()" class="btn-ghost" style="color:var(--gray-4);border-color:var(--gray-2);">Cancel</button>
-    </div>
   </div>
-</div>
 
-<!-- ══════════════════════════════════════════════════════════
+  <!-- ══════════════════════════════════════════════════════════
      PAYWALL MODAL
 ══════════════════════════════════════════════════════════ -->
-<div class="modal-overlay" id="paywall-overlay" onclick="if(event.target===this)closePaywall()">
-  <div class="modal-sheet">
-    <div class="modal-handle"></div>
-    <div style="padding:24px 24px 0;">
-      <div style="font-family:var(--font-display);font-size:22px;color:var(--navy);margin-bottom:6px;" id="paywall-feature-title">Keep your plan moving</div>
-      <div style="font-size:13px;color:var(--gray-4);line-height:1.65;margin-bottom:18px;" id="paywall-feature-sub">Tracent Edge helps you keep improving your position with deeper reviews, saved scenarios, and contextual guidance built around your numbers.</div>
-      <div style="display:flex;flex-direction:column;gap:9px;margin-bottom:20px;" id="paywall-bullets">
-        <div style="display:flex;align-items:flex-start;gap:10px;font-size:13px;color:var(--navy);line-height:1.5;">
-          <span style="color:var(--teal);font-weight:700;flex-shrink:0;">→</span>
-          <span>Track how your position changes month to month</span>
+  <div class="modal-overlay" id="paywall-overlay" onclick="if(event.target===this)closePaywall()">
+    <div class="modal-sheet">
+      <div class="modal-handle"></div>
+      <div style="padding:24px 24px 0;">
+        <div style="font-family:var(--font-display);font-size:22px;color:var(--navy);margin-bottom:6px;"
+          id="paywall-feature-title">Keep your plan moving</div>
+        <div style="font-size:13px;color:var(--gray-4);line-height:1.65;margin-bottom:18px;" id="paywall-feature-sub">
+          Tracent Edge helps you keep improving your position with deeper reviews, saved scenarios, and contextual
+          guidance built around your numbers.</div>
+        <div style="display:flex;flex-direction:column;gap:9px;margin-bottom:20px;" id="paywall-bullets">
+          <div style="display:flex;align-items:flex-start;gap:10px;font-size:13px;color:var(--navy);line-height:1.5;">
+            <span style="color:var(--teal);font-weight:700;flex-shrink:0;">→</span>
+            <span>Track how your position changes month to month</span>
+          </div>
+          <div style="display:flex;align-items:flex-start;gap:10px;font-size:13px;color:var(--navy);line-height:1.5;">
+            <span style="color:var(--teal);font-weight:700;flex-shrink:0;">→</span>
+            <span>Model decisions before you make them</span>
+          </div>
+          <div style="display:flex;align-items:flex-start;gap:10px;font-size:13px;color:var(--navy);line-height:1.5;">
+            <span style="color:var(--teal);font-weight:700;flex-shrink:0;">→</span>
+            <span>Get contextual AI guidance when life changes</span>
+          </div>
+          <div style="display:flex;align-items:flex-start;gap:10px;font-size:13px;color:var(--navy);line-height:1.5;">
+            <span style="color:var(--teal);font-weight:700;flex-shrink:0;">→</span>
+            <span>Save scenarios and compare your best path forward</span>
+          </div>
         </div>
-        <div style="display:flex;align-items:flex-start;gap:10px;font-size:13px;color:var(--navy);line-height:1.5;">
-          <span style="color:var(--teal);font-weight:700;flex-shrink:0;">→</span>
-          <span>Model decisions before you make them</span>
+        <div style="font-size:11px;color:var(--gray-3);margin-bottom:14px;" id="paywall-context-note"></div>
+        <button onclick="unlockPremium()" class="btn-cta" style="margin-bottom:10px;" id="paywall-cta-label">Unlock Edge
+          →</button>
+        <div style="display:none;"><input id="paywall-email-input">
+          <div id="paywall-email-wrap"></div>
         </div>
-        <div style="display:flex;align-items:flex-start;gap:10px;font-size:13px;color:var(--navy);line-height:1.5;">
-          <span style="color:var(--teal);font-weight:700;flex-shrink:0;">→</span>
-          <span>Get contextual AI guidance when life changes</span>
-        </div>
-        <div style="display:flex;align-items:flex-start;gap:10px;font-size:13px;color:var(--navy);line-height:1.5;">
-          <span style="color:var(--teal);font-weight:700;flex-shrink:0;">→</span>
-          <span>Save scenarios and compare your best path forward</span>
-        </div>
+        <button onclick="closePaywall()"
+          style="width:100%;padding:13px;background:transparent;color:var(--gray-3);border:none;font-family:var(--font-body);font-size:13px;cursor:pointer;">Not
+          right now</button>
+        <div style="text-align:center;font-size:11px;color:var(--gray-3);padding-bottom:20px;margin-top:2px;">
+          Educational tool · Not financial advice</div>
       </div>
-      <div style="font-size:11px;color:var(--gray-3);margin-bottom:14px;" id="paywall-context-note"></div>
-      <button onclick="unlockPremium()" class="btn-cta" style="margin-bottom:10px;" id="paywall-cta-label">Unlock Edge →</button>
-      <div style="display:none;"><input id="paywall-email-input"><div id="paywall-email-wrap"></div></div>
-      <button onclick="closePaywall()" style="width:100%;padding:13px;background:transparent;color:var(--gray-3);border:none;font-family:var(--font-body);font-size:13px;cursor:pointer;">Not right now</button>
-      <div style="text-align:center;font-size:11px;color:var(--gray-3);padding-bottom:20px;margin-top:2px;">Educational tool · Not financial advice</div>
     </div>
   </div>
-</div>
 
-<!-- ══════════════════════════════════════════════════════════
+  <!-- ══════════════════════════════════════════════════════════
      SCORE BREAKDOWN MODAL
 ══════════════════════════════════════════════════════════ -->
-<div class="modal-overlay" id="score-breakdown-overlay" onclick="if(event.target===this)closeScoreBreakdown()">
-  <div class="modal-sheet" id="score-breakdown-sheet" style="padding:0;max-height:92vh;display:flex;flex-direction:column;">
-    <div class="modal-handle" style="flex-shrink:0;margin:10px auto 0;"></div>
+  <div class="modal-overlay" id="score-breakdown-overlay" onclick="if(event.target===this)closeScoreBreakdown()">
+    <div class="modal-sheet" id="score-breakdown-sheet"
+      style="padding:0;max-height:92vh;display:flex;flex-direction:column;">
+      <div class="modal-handle" style="flex-shrink:0;margin:10px auto 0;"></div>
 
-    <!-- PART 1 — SCORE TRUTH HEADER (gradient bar) -->
-    <div id="sbd-header" style="flex-shrink:0;background:linear-gradient(160deg,var(--navy-mid),var(--navy));padding:20px 20px 16px;position:relative;">
-      <button onclick="closeScoreBreakdown()" style="position:absolute;top:14px;right:14px;background:rgba(255,255,255,0.08);border:none;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;color:rgba(255,255,255,0.55);font-size:14px;">✕</button>
-      <div style="display:flex;align-items:center;gap:14px;margin-bottom:12px;">
-        <div id="sbd-ring-wrap" style="position:relative;width:64px;height:64px;flex-shrink:0;">
-          <svg width="64" height="64" viewBox="0 0 64 64" style="transform:rotate(-90deg);">
-            <circle cx="32" cy="32" r="26" fill="none" stroke="rgba(255,255,255,0.10)" stroke-width="5"/>
-            <circle id="sbd-ring-arc" cx="32" cy="32" r="26" fill="none" stroke="var(--sky)" stroke-width="5"
-              stroke-dasharray="163.4" stroke-dashoffset="163.4" stroke-linecap="round"
-              style="transition:stroke-dashoffset 0.8s var(--spring),stroke 0.4s;"/>
-          </svg>
-          <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-size:19px;color:var(--white);" id="sbd-score-num">—</div>
+      <!-- PART 1 — SCORE TRUTH HEADER (gradient bar) -->
+      <div id="sbd-header"
+        style="flex-shrink:0;background:linear-gradient(160deg,var(--navy-mid),var(--navy));padding:20px 20px 16px;position:relative;">
+        <button onclick="closeScoreBreakdown()"
+          style="position:absolute;top:14px;right:14px;background:rgba(255,255,255,0.08);border:none;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;color:rgba(255,255,255,0.55);font-size:14px;">✕</button>
+        <div style="display:flex;align-items:center;gap:14px;margin-bottom:12px;">
+          <div id="sbd-ring-wrap" style="position:relative;width:64px;height:64px;flex-shrink:0;">
+            <svg width="64" height="64" viewBox="0 0 64 64" style="transform:rotate(-90deg);">
+              <circle cx="32" cy="32" r="26" fill="none" stroke="rgba(255,255,255,0.10)" stroke-width="5" />
+              <circle id="sbd-ring-arc" cx="32" cy="32" r="26" fill="none" stroke="var(--sky)" stroke-width="5"
+                stroke-dasharray="163.4" stroke-dashoffset="163.4" stroke-linecap="round"
+                style="transition:stroke-dashoffset 0.8s var(--spring),stroke 0.4s;" />
+            </svg>
+            <div
+              style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-size:19px;color:var(--white);"
+              id="sbd-score-num">—</div>
+          </div>
+          <div>
+            <div
+              style="font-size:10px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:rgba(255,255,255,0.40);margin-bottom:3px;">
+              Your Tracent Score</div>
+            <div style="font-family:var(--font-display);font-size:22px;color:var(--white);margin-bottom:2px;"
+              id="sbd-title">—</div>
+            <div style="font-size:12px;color:rgba(255,255,255,0.45);" id="sbd-subtitle">A planning score built from 5
+              visible factors</div>
+          </div>
         </div>
-        <div>
-          <div style="font-size:10px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:rgba(255,255,255,0.40);margin-bottom:3px;">Your Tracent Score</div>
-          <div style="font-family:var(--font-display);font-size:22px;color:var(--white);margin-bottom:2px;" id="sbd-title">—</div>
-          <div style="font-size:12px;color:rgba(255,255,255,0.45);" id="sbd-subtitle">A planning score built from 5 visible factors</div>
+        <!-- Confidence / input meta row -->
+        <div id="sbd-meta-chips" style="display:flex;flex-wrap:wrap;gap:6px;"></div>
+      </div>
+
+      <!-- Scrollable body -->
+      <div style="overflow-y:auto;flex:1;padding:0 20px 28px;">
+
+        <!-- PART 2 — ONE-SENTENCE VERDICT -->
+        <div id="sbd-verdict-section" style="display:none;padding:14px 0 10px;border-bottom:1px solid var(--gray-1);">
+          <div id="sbd-verdict-text" style="font-size:14px;font-weight:600;color:var(--navy);line-height:1.55;"></div>
         </div>
-      </div>
-      <!-- Confidence / input meta row -->
-      <div id="sbd-meta-chips" style="display:flex;flex-wrap:wrap;gap:6px;"></div>
-    </div>
 
-    <!-- Scrollable body -->
-    <div style="overflow-y:auto;flex:1;padding:0 20px 28px;">
-
-      <!-- PART 2 — ONE-SENTENCE VERDICT -->
-      <div id="sbd-verdict-section" style="display:none;padding:14px 0 10px;border-bottom:1px solid var(--gray-1);">
-        <div id="sbd-verdict-text" style="font-size:14px;font-weight:600;color:var(--navy);line-height:1.55;"></div>
-      </div>
-
-      <!-- PART 5 — WHAT IF BANNER (kept in place, enhanced) -->
-      <div id="sbd-whatif-banner" style="display:none;background:var(--sky-dim);border-radius:var(--r-sm);padding:12px 14px;margin-top:14px;">
-        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.6px;color:var(--teal);margin-bottom:4px;" id="sbd-whatif-title">What-if scenario</div>
-        <div style="font-size:13px;color:var(--gray-4);line-height:1.5;" id="sbd-whatif-sub"></div>
-        <div style="display:flex;align-items:baseline;gap:8px;margin-top:6px;">
-          <div style="font-family:var(--font-display);font-size:24px;color:var(--navy);" id="sbd-whatif-score"></div>
-          <div style="font-size:11px;color:var(--gray-4);" id="sbd-whatif-factor-note"></div>
+        <!-- PART 5 — WHAT IF BANNER (kept in place, enhanced) -->
+        <div id="sbd-whatif-banner"
+          style="display:none;background:var(--sky-dim);border-radius:var(--r-sm);padding:12px 14px;margin-top:14px;">
+          <div
+            style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.6px;color:var(--teal);margin-bottom:4px;"
+            id="sbd-whatif-title">What-if scenario</div>
+          <div style="font-size:13px;color:var(--gray-4);line-height:1.5;" id="sbd-whatif-sub"></div>
+          <div style="display:flex;align-items:baseline;gap:8px;margin-top:6px;">
+            <div style="font-family:var(--font-display);font-size:24px;color:var(--navy);" id="sbd-whatif-score"></div>
+            <div style="font-size:11px;color:var(--gray-4);" id="sbd-whatif-factor-note"></div>
+          </div>
         </div>
-      </div>
 
-      <!-- PART 3 — FACTOR LIST -->
-      <div id="sbd-factor-section" style="padding-top:14px;">
-        <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:var(--gray-3);margin-bottom:10px;">Score factors</div>
-        <div id="sbd-factor-list" style="display:flex;flex-direction:column;gap:12px;"></div>
-      </div>
+        <!-- PART 3 — FACTOR LIST -->
+        <div id="sbd-factor-section" style="padding-top:14px;">
+          <div
+            style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:var(--gray-3);margin-bottom:10px;">
+            Score factors</div>
+          <div id="sbd-factor-list" style="display:flex;flex-direction:column;gap:12px;"></div>
+        </div>
 
-      <!-- PART 4 — WHY THIS WON -->
-      <div id="sbd-why-won-section" style="display:none;margin-top:6px;">
-        <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:var(--gray-3);margin-bottom:10px;">Why this is the right move now</div>
-        <div id="sbd-why-won-body"></div>
-      </div>
+        <!-- PART 4 — WHY THIS WON -->
+        <div id="sbd-why-won-section" style="display:none;margin-top:6px;">
+          <div
+            style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:var(--gray-3);margin-bottom:10px;">
+            Why this is the right move now</div>
+          <div id="sbd-why-won-body"></div>
+        </div>
 
-      <!-- PART 6 — TRUST NOTE -->
-      <div id="sbd-trust-note" style="margin-top:20px;padding:14px;background:var(--gray-1);border-radius:var(--r-sm);">
-        <div style="font-size:11px;font-weight:700;color:var(--gray-4);margin-bottom:5px;text-transform:uppercase;letter-spacing:0.5px;">A note on this score</div>
-        <div style="font-size:12px;color:var(--gray-4);line-height:1.65;" id="sbd-trust-body">This is not a credit score. It is an educational planning tool built from your own inputs. Refine your inputs anytime to improve accuracy — the more detail you provide, the sharper the analysis.</div>
-      </div>
+        <!-- PART 6 — TRUST NOTE -->
+        <div id="sbd-trust-note"
+          style="margin-top:20px;padding:14px;background:var(--gray-1);border-radius:var(--r-sm);">
+          <div
+            style="font-size:11px;font-weight:700;color:var(--gray-4);margin-bottom:5px;text-transform:uppercase;letter-spacing:0.5px;">
+            A note on this score</div>
+          <div style="font-size:12px;color:var(--gray-4);line-height:1.65;" id="sbd-trust-body">This is not a credit
+            score. It is an educational planning tool built from your own inputs. Refine your inputs anytime to improve
+            accuracy — the more detail you provide, the sharper the analysis.</div>
+        </div>
 
+      </div>
     </div>
   </div>
-</div>
 
-<!-- ══════════════════════════════════════════════════════════
+  <!-- ══════════════════════════════════════════════════════════
      SALARY NEGOTIATION MODAL
 ══════════════════════════════════════════════════════════ -->
-<div class="modal-overlay" id="salary-negotiate-overlay" onclick="if(event.target===this)closeSalaryNegotiation()">
-  <div class="modal-sheet" style="padding:0;overflow:hidden;max-height:92vh;display:flex;flex-direction:column;">
-    <div style="background:linear-gradient(160deg,var(--navy-mid),var(--navy));padding:24px 22px 20px;flex-shrink:0;">
-      <div class="modal-handle" style="background:rgba(255,255,255,0.2);margin-bottom:16px;"></div>
-      <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px;">
-        <div style="width:40px;height:40px;background:rgba(0,168,232,0.2);border:1px solid rgba(0,168,232,0.3);border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--sky)" stroke-width="2" stroke-linecap="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-        </div>
-        <div>
-          <div style="font-family:var(--font-display);font-size:20px;color:white;">AI Salary Coach</div>
-          <div style="font-size:11px;color:rgba(255,255,255,0.4);margin-top:1px;">Tracent<span style="color:var(--sky);">.</span> Edge · Powered by Claude</div>
-        </div>
-      </div>
-      <div id="sn-gap-summary" style="background:rgba(255,255,255,0.06);border-radius:var(--r-sm);padding:12px 14px;font-size:13px;color:rgba(255,255,255,0.65);line-height:1.5;"></div>
-    </div>
-    <div style="overflow-y:auto;flex:1;padding:20px 22px 28px;background:white;">
-      <div id="sn-form">
-        <div style="font-size:14px;font-weight:600;color:var(--navy);margin-bottom:16px;">A bit more context</div>
-        <div style="display:flex;flex-direction:column;gap:12px;margin-bottom:20px;">
-          <div>
-            <label class="field-label">Time in this role</label>
-            <select id="sn-tenure" class="field-input" style="font-size:14px;">
-              <option value="under1">Under 1 year</option>
-              <option value="1to2" selected>1–2 years</option>
-              <option value="2to4">2–4 years</option>
-              <option value="4plus">4+ years</option>
-            </select>
+  <div class="modal-overlay" id="salary-negotiate-overlay" onclick="if(event.target===this)closeSalaryNegotiation()">
+    <div class="modal-sheet" style="padding:0;overflow:hidden;max-height:92vh;display:flex;flex-direction:column;">
+      <div style="background:linear-gradient(160deg,var(--navy-mid),var(--navy));padding:24px 22px 20px;flex-shrink:0;">
+        <div class="modal-handle" style="background:rgba(255,255,255,0.2);margin-bottom:16px;"></div>
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px;">
+          <div
+            style="width:40px;height:40px;background:rgba(0,168,232,0.2);border:1px solid rgba(0,168,232,0.3);border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--sky)" stroke-width="2"
+              stroke-linecap="round">
+              <line x1="12" y1="1" x2="12" y2="23" />
+              <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+            </svg>
           </div>
           <div>
-            <label class="field-label">Recent achievements</label>
-            <textarea id="sn-achievements" placeholder="e.g. Led a project that saved 8 hours/week, exceeded targets by 20%…" rows="3"
-              style="width:100%;padding:11px 12px;border:1.5px solid var(--gray-2);border-radius:var(--r-sm);font-family:var(--font-body);font-size:13px;color:var(--navy);resize:none;outline:none;line-height:1.6;"
-              onfocus="this.style.borderColor='var(--sky)'" onblur="this.style.borderColor='var(--gray-2)'"></textarea>
-          </div>
-          <div>
-            <label class="field-label">Target raise</label>
-            <select id="sn-target" class="field-input" style="font-size:14px;">
-              <option value="5">5% — modest</option>
-              <option value="10" selected>10% — standard</option>
-              <option value="15">15% — strong case</option>
-              <option value="20">20% — market correction</option>
-            </select>
+            <div style="font-family:var(--font-display);font-size:20px;color:white;">AI Salary Coach</div>
+            <div style="font-size:11px;color:rgba(255,255,255,0.4);margin-top:1px;">Tracent<span
+                style="color:var(--sky);">.</span> Edge · Powered by Claude</div>
           </div>
         </div>
-        <button onclick="generateSalaryScript()" class="btn-cta">Generate my script →</button>
-        <div style="text-align:center;font-size:11px;color:var(--gray-3);margin-top:10px;">Uses your actual income, role, and market data</div>
-      </div>
-      <div id="sn-loading" style="display:none;text-align:center;padding:40px 20px;">
-        <div style="width:36px;height:36px;border:2.5px solid var(--gray-2);border-top-color:var(--teal);border-radius:50%;animation:tracentSpin 0.75s linear infinite;margin:0 auto 14px;"></div>
-        <div style="font-size:14px;font-weight:600;color:var(--navy);margin-bottom:4px;">Building your script</div>
-        <div style="font-size:12px;color:var(--gray-3);">Analysing your market position…</div>
-      </div>
-      <div id="sn-result" style="display:none;">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
-          <div style="font-size:14px;font-weight:600;color:var(--navy);">Your negotiation script</div>
-          <button onclick="copySalaryScript()" id="sn-copy-btn" style="background:var(--sky-dim);border:1px solid var(--sky-border);color:var(--teal);padding:6px 12px;border-radius:20px;font-family:var(--font-body);font-size:11px;font-weight:600;cursor:pointer;">Copy</button>
+        <div id="sn-gap-summary"
+          style="background:rgba(255,255,255,0.06);border-radius:var(--r-sm);padding:12px 14px;font-size:13px;color:rgba(255,255,255,0.65);line-height:1.5;">
         </div>
-        <div id="sn-script-body" style="background:var(--gray-1);border-radius:var(--r-sm);padding:16px 18px;font-size:13px;color:var(--navy);line-height:1.8;white-space:pre-wrap;border:1px solid var(--gray-2);"></div>
-        <div style="margin-top:14px;background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.18);border-radius:var(--r-sm);padding:12px 14px;">
-          <div style="font-size:11px;font-weight:700;color:var(--green);margin-bottom:4px;">Your position</div>
-          <div id="sn-position-summary" style="font-size:12px;color:var(--gray-4);line-height:1.6;"></div>
-        </div>
-        <button onclick="resetSalaryNegotiation()" style="width:100%;padding:12px;background:transparent;color:var(--gray-3);border:1.5px solid var(--gray-2);border-radius:var(--r-pill);font-family:var(--font-body);font-size:13px;cursor:pointer;margin-top:12px;">Reset and retry</button>
       </div>
-      <div id="sn-paywall" style="display:none;text-align:center;padding:24px 16px;">
-        <div style="font-family:var(--font-display);font-size:20px;color:var(--navy);margin-bottom:8px;">AI Salary Coaching is part of Edge</div>
-        <div style="font-size:13px;color:var(--gray-4);line-height:1.65;margin-bottom:20px;">This feature helps you model your salary gap and build a personalised approach based on your actual numbers — it\u2019s part of Edge because it tracks ongoing plan changes, not just a one-time result.</div>
-        <button onclick="closeSalaryNegotiation();showPaywall('negotiate')" class="btn-cta">Unlock Edge \u2192</button>
+      <div style="overflow-y:auto;flex:1;padding:20px 22px 28px;background:white;">
+        <div id="sn-form">
+          <div style="font-size:14px;font-weight:600;color:var(--navy);margin-bottom:16px;">A bit more context</div>
+          <div style="display:flex;flex-direction:column;gap:12px;margin-bottom:20px;">
+            <div>
+              <label class="field-label">Time in this role</label>
+              <select id="sn-tenure" class="field-input" style="font-size:14px;">
+                <option value="under1">Under 1 year</option>
+                <option value="1to2" selected>1–2 years</option>
+                <option value="2to4">2–4 years</option>
+                <option value="4plus">4+ years</option>
+              </select>
+            </div>
+            <div>
+              <label class="field-label">Recent achievements</label>
+              <textarea id="sn-achievements"
+                placeholder="e.g. Led a project that saved 8 hours/week, exceeded targets by 20%…" rows="3"
+                style="width:100%;padding:11px 12px;border:1.5px solid var(--gray-2);border-radius:var(--r-sm);font-family:var(--font-body);font-size:13px;color:var(--navy);resize:none;outline:none;line-height:1.6;"
+                onfocus="this.style.borderColor='var(--sky)'"
+                onblur="this.style.borderColor='var(--gray-2)'"></textarea>
+            </div>
+            <div>
+              <label class="field-label">Target raise</label>
+              <select id="sn-target" class="field-input" style="font-size:14px;">
+                <option value="5">5% — modest</option>
+                <option value="10" selected>10% — standard</option>
+                <option value="15">15% — strong case</option>
+                <option value="20">20% — market correction</option>
+              </select>
+            </div>
+          </div>
+          <button onclick="generateSalaryScript()" class="btn-cta">Generate my script →</button>
+          <div style="text-align:center;font-size:11px;color:var(--gray-3);margin-top:10px;">Uses your actual income,
+            role, and market data</div>
+        </div>
+        <div id="sn-loading" style="display:none;text-align:center;padding:40px 20px;">
+          <div
+            style="width:36px;height:36px;border:2.5px solid var(--gray-2);border-top-color:var(--teal);border-radius:50%;animation:tracentSpin 0.75s linear infinite;margin:0 auto 14px;">
+          </div>
+          <div style="font-size:14px;font-weight:600;color:var(--navy);margin-bottom:4px;">Building your script</div>
+          <div style="font-size:12px;color:var(--gray-3);">Analysing your market position…</div>
+        </div>
+        <div id="sn-result" style="display:none;">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+            <div style="font-size:14px;font-weight:600;color:var(--navy);">Your negotiation script</div>
+            <button onclick="copySalaryScript()" id="sn-copy-btn"
+              style="background:var(--sky-dim);border:1px solid var(--sky-border);color:var(--teal);padding:6px 12px;border-radius:20px;font-family:var(--font-body);font-size:11px;font-weight:600;cursor:pointer;">Copy</button>
+          </div>
+          <div id="sn-script-body"
+            style="background:var(--gray-1);border-radius:var(--r-sm);padding:16px 18px;font-size:13px;color:var(--navy);line-height:1.8;white-space:pre-wrap;border:1px solid var(--gray-2);">
+          </div>
+          <div
+            style="margin-top:14px;background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.18);border-radius:var(--r-sm);padding:12px 14px;">
+            <div style="font-size:11px;font-weight:700;color:var(--green);margin-bottom:4px;">Your position</div>
+            <div id="sn-position-summary" style="font-size:12px;color:var(--gray-4);line-height:1.6;"></div>
+          </div>
+          <button onclick="resetSalaryNegotiation()"
+            style="width:100%;padding:12px;background:transparent;color:var(--gray-3);border:1.5px solid var(--gray-2);border-radius:var(--r-pill);font-family:var(--font-body);font-size:13px;cursor:pointer;margin-top:12px;">Reset
+            and retry</button>
+        </div>
+        <div id="sn-paywall" style="display:none;text-align:center;padding:24px 16px;">
+          <div style="font-family:var(--font-display);font-size:20px;color:var(--navy);margin-bottom:8px;">AI Salary
+            Coaching is part of Edge</div>
+          <div style="font-size:13px;color:var(--gray-4);line-height:1.65;margin-bottom:20px;">This feature helps you
+            model your salary gap and build a personalised approach based on your actual numbers — it\u2019s part of
+            Edge because it tracks ongoing plan changes, not just a one-time result.</div>
+          <button onclick="closeSalaryNegotiation();showPaywall('negotiate')" class="btn-cta">Unlock Edge
+            \u2192</button>
+        </div>
       </div>
     </div>
   </div>
-</div>
 
-<!-- ══════════════════════════════════════════════════════════
+  <!-- ══════════════════════════════════════════════════════════
      FEEDBACK MODAL
 ══════════════════════════════════════════════════════════ -->
-<div class="modal-overlay" id="feedback-modal" onclick="if(event.target===this)closeFeedback()">
-  <div class="modal-sheet" style="padding:24px 24px 40px;">
-    <div class="modal-handle"></div>
-    <div style="font-family:var(--font-display);font-size:20px;color:var(--navy);margin-bottom:8px;">Share feedback</div>
-    <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;">
-      <div class="tag sky active" id="fbt-idea" onclick="selectFeedbackType('idea',this)" style="cursor:pointer;padding:8px 14px;">💡 Idea</div>
-      <div class="tag navy" id="fbt-bug" onclick="selectFeedbackType('bug',this)" style="cursor:pointer;padding:8px 14px;">🐛 Bug</div>
-      <div class="tag navy" id="fbt-love" onclick="selectFeedbackType('love',this)" style="cursor:pointer;padding:8px 14px;">❤️ Love it</div>
+  <div class="modal-overlay" id="feedback-modal" onclick="if(event.target===this)closeFeedback()">
+    <div class="modal-sheet" style="padding:24px 24px 40px;">
+      <div class="modal-handle"></div>
+      <div style="font-family:var(--font-display);font-size:20px;color:var(--navy);margin-bottom:8px;">Share feedback
+      </div>
+      <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;">
+        <div class="tag sky active" id="fbt-idea" onclick="selectFeedbackType('idea',this)"
+          style="cursor:pointer;padding:8px 14px;">💡 Idea</div>
+        <div class="tag navy" id="fbt-bug" onclick="selectFeedbackType('bug',this)"
+          style="cursor:pointer;padding:8px 14px;">🐛 Bug</div>
+        <div class="tag navy" id="fbt-love" onclick="selectFeedbackType('love',this)"
+          style="cursor:pointer;padding:8px 14px;">❤️ Love it</div>
+      </div>
+      <textarea id="feedback-text" placeholder="Tell us what you think…" rows="4"
+        style="width:100%;padding:12px;border:1.5px solid var(--gray-2);border-radius:var(--r-sm);font-family:var(--font-body);font-size:14px;color:var(--navy);resize:none;outline:none;margin-bottom:14px;"
+        onfocus="this.style.borderColor='var(--sky)'" onblur="this.style.borderColor='var(--gray-2)'"></textarea>
+      <button onclick="submitFeedback()" class="btn-cta" style="margin-bottom:8px;">Send feedback</button>
+      <button onclick="closeFeedback()"
+        style="width:100%;padding:12px;background:transparent;color:var(--gray-3);border:none;font-family:var(--font-body);font-size:13px;cursor:pointer;">Cancel</button>
     </div>
-    <textarea id="feedback-text" placeholder="Tell us what you think…" rows="4"
-      style="width:100%;padding:12px;border:1.5px solid var(--gray-2);border-radius:var(--r-sm);font-family:var(--font-body);font-size:14px;color:var(--navy);resize:none;outline:none;margin-bottom:14px;"
-      onfocus="this.style.borderColor='var(--sky)'" onblur="this.style.borderColor='var(--gray-2)'"></textarea>
-    <button onclick="submitFeedback()" class="btn-cta" style="margin-bottom:8px;">Send feedback</button>
-    <button onclick="closeFeedback()" style="width:100%;padding:12px;background:transparent;color:var(--gray-3);border:none;font-family:var(--font-body);font-size:13px;cursor:pointer;">Cancel</button>
   </div>
-</div>
 
-<!-- ══════════════════════════════════════════════════════════
+  <!-- ══════════════════════════════════════════════════════════
      SCENARIO MODAL
 ══════════════════════════════════════════════════════════ -->
-<div class="modal-overlay" id="scenario-modal" onclick="if(event.target===this)closeScenarios()">
-  <div class="modal-sheet" style="padding:24px 24px 40px;">
-    <div class="modal-handle"></div>
-    <div style="font-family:var(--font-display);font-size:20px;color:var(--navy);margin-bottom:6px;" id="scenario-modal-sub">Scenario Planner</div>
-    <div id="scenario-modal-body"></div>
-    <button onclick="closeScenarios()" id="scenario-modal-close" style="width:100%;padding:13px;background:transparent;color:var(--gray-3);border:1.5px solid var(--gray-2);border-radius:var(--r-pill);font-family:var(--font-body);font-size:13px;cursor:pointer;margin-top:14px;">Close</button>
-  </div>
-</div>
-
-<!-- ══════════════════════════════════════════════════════════
-     WHAT IF MODAL
-══════════════════════════════════════════════════════════ -->
-<div class="modal-overlay" id="whatif-modal" onclick="if(event.target===this)closeModal('whatif-modal')">
-  <div class="modal-sheet" style="padding:24px 24px 40px;">
-    <div class="modal-handle"></div>
-    <div style="font-family:var(--font-display);font-size:20px;color:var(--navy);margin-bottom:16px;">What If?</div>
-    <div id="whatif-content">
-      <div style="text-align:center;padding:20px;color:var(--gray-3);font-size:13px;">Complete your analysis to use the What If planner.</div>
+  <div class="modal-overlay" id="scenario-modal" onclick="if(event.target===this)closeScenarios()">
+    <div class="modal-sheet" style="padding:24px 24px 40px;">
+      <div class="modal-handle"></div>
+      <div style="font-family:var(--font-display);font-size:20px;color:var(--navy);margin-bottom:6px;"
+        id="scenario-modal-sub">Scenario Planner</div>
+      <div id="scenario-modal-body"></div>
+      <button onclick="closeScenarios()" id="scenario-modal-close"
+        style="width:100%;padding:13px;background:transparent;color:var(--gray-3);border:1.5px solid var(--gray-2);border-radius:var(--r-pill);font-family:var(--font-body);font-size:13px;cursor:pointer;margin-top:14px;">Close</button>
     </div>
   </div>
-</div>
 
-<!-- ══════════════════════════════════════════════════════════
+  <!-- ══════════════════════════════════════════════════════════
+     WHAT IF MODAL
+══════════════════════════════════════════════════════════ -->
+  <div class="modal-overlay" id="whatif-modal" onclick="if(event.target===this)closeModal('whatif-modal')">
+    <div class="modal-sheet" style="padding:24px 24px 40px;">
+      <div class="modal-handle"></div>
+      <div style="font-family:var(--font-display);font-size:20px;color:var(--navy);margin-bottom:16px;">What If?</div>
+      <div id="whatif-content">
+        <div style="text-align:center;padding:20px;color:var(--gray-3);font-size:13px;">Complete your analysis to use
+          the What If planner.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════
      CONFIRM NEW ANALYSIS SHEET
 ══════════════════════════════════════════════════════════ -->
-<div class="modal-overlay" id="confirm-analysis-sheet" onclick="if(event.target===this)closeModal('confirm-analysis-sheet')">
-  <div class="modal-sheet" style="padding:24px 24px 40px;">
-    <div class="modal-handle"></div>
-    <div style="font-family:var(--font-display);font-size:20px;color:var(--navy);margin-bottom:8px;">Update your numbers?</div>
-    <div style="font-size:14px;color:var(--gray-4);line-height:1.65;margin-bottom:24px;">This will start a fresh analysis with your updated information. Your current score will be replaced.</div>
-    <button onclick="startFreshAnalysis()" class="btn-cta" style="margin-bottom:10px;">Yes, update my numbers →</button>
-    <button onclick="closeModal('confirm-analysis-sheet')" style="width:100%;padding:13px;background:transparent;color:var(--gray-3);border:none;font-family:var(--font-body);font-size:13px;cursor:pointer;">Cancel</button>
+  <div class="modal-overlay" id="confirm-analysis-sheet"
+    onclick="if(event.target===this)closeModal('confirm-analysis-sheet')">
+    <div class="modal-sheet" style="padding:24px 24px 40px;">
+      <div class="modal-handle"></div>
+      <div style="font-family:var(--font-display);font-size:20px;color:var(--navy);margin-bottom:8px;">Update your
+        numbers?</div>
+      <div style="font-size:14px;color:var(--gray-4);line-height:1.65;margin-bottom:24px;">This will start a fresh
+        analysis with your updated information. Your current score will be replaced.</div>
+      <button onclick="startFreshAnalysis()" class="btn-cta" style="margin-bottom:10px;">Yes, update my numbers
+        →</button>
+      <button onclick="closeModal('confirm-analysis-sheet')"
+        style="width:100%;padding:13px;background:transparent;color:var(--gray-3);border:none;font-family:var(--font-body);font-size:13px;cursor:pointer;">Cancel</button>
+    </div>
   </div>
-</div>
 
-<!-- ══════════════════════════════════════════════════════════
+  <!-- ══════════════════════════════════════════════════════════
      FLOATING FEEDBACK BUTTON
 ══════════════════════════════════════════════════════════ -->
-<button class="feedback-fab" id="feedback-fab" onclick="openFeedback()">
-  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-  Feedback
-</button>
+  <button class="feedback-fab" id="feedback-fab" onclick="openFeedback()">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+      stroke-linecap="round">
+      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+    </svg>
+    Feedback
+  </button>
 
 
 
-<!-- ══════════════════════════════════════════════════════════
+  <!-- ══════════════════════════════════════════════════════════
      UI CONTROLLER — New clean navigation and onboarding
 ══════════════════════════════════════════════════════════ -->
 
-<div style="display:none!important" aria-hidden="true" id="final-stubs">
-  <div id="co-purpose"></div>
-  <div id="debt-summary"></div>
-  <div id="loan-type-note"></div>
-  <div id="method-info"></div>
-  <div id="p-cc-rate"></div>
-  <div id="p-job"></div>
-  <div id="p-other-debt"></div>
-  <div id="p-refi-threshold"></div>
-  <div id="p-total-debt"></div>
-  <div id="rate-alert-slider"></div>
-  <div id="rate-alert-val"></div>
-  <div id="recheck-freq"></div>
-  <div id="refi-analysis-body"></div>
-  <div id="reminder-preview-body"></div>
-  <div id="reminder-preview-title"></div>
-  <div id="score-ring-label"></div>
-  <div id="settings-activity-log"></div>
-  <div id="settings-empty-note"></div>
-  <div id="sim-breakeven"></div>
-  <div id="sim-lifetime"></div>
-  <div id="sim-monthly"></div>
-  <div id="sim-savings"></div>
-  <div id="sim-verdict"></div>
-  <div id="splash-greeting"></div>
-  <div id="splash-new"></div>
-  <div id="splash-returning"></div>
-</div>
+  <div style="display:none!important" aria-hidden="true" id="final-stubs">
+    <div id="co-purpose"></div>
+    <div id="debt-summary"></div>
+    <div id="loan-type-note"></div>
+    <div id="method-info"></div>
+    <div id="p-cc-rate"></div>
+    <div id="p-job"></div>
+    <div id="p-other-debt"></div>
+    <div id="p-refi-threshold"></div>
+    <div id="p-total-debt"></div>
+    <div id="rate-alert-slider"></div>
+    <div id="rate-alert-val"></div>
+    <div id="recheck-freq"></div>
+    <div id="refi-analysis-body"></div>
+    <div id="reminder-preview-body"></div>
+    <div id="reminder-preview-title"></div>
+    <div id="score-ring-label"></div>
+    <div id="settings-activity-log"></div>
+    <div id="settings-empty-note"></div>
+    <div id="sim-breakeven"></div>
+    <div id="sim-lifetime"></div>
+    <div id="sim-monthly"></div>
+    <div id="sim-savings"></div>
+    <div id="sim-verdict"></div>
+    <div id="splash-greeting"></div>
+    <div id="splash-new"></div>
+    <div id="splash-returning"></div>
+  </div>
 
-<!-- ══════════════════════════════════════════════════════════
+  <!-- ══════════════════════════════════════════════════════════
      LEGAL MODAL — Terms of Use & Privacy Policy
      [STABILIZE] Added: openLegalModal() required legal-modal-overlay
      and legal-modal-body DOM nodes to exist. Previously these nodes
      were missing, causing openLegalModal() to silently fail.
 ══════════════════════════════════════════════════════════ -->
-<div id="legal-modal-overlay" class="modal-overlay" onclick="if(event.target===this)closeLegalModal()" style="display:none;">
-  <div class="modal-sheet" style="max-height:88vh;display:flex;flex-direction:column;overflow:hidden;">
-    <div class="modal-handle"></div>
-    <div style="display:flex;align-items:center;justify-content:space-between;padding:20px 24px 12px;border-bottom:1px solid var(--gray-2);flex-shrink:0;">
-      <div style="font-family:var(--font-display);font-size:20px;color:var(--navy);" id="legal-modal-title">Legal</div>
-      <button onclick="closeLegalModal()" style="background:var(--gray-1);border:none;border-radius:50%;width:32px;height:32px;display:flex;align-items:center;justify-content:center;cursor:pointer;">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--navy)" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-      </button>
-    </div>
-    <!-- Tab switcher -->
-    <div style="display:flex;gap:0;padding:0 24px;border-bottom:1px solid var(--gray-2);flex-shrink:0;">
-      <button id="legal-tab-terms" onclick="switchLegalTab('terms')"
-        style="flex:1;padding:12px 0;background:none;border:none;border-bottom:2px solid var(--teal);font-family:var(--font-body);font-size:13px;font-weight:600;color:var(--teal);cursor:pointer;">
-        Terms of Use
-      </button>
-      <button id="legal-tab-privacy" onclick="switchLegalTab('privacy')"
-        style="flex:1;padding:12px 0;background:none;border:none;border-bottom:2px solid transparent;font-family:var(--font-body);font-size:13px;font-weight:600;color:var(--gray-4);cursor:pointer;">
-        Privacy Policy
-      </button>
-    </div>
-    <!-- Body content -->
-    <div id="legal-modal-body" style="overflow-y:auto;flex:1;padding:20px 24px 32px;font-size:13px;color:var(--gray-4);line-height:1.75;">
-      <!-- Populated by openLegalModal() / switchLegalTab() -->
+  <div id="legal-modal-overlay" class="modal-overlay" onclick="if(event.target===this)closeLegalModal()"
+    style="display:none;">
+    <div class="modal-sheet" style="max-height:88vh;display:flex;flex-direction:column;overflow:hidden;">
+      <div class="modal-handle"></div>
+      <div
+        style="display:flex;align-items:center;justify-content:space-between;padding:20px 24px 12px;border-bottom:1px solid var(--gray-2);flex-shrink:0;">
+        <div style="font-family:var(--font-display);font-size:20px;color:var(--navy);" id="legal-modal-title">Legal
+        </div>
+        <button onclick="closeLegalModal()"
+          style="background:var(--gray-1);border:none;border-radius:50%;width:32px;height:32px;display:flex;align-items:center;justify-content:center;cursor:pointer;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--navy)" stroke-width="2.5"
+            stroke-linecap="round">
+            <line x1="18" y1="6" x2="6" y2="18" />
+            <line x1="6" y1="6" x2="18" y2="18" />
+          </svg>
+        </button>
+      </div>
+      <!-- Tab switcher -->
+      <div style="display:flex;gap:0;padding:0 24px;border-bottom:1px solid var(--gray-2);flex-shrink:0;">
+        <button id="legal-tab-terms" onclick="switchLegalTab('terms')"
+          style="flex:1;padding:12px 0;background:none;border:none;border-bottom:2px solid var(--teal);font-family:var(--font-body);font-size:13px;font-weight:600;color:var(--teal);cursor:pointer;">
+          Terms of Use
+        </button>
+        <button id="legal-tab-privacy" onclick="switchLegalTab('privacy')"
+          style="flex:1;padding:12px 0;background:none;border:none;border-bottom:2px solid transparent;font-family:var(--font-body);font-size:13px;font-weight:600;color:var(--gray-4);cursor:pointer;">
+          Privacy Policy
+        </button>
+      </div>
+      <!-- Body content -->
+      <div id="legal-modal-body"
+        style="overflow-y:auto;flex:1;padding:20px 24px 32px;font-size:13px;color:var(--gray-4);line-height:1.75;">
+        <!-- Populated by openLegalModal() / switchLegalTab() -->
+      </div>
     </div>
   </div>
-</div>
 
-<!-- ══════════════════════════════════════════════════════════
+  <!-- ══════════════════════════════════════════════════════════
      V21 RETENTION MODALS
 ══════════════════════════════════════════════════════════ -->
 
-<!-- Weekly Check-in Modal -->
-<div class="modal-overlay" id="v21-checkin-overlay" onclick="if(event.target===this)closeModal('v21-checkin-overlay')" style="display:none;">
-  <div class="modal-sheet">
-    <div class="modal-handle"></div>
-    <div style="padding:20px 24px 0;">
-      <div style="font-family:var(--font-display);font-size:22px;color:var(--navy);margin-bottom:6px;">Weekly check-in</div>
-      <div style="font-size:13px;color:var(--gray-4);line-height:1.6;margin-bottom:20px;">Quick updates keep your score accurate and your roadmap relevant.</div>
-      <div id="v21-checkin-rows">
-        <div class="v21-checkin-row">
-          <div><div class="v21-checkin-label">Income changed?</div><div class="v21-checkin-sub">New job, raise, or income drop</div></div>
-          <div class="v21-yes-no"><button class="v21-yn-btn" onclick="v21CheckinFlag(this,'income_yes')">Yes</button><button class="v21-yn-btn" onclick="v21CheckinFlag(this,'income_no')">No</button></div>
+  <!-- Weekly Check-in Modal -->
+  <div class="modal-overlay" id="v21-checkin-overlay" onclick="if(event.target===this)closeModal('v21-checkin-overlay')"
+    style="display:none;">
+    <div class="modal-sheet">
+      <div class="modal-handle"></div>
+      <div style="padding:20px 24px 0;">
+        <div style="font-family:var(--font-display);font-size:22px;color:var(--navy);margin-bottom:6px;">Weekly check-in
         </div>
-        <div class="v21-checkin-row">
-          <div><div class="v21-checkin-label">Debt changed?</div><div class="v21-checkin-sub">Paid something off, or new balance</div></div>
-          <div class="v21-yes-no"><button class="v21-yn-btn" onclick="v21CheckinFlag(this,'debt_yes')">Yes</button><button class="v21-yn-btn" onclick="v21CheckinFlag(this,'debt_no')">No</button></div>
+        <div style="font-size:13px;color:var(--gray-4);line-height:1.6;margin-bottom:20px;">Quick updates keep your
+          score accurate and your roadmap relevant.</div>
+        <div id="v21-checkin-rows">
+          <div class="v21-checkin-row">
+            <div>
+              <div class="v21-checkin-label">Income changed?</div>
+              <div class="v21-checkin-sub">New job, raise, or income drop</div>
+            </div>
+            <div class="v21-yes-no"><button class="v21-yn-btn"
+                onclick="v21CheckinFlag(this,'income_yes')">Yes</button><button class="v21-yn-btn"
+                onclick="v21CheckinFlag(this,'income_no')">No</button></div>
+          </div>
+          <div class="v21-checkin-row">
+            <div>
+              <div class="v21-checkin-label">Debt changed?</div>
+              <div class="v21-checkin-sub">Paid something off, or new balance</div>
+            </div>
+            <div class="v21-yes-no"><button class="v21-yn-btn"
+                onclick="v21CheckinFlag(this,'debt_yes')">Yes</button><button class="v21-yn-btn"
+                onclick="v21CheckinFlag(this,'debt_no')">No</button></div>
+          </div>
+          <div class="v21-checkin-row">
+            <div>
+              <div class="v21-checkin-label">Savings changed?</div>
+              <div class="v21-checkin-sub">Emergency fund grew or dipped</div>
+            </div>
+            <div class="v21-yes-no"><button class="v21-yn-btn"
+                onclick="v21CheckinFlag(this,'savings_yes')">Yes</button><button class="v21-yn-btn"
+                onclick="v21CheckinFlag(this,'savings_no')">No</button></div>
+          </div>
+          <div class="v21-checkin-row">
+            <div>
+              <div class="v21-checkin-label">Housing plans changed?</div>
+              <div class="v21-checkin-sub">Timeline shift, new city, etc.</div>
+            </div>
+            <div class="v21-yes-no"><button class="v21-yn-btn"
+                onclick="v21CheckinFlag(this,'housing_yes')">Yes</button><button class="v21-yn-btn"
+                onclick="v21CheckinFlag(this,'housing_no')">No</button></div>
+          </div>
         </div>
-        <div class="v21-checkin-row">
-          <div><div class="v21-checkin-label">Savings changed?</div><div class="v21-checkin-sub">Emergency fund grew or dipped</div></div>
-          <div class="v21-yes-no"><button class="v21-yn-btn" onclick="v21CheckinFlag(this,'savings_yes')">Yes</button><button class="v21-yn-btn" onclick="v21CheckinFlag(this,'savings_no')">No</button></div>
-        </div>
-        <div class="v21-checkin-row">
-          <div><div class="v21-checkin-label">Housing plans changed?</div><div class="v21-checkin-sub">Timeline shift, new city, etc.</div></div>
-          <div class="v21-yes-no"><button class="v21-yn-btn" onclick="v21CheckinFlag(this,'housing_yes')">Yes</button><button class="v21-yn-btn" onclick="v21CheckinFlag(this,'housing_no')">No</button></div>
-        </div>
+        <button class="btn-cta" onclick="v21SaveCheckin()" style="margin-top:20px;margin-bottom:12px;">Save check-in
+          →</button>
+        <button onclick="closeModal('v21-checkin-overlay')"
+          style="width:100%;padding:12px;background:none;border:none;font-family:var(--font-body);font-size:13px;color:var(--gray-3);cursor:pointer;margin-bottom:8px;">Close</button>
       </div>
-      <button class="btn-cta" onclick="v21SaveCheckin()" style="margin-top:20px;margin-bottom:12px;">Save check-in →</button>
-      <button onclick="closeModal('v21-checkin-overlay')" style="width:100%;padding:12px;background:none;border:none;font-family:var(--font-body);font-size:13px;color:var(--gray-3);cursor:pointer;margin-bottom:8px;">Close</button>
     </div>
   </div>
-</div>
 
-<!-- Monthly Review Modal -->
-<div class="modal-overlay" id="v21-review-overlay" onclick="if(event.target===this)closeModal('v21-review-overlay')" style="display:none;">
-  <div class="modal-sheet">
-    <div class="modal-handle"></div>
-    <div style="padding:20px 24px 0;">
-      <div style="font-family:var(--font-display);font-size:22px;color:var(--navy);margin-bottom:6px;">Monthly review</div>
-      <div style="font-size:13px;color:var(--gray-4);margin-bottom:20px;">Where you stand this month.</div>
-      <div id="v21-review-content">
-        <div class="v21-review-row">
-          <span class="v21-review-label">Score this month</span>
-          <span class="v21-review-val" id="v21-rev-score">—</span>
+  <!-- Monthly Review Modal -->
+  <div class="modal-overlay" id="v21-review-overlay" onclick="if(event.target===this)closeModal('v21-review-overlay')"
+    style="display:none;">
+    <div class="modal-sheet">
+      <div class="modal-handle"></div>
+      <div style="padding:20px 24px 0;">
+        <div style="font-family:var(--font-display);font-size:22px;color:var(--navy);margin-bottom:6px;">Monthly review
         </div>
-        <div class="v21-review-row">
-          <span class="v21-review-label">Change vs last month</span>
-          <span class="v21-review-val v21-review-win" id="v21-rev-delta">—</span>
+        <div style="font-size:13px;color:var(--gray-4);margin-bottom:20px;">Where you stand this month.</div>
+        <div id="v21-review-content">
+          <div class="v21-review-row">
+            <span class="v21-review-label">Score this month</span>
+            <span class="v21-review-val" id="v21-rev-score">—</span>
+          </div>
+          <div class="v21-review-row">
+            <span class="v21-review-label">Change vs last month</span>
+            <span class="v21-review-val v21-review-win" id="v21-rev-delta">—</span>
+          </div>
+          <div class="v21-review-row">
+            <span class="v21-review-label">Biggest win</span>
+            <span class="v21-review-val v21-review-win" id="v21-rev-win"
+              style="max-width:55%;text-align:right;font-size:12px;">—</span>
+          </div>
+          <div class="v21-review-row">
+            <span class="v21-review-label">Biggest drag</span>
+            <span class="v21-review-val v21-review-drag" id="v21-rev-drag"
+              style="max-width:55%;text-align:right;font-size:12px;">—</span>
+          </div>
+          <div class="v21-review-row">
+            <span class="v21-review-label">Top recommendation</span>
+            <span class="v21-review-val" id="v21-rev-rec"
+              style="max-width:55%;text-align:right;font-size:12px;color:var(--teal);">—</span>
+          </div>
         </div>
-        <div class="v21-review-row">
-          <span class="v21-review-label">Biggest win</span>
-          <span class="v21-review-val v21-review-win" id="v21-rev-win" style="max-width:55%;text-align:right;font-size:12px;">—</span>
+        <div
+          style="background:var(--gray-1);border-radius:var(--r-sm);padding:14px;margin-top:16px;font-size:13px;color:var(--gray-4);line-height:1.65;"
+          id="v21-rev-commitment">
+          Set a commitment for next month to keep momentum going.
         </div>
-        <div class="v21-review-row">
-          <span class="v21-review-label">Biggest drag</span>
-          <span class="v21-review-val v21-review-drag" id="v21-rev-drag" style="max-width:55%;text-align:right;font-size:12px;">—</span>
-        </div>
-        <div class="v21-review-row">
-          <span class="v21-review-label">Top recommendation</span>
-          <span class="v21-review-val" id="v21-rev-rec" style="max-width:55%;text-align:right;font-size:12px;color:var(--teal);">—</span>
-        </div>
+        <button onclick="closeModal('v21-review-overlay')"
+          style="width:100%;padding:14px;background:none;border:none;font-family:var(--font-body);font-size:13px;color:var(--gray-3);cursor:pointer;margin-top:16px;margin-bottom:8px;">Close</button>
       </div>
-      <div style="background:var(--gray-1);border-radius:var(--r-sm);padding:14px;margin-top:16px;font-size:13px;color:var(--gray-4);line-height:1.65;" id="v21-rev-commitment">
-        Set a commitment for next month to keep momentum going.
-      </div>
-      <button onclick="closeModal('v21-review-overlay')" style="width:100%;padding:14px;background:none;border:none;font-family:var(--font-body);font-size:13px;color:var(--gray-3);cursor:pointer;margin-top:16px;margin-bottom:8px;">Close</button>
     </div>
   </div>
-</div>
 
-<!-- Life Events Modal -->
-<div class="modal-overlay" id="v21-events-overlay" onclick="if(event.target===this)closeModal('v21-events-overlay')" style="display:none;">
-  <div class="modal-sheet">
-    <div class="modal-handle"></div>
-    <div style="padding:20px 24px 0;">
-      <div style="font-family:var(--font-display);font-size:22px;color:var(--navy);margin-bottom:6px;">Life event</div>
-      <div style="font-size:13px;color:var(--gray-4);line-height:1.6;margin-bottom:6px;">Select anything that's changed. Tracent updates your score weighting, roadmap, and next best move.</div>
-      <div class="v21-life-event-grid">
-        <button class="v21-life-event-btn" onclick="v21TriggerLifeEvent('new_job',this)">🚀 New job</button>
-        <button class="v21-life-event-btn" onclick="v21TriggerLifeEvent('raise',this)">📈 Got a raise</button>
-        <button class="v21-life-event-btn" onclick="v21TriggerLifeEvent('move',this)">📦 Moving home</button>
-        <button class="v21-life-event-btn" onclick="v21TriggerLifeEvent('bonus',this)">💰 Received bonus</button>
-        <button class="v21-life-event-btn" onclick="v21TriggerLifeEvent('new_baby',this)">👶 New baby</button>
-        <button class="v21-life-event-btn" onclick="v21TriggerLifeEvent('job_loss',this)">⚠️ Job loss</button>
-        <button class="v21-life-event-btn" onclick="v21TriggerLifeEvent('divorce',this)">📋 Separation</button>
-        <button class="v21-life-event-btn" onclick="v21TriggerLifeEvent('health',this)">🏥 Medical event</button>
-        <button class="v21-life-event-btn" onclick="v21TriggerLifeEvent('inheritance',this)">🎁 Inheritance</button>
-        <button class="v21-life-event-btn" onclick="v21TriggerLifeEvent('bereavement',this)">❤️ Bereavement</button>
+  <!-- Life Events Modal -->
+  <div class="modal-overlay" id="v21-events-overlay" onclick="if(event.target===this)closeModal('v21-events-overlay')"
+    style="display:none;">
+    <div class="modal-sheet">
+      <div class="modal-handle"></div>
+      <div style="padding:20px 24px 0;">
+        <div style="font-family:var(--font-display);font-size:22px;color:var(--navy);margin-bottom:6px;">Life event
+        </div>
+        <div style="font-size:13px;color:var(--gray-4);line-height:1.6;margin-bottom:6px;">Select anything that's
+          changed. Tracent updates your score weighting, roadmap, and next best move.</div>
+        <div class="v21-life-event-grid">
+          <button class="v21-life-event-btn" onclick="v21TriggerLifeEvent('new_job',this)">🚀 New job</button>
+          <button class="v21-life-event-btn" onclick="v21TriggerLifeEvent('raise',this)">📈 Got a raise</button>
+          <button class="v21-life-event-btn" onclick="v21TriggerLifeEvent('move',this)">📦 Moving home</button>
+          <button class="v21-life-event-btn" onclick="v21TriggerLifeEvent('bonus',this)">💰 Received bonus</button>
+          <button class="v21-life-event-btn" onclick="v21TriggerLifeEvent('new_baby',this)">👶 New baby</button>
+          <button class="v21-life-event-btn" onclick="v21TriggerLifeEvent('job_loss',this)">⚠️ Job loss</button>
+          <button class="v21-life-event-btn" onclick="v21TriggerLifeEvent('divorce',this)">📋 Separation</button>
+          <button class="v21-life-event-btn" onclick="v21TriggerLifeEvent('health',this)">🏥 Medical event</button>
+          <button class="v21-life-event-btn" onclick="v21TriggerLifeEvent('inheritance',this)">🎁 Inheritance</button>
+          <button class="v21-life-event-btn" onclick="v21TriggerLifeEvent('bereavement',this)">❤️ Bereavement</button>
+        </div>
+        <button onclick="closeModal('v21-events-overlay')"
+          style="width:100%;padding:14px;background:none;border:none;font-family:var(--font-body);font-size:13px;color:var(--gray-3);cursor:pointer;margin-top:16px;margin-bottom:8px;">Close</button>
       </div>
-      <button onclick="closeModal('v21-events-overlay')" style="width:100%;padding:14px;background:none;border:none;font-family:var(--font-body);font-size:13px;color:var(--gray-3);cursor:pointer;margin-top:16px;margin-bottom:8px;">Close</button>
     </div>
   </div>
-</div>
 
-<!-- ══════════════════════════════════════════════════════════
+  <!-- ══════════════════════════════════════════════════════════
      V21 BEHAVIORAL ENGINE
      Handles: onboarding phases, score range, archetype
      inference, bridge to existing engine, dashboard
      rendering, mode rail, driver strip, retention layer.
 ══════════════════════════════════════════════════════════ -->
 
-<!-- ══════════════════════════════════════════════════════════
+  <!-- ══════════════════════════════════════════════════════════
    JAVASCRIPT MODULE MAP
    ─────────────────────────────────────────────
    Load order matters. BSE must load last.
    Config loads first. Services load after state.js. BSE loads last.
 ══════════════════════════════════════════════════════════ -->
 
-<!-- Config: Environment settings (Supabase URL/key, feature flags) -->
-<script src="js/config/config.js"></script>
+  <!-- Config: Environment settings (Supabase URL/key, feature flags) -->
+  <script src="js/config/config.js"></script>
 
-<!-- Core: State (startup guards — G, pbfdeState, AI proxy) -->
-<script src="js/core/state.js"></script>
+  <!-- Core: State (startup guards — G, pbfdeState, AI proxy) -->
+  <script src="js/core/state.js"></script>
 
-<!-- Core: State Adapter (clean read-only accessor for G/BSE) -->
-<script src="js/core/stateAdapter.js"></script>
+  <!-- Core: State Adapter (clean read-only accessor for G/BSE) -->
+  <script src="js/core/stateAdapter.js"></script>
 
-<!-- Services: Supabase client, auth, stores (safe no-ops if not configured) -->
-<script src="js/services/supabase.js"></script>
-<script src="js/services/auth.js"></script>
-<script src="js/services/profileStore.js"></script>
-<script src="js/services/goalsStore.js"></script>
+  <!-- Services: Supabase client, auth, stores (safe no-ops if not configured) -->
+  <script src="js/services/supabase.js"></script>
+  <script src="js/services/auth.js"></script>
+  <script src="js/services/profileStore.js"></script>
+  <script src="js/services/goalsStore.js"></script>
 
-<!-- Core: Hydration (session-aware boot — loads after services) -->
-<script src="js/core/hydration.js"></script>
+  <!-- Core: Hydration (session-aware boot — loads after services) -->
+  <script src="js/core/hydration.js"></script>
 
-<!-- Core: Navigation -->
-<script src="js/core/navigation.js"></script>
+  <!-- Core: Navigation -->
+  <script src="js/core/navigation.js"></script>
 
-<!-- Render: Modals (modal system, score breakdown, paywall, feedback, legal) -->
-<script src="js/render/modals.js"></script>
+  <!-- Render: Modals (modal system, score breakdown, paywall, feedback, legal) -->
+  <script src="js/render/modals.js"></script>
 
-<!-- Engine: Calculations + Compatibility Bridge -->
-<script src="js/engine/legacy-calculations.js"></script>
-<script src="js/engine/compat-bridge.js"></script>
+  <!-- Engine: Calculations + Compatibility Bridge -->
+  <script src="js/engine/legacy-calculations.js"></script>
+  <script src="js/engine/compat-bridge.js"></script>
 
-<!-- Render: Progress (subtab routing, net worth, goals) -->
-<script src="js/render/progress.js"></script>
+  <!-- Render: Progress (subtab routing, net worth, goals) -->
+  <script src="js/render/progress.js"></script>
 
-<!-- Render: Debt (method selection, accelerator, UI events) -->
-<script src="js/render/debt.js"></script>
+  <!-- Render: Debt (method selection, accelerator, UI events) -->
+  <script src="js/render/debt.js"></script>
 
-<!-- Render: Home Tab (board, modes, dashboard, align, NBM, score band) -->
-<script src="js/render/home.js"></script>
+  <!-- Render: Home Tab (board, modes, dashboard, align, NBM, score band) -->
+  <script src="js/render/home.js"></script>
 
-<!-- Render: Retirement (mode routing + retirement mode) -->
-<script src="js/render/retirement.js"></script>
+  <!-- Render: Retirement (mode routing + retirement mode) -->
+  <script src="js/render/retirement.js"></script>
 
-<!-- Render: Advice (personalization + copilot) -->
-<script src="js/render/advice.js"></script>
+  <!-- Render: Advice (personalization + copilot) -->
+  <script src="js/render/advice.js"></script>
 
-<!-- Features: Adaptive Dashboard + Debt Experience (staged layer — reads state after engine + BSE) -->
-<script src="js/features/adaptiveDashboard.js"></script>
-<script src="js/features/renderAdaptiveDashboard.js"></script>
-<script src="js/features/debtExperience.js"></script>
-<script src="js/features/renderDebtExperience.js"></script>
+  <!-- Features: Adaptive Dashboard + Debt Experience (staged layer — reads state after engine + BSE) -->
+  <script src="js/features/adaptiveDashboard.js"></script>
+  <script src="js/features/renderAdaptiveDashboard.js"></script>
+  <script src="js/features/debtExperience.js"></script>
+  <script src="js/features/renderDebtExperience.js"></script>
 
-<!-- App: Retention + Initialization -->
-<script src="js/app.js"></script>
+  <!-- App: Retention + Initialization -->
+  <script src="js/app.js"></script>
 
-<!-- Core: BSE — Behavioral State Engine (MUST LOAD LAST) -->
-<script src="js/core/bse.js"></script>
+  <!-- Core: BSE — Behavioral State Engine (MUST LOAD LAST) -->
+  <script src="js/core/bse.js"></script>
 
 </body>
+
 </html>

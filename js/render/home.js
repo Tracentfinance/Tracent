@@ -2537,10 +2537,12 @@ window.bseApplyModuleVis = function() {
     else tabHome.classList.remove('bse-focus-active');
   }
 
-  /* Debt tab: apply strategy-hidden class when debtLayer <= 2 */
+  /* Debt tab: apply strategy-hidden class when debtLayer <= 2,
+     BUT never while the tab is active — the user has explicitly navigated here. */
   var tabDebt = document.getElementById('tab-debtrank');
   if (tabDebt) {
-    if ((BSE.debtLayer || 1) <= 2) tabDebt.classList.add('bse-debt-strategy-hidden');
+    var debtIsActive = tabDebt.classList.contains('active');
+    if ((BSE.debtLayer || 1) <= 2 && !debtIsActive) tabDebt.classList.add('bse-debt-strategy-hidden');
     else tabDebt.classList.remove('bse-debt-strategy-hidden');
   }
 };

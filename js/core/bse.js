@@ -303,6 +303,16 @@
     /* Delegate DOM application to navigation.js */
     if(typeof window.bseApplyNavConfig === 'function') window.bseApplyNavConfig(items);
 
+    /* ── Debt nav override: always show Debt tab when user has meaningful liabilities ── */
+    /* Retirement navStyle hides nav-debt by default, but debt payoff is relevant regardless
+       of retirement intent. Show the button whenever any consumer debt exists. */
+    var _g = window.G || {};
+    var _totDebt = (_g.ccDebt||0)+(_g.carDebt||0)+(_g.studentDebt||0)+(_g.otherDebt||0);
+    if (_totDebt > 0) {
+      var _nd = document.getElementById('nav-debt');
+      if (_nd) { _nd.style.display = ''; }
+    }
+
     /* ── Retirement structural enforcement ── */
     _enforceRetirementLifeStage();
   }
@@ -538,14 +548,21 @@
       /* Debt relief */
       '.bse-debt-wrap{padding:14px 14px 0}',
       '.bse-dl{margin-bottom:14px}',
-      '.bse-dl-orient{font-size:15px;color:var(--navy);line-height:1.65;padding:16px;background:var(--sky-dim);border:1px solid var(--sky-border);border-radius:14px;margin-bottom:10px}',
-      '.bse-dl-capacity{font-size:13px;color:var(--gray-4);padding:10px 14px;background:var(--gray-1);border-radius:10px}',
+      '.bse-dl-orient{font-size:15px;color:var(--navy);line-height:1.7;padding:20px 18px;background:var(--sky-dim);border:1px solid var(--sky-border);border-radius:14px;margin-bottom:10px}',
+      '.bse-dl-hero{margin-bottom:20px}',
+      '.bse-dl-capacity{font-size:13px;color:var(--gray-4);padding:10px 14px;background:var(--gray-1);border-radius:10px;margin-top:10px}',
       '.bse-dl-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.7px;color:var(--gray-3);margin-bottom:10px}',
       '.bse-dp-card{background:#fff;border:1px solid var(--gray-2);border-radius:14px;padding:16px;border-left:3px solid var(--teal)}',
       '.bse-dp-name{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--gray-3);margin-bottom:6px}',
       '.bse-dp-amt{font-family:var(--font-display);font-size:30px;color:var(--navy);margin-bottom:4px}',
       '.bse-dp-why{font-size:12px;color:var(--teal);font-weight:600;margin-bottom:5px}',
       '.bse-dp-timeline{font-size:12px;color:var(--gray-4)}',
+      '.bse-dl-metrics{background:var(--gray-1);border:1px solid var(--gray-2);border-radius:14px;padding:16px 18px}',
+      '.bse-metric-primary{margin-bottom:6px}',
+      '.bse-metric-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.7px;color:var(--gray-3);margin-bottom:4px}',
+      '.bse-metric-value{font-family:var(--font-display);font-size:28px;color:var(--navy);line-height:1.1}',
+      '.bse-metric-unit{font-family:var(--font-body);font-size:13px;color:var(--gray-3);font-weight:500;margin-left:2px}',
+      '.bse-metric-secondary{font-size:12px;color:var(--gray-4)}',
       '.bse-debt-list{display:flex;flex-direction:column;gap:8px}',
       '.bse-debt-row{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;background:#fff;border:1px solid var(--gray-2);border-radius:12px}',
       '.bse-dr-name{font-size:13px;font-weight:600;color:var(--navy)}',
@@ -553,7 +570,7 @@
       '.bse-dr-amt{font-size:14px;font-weight:700;color:var(--navy)}',
       '.bse-dr-int{font-size:11px;color:var(--red)}',
       '.bse-dl-strategy-btn{width:100%;padding:12px;background:var(--sky-dim);border:1.5px solid var(--sky-border);color:var(--teal);border-radius:12px;font-family:var(--font-body);font-size:13px;font-weight:700;cursor:pointer}',
-      '.bse-dl-reveal{display:block;width:100%;padding:12px;background:var(--gray-1);border:1px solid var(--gray-2);border-radius:12px;font-family:var(--font-body);font-size:13px;color:var(--gray-4);cursor:pointer;margin-top:4px;-webkit-tap-highlight-color:transparent}',
+      '.bse-dl-reveal{display:block;width:100%;padding:12px;background:var(--gray-1);border:1px solid var(--gray-2);border-radius:12px;font-family:var(--font-body);font-size:13px;color:var(--gray-4);cursor:pointer;margin-top:8px;-webkit-tap-highlight-color:transparent}',
     ].join('');
     document.head.appendChild(s);
   }
