@@ -664,29 +664,11 @@
   ═══════════════════════════════════════════════════════ */
 
   function patchNBM(mode){
-    var g = G(); if(!g || !g.scoreFinal) return;
-    var card = document.getElementById('v21-nbm-card');
-    if (!card || card.style.display === 'none') return;
-
-    var eyebrowEl = card.querySelector('.v21-nbm-eyebrow');
-    var titleEl   = document.getElementById('v21-nbm-title');
-    var descEl    = document.getElementById('v21-nbm-desc');
-
-    if (!titleEl || !descEl) return;
-
-    var move = buildModeNBMCopy(mode, g);
-    if (!move) return;
-
-    if (eyebrowEl) eyebrowEl.innerHTML = '<span class="v21-live-dot"></span>' + (move.eyebrow || 'Your next best move');
-    titleEl.textContent = move.title;
-    descEl.textContent  = move.why + ' ' + move.action;
-
-    var impactEl = document.getElementById('v21-nbm-impact');
-    var cashEl   = document.getElementById('v21-nbm-cash');
-    var timeEl   = document.getElementById('v21-nbm-time');
-    if (impactEl) impactEl.textContent = move.scoreImpact ? '+'+move.scoreImpact : '—';
-    if (cashEl)   cashEl.textContent   = move.cashImpact  || '—';
-    if (timeEl)   timeEl.textContent   = move.timeframe   || '—';
+    // Delegate to the scoring engine (home.js NBM Engine module).
+    // The engine accounts for mode alignment via per-candidate modeAlignment scores,
+    // so re-running it on mode switch produces the correct mode-aware answer.
+    // buildModeNBMCopy() predates the scoring engine and is now superseded by it.
+    try { if (typeof window.v21RenderNBMCard === 'function') window.v21RenderNBMCard(); } catch(e){}
   }
 
   function buildModeNBMCopy(mode, g){
@@ -1089,22 +1071,9 @@
       updated = diff<1?'just now':diff<60?diff+'m ago':new Date(ts).toLocaleDateString([],{month:'short',day:'numeric'});
     }catch(e){ updated='just now'; }
 
-    // Insert meta bar after existing content
-    var existing = host.querySelector('.tracent-soft-note');
-    if(!existing||host.querySelector('.v21-auth-meta-bar')) return; // already enhanced
-
-    var meta = document.createElement('div');
-    meta.className = 'v21-auth-meta-bar';
-    meta.innerHTML =
-      '<div class="v21-auth-meta-row">' +
-        '<span class="v21-auth-meta-chip" style="border-color:'+confColor+';color:'+confColor+'">'+
-          'Confidence: '+confidence+
-        '</span>' +
-        '<span class="v21-auth-meta-chip">~'+inputCount+' inputs · '+inferredCount+' estimated</span>' +
-        '<span class="v21-auth-meta-chip">Updated: '+updated+'</span>' +
-      '</div>' +
-      '<div class="v21-auth-refine-note">This is based on your inputs \u2014 refine anytime to improve accuracy.</div>';
-    host.appendChild(meta);
+    // Confidence/meta bar suppressed — internal engine data only, not user-facing.
+    // Values (confidence, inputCount, inferredCount, updated) remain available
+    // in G.profileCompleteness / G._inferredFields for engine/debug use.
   }
 
   /* ── 4. MOVE MODE RAIL INTO tab-home ───────────────────── */
@@ -1595,13 +1564,23 @@
     var completeness = Number(gv.profileCompleteness||0);
     var inferred  = Array.isArray(gv._inferredFields)?gv._inferredFields.length:0;
     var confidence= completeness>=80&&inferred===0?'high':completeness>=60&&inferred<=2?'medium':'low';
+    var currentAge = parseInt(gv.currentAge||gv.age||'0');
+    // ── cashflow structure (from cashflow.js, if computed) ────────
+    var _cf = gv.cashflow || null;
+    var effectiveFCF  = _cf ? _cf.effectiveFCF  : fcf;
+    var leakRisk      = _cf ? _cf.leakRisk      : 'low';
+    var leakItems     = _cf ? _cf.leakItems      : [];
+    var nmMonthly     = _cf ? _cf.nonMonthlyMonthly : 0;
+    var subEst        = _cf ? _cf.subscriptionEst   : 0;
     return {
       active:active,income:income,takeHome:takeHome,fixedSpend:fixedSpend,fcf:fcf,efMonths:efMonths,efTarget:efTarget,
       ccDebt:ccDebt,ccRate:ccRate,carDebt:carDebt,studDebt:studDebt,othDebt:othDebt,totalDebt:totalDebt,minPmts:minPmts,dti:dti,
       homePrice:homePrice,depSaved:depSaved,depNeed:depNeed,closingEst:closingEst,depositGap:depositGap,saveCap:saveCap,
       retMatch:retMatch,matchMissed:matchMissed,
       score:gv.score||55,intent:gv.primaryIntent||'stable',
-      completeness:completeness,inferred:inferred,confidence:confidence
+      completeness:completeness,inferred:inferred,confidence:confidence,
+      currentAge:currentAge,
+      effectiveFCF:effectiveFCF,leakRisk:leakRisk,leakItems:leakItems,nmMonthly:nmMonthly,subEst:subEst
     };
   }
 
@@ -1782,8 +1761,8 @@
       });
     }
 
-    /* RETIRE: increase contribution */
-    if(s.income>0&&s.efMonths>=2){
+    /* RETIRE: increase contribution — excluded at draw age (65+) */
+    if(s.income>0&&s.efMonths>=2&&s.currentAge<65){
       var curAmt=Math.round(s.income*0.06/12);
       var idealAmt=Math.round(s.income*0.15/12);
       var gap=Math.max(0,idealAmt-curAmt);
@@ -1803,15 +1782,49 @@
       }
     }
 
-    /* STABLE: subscription audit */
-    if(s.score>=70&&s.ccDebt===0&&s.efMonths>=s.efTarget){
+    /* CAREER: income below market — only when benchmark is confident */
+    var _cbm = window.G && window.G.careerBenchmark;
+    if (_cbm && _cbm.confidence !== null && !_cbm.aboveMedian && (_cbm.gapFromMedian || 0) > 5000) {
+      var _gapK   = Math.round(_cbm.gapFromMedian / 1000);
+      var _moGain = Math.round(_cbm.gapFromMedian / 12);
+      c.push({id:'career_gap',
+        title:'You\'re $'+_gapK+'k below market for '+(_cbm.roleTitle||'your role')+' — build the case for your next review',
+        why:'Market median for '+(_cbm.roleTitle||'your role')+' in '+(window.G.state||'your area')+' is '+fmt(_cbm.median)+'. Your income is '+_cbm.pctOfMedian+'% of that — a $'+_gapK+'k gap. Closing it adds '+fmt(_moGain)+'/mo; income growth is the highest-leverage financial lever available to you.',
+        action:'Your benchmark data is in the Career tab. Request the conversation 4–6 weeks before your review. Come with the market number, a list of wins from the past 12 months, and a specific dollar ask.',
+        impact:'$'+_gapK+'k income increase shifts debt payoff, savings rate, and long-term wealth simultaneously',timing:'Next review cycle',
+        confidenceNote:'Benchmark: '+(_cbm.confidence==='high'?'BLS direct match (high confidence)':'Market data match (medium confidence)')+'. Base salary comparison only.',
+        scoreImpact:7,cashImpact:'+'+fmt(_moGain)+'/mo',timeToStart:'4–6 weeks out',
+        category:'grow',
+        scores:{urgency:7,impact:9,feasibility:5,confidence:_cbm.confidence==='high'?9:7,modeAlignment:s.active==='today'||s.active==='grow'?9:6}
+      });
+    }
+
+    /* RECURRING LEAK: high leak risk detected by cashflow engine */
+    if(s.leakRisk==='high'&&s.efMonths>=1&&s.fcf>0&&s.ccDebt===0){
+      var _leakAmt=s.subEst+Math.round(s.nmMonthly*0.3); // subscriptions + 30% of non-monthly as recoverable
+      var _topLeaks=s.leakItems.slice(0,3).map(function(l){return l.label.split('(')[0].trim();}).join(', ');
+      c.push({id:'recurring_leak',
+        title:'Recurring charges may be absorbing '+fmt(_leakAmt)+'/mo of your cash flow',
+        why:'Your estimated non-monthly and subscription costs are reducing real cash flow significantly. The gap between your stated free cash and your effective free cash is '+fmt(s.fcf-s.effectiveFCF)+'/mo.',
+        action:'Pull your last two bank statements and highlight every recurring charge. Focus on: '+(_topLeaks||'subscriptions, insurance, memberships')+'. Cancel anything unused. Redirect recovered cash to your top priority.',
+        impact:'Recovering '+fmt(_leakAmt)+'/mo improves effective FCF by '+Math.round(_leakAmt/(s.takeHome||1)*100)+'% of take-home',timing:'This week',
+        confidenceNote:'Estimates based on income-band averages — actual amounts will vary. Check your statements to confirm.',
+        scoreImpact:3,cashImpact:'+'+fmt(_leakAmt)+'/mo recovered',timeToStart:'This week',
+        category:'grow',
+        scores:{urgency:6,impact:5,feasibility:9,confidence:4,modeAlignment:s.active==='today'||s.active==='grow'?8:5}
+      });
+    }
+
+    /* STABLE: subscription audit (when cashflow engine not available or leak risk not high) */
+    if(s.score>=70&&s.ccDebt===0&&s.efMonths>=s.efTarget&&s.leakRisk!=='high'){
+      var _auditAmt=s.subEst>0?Math.round(s.subEst*0.25):Math.round(s.fcf*0.08);
       c.push({id:'optimize_fcf',
-        title:'Audit recurring subscriptions — recover '+fmt(Math.round(s.fcf*0.08))+'/mo to redirect',
+        title:'Audit recurring subscriptions — recover '+fmt(_auditAmt)+'/mo to redirect',
         why:'Your position is strong. Most people overpay on subscriptions, insurance, and utilities by 5–10% of take-home. That money redeploys more productively elsewhere.',
         action:'Pull your last two bank statements. Highlight every recurring charge under $30. Cancel any you have not actively used in 30 days. Redirect what you save to your primary goal.',
-        impact:'Frees '+fmt(Math.round(s.fcf*0.08))+'/mo to deploy intentionally',timing:'This week',
-        confidenceNote:'Estimate based on 8% of FCF — actual recovery depends on your subscription mix.',
-        scoreImpact:2,cashImpact:'+'+fmt(Math.round(s.fcf*0.08))+'/mo',timeToStart:'This week',
+        impact:'Frees '+fmt(_auditAmt)+'/mo to deploy intentionally',timing:'This week',
+        confidenceNote:s.subEst>0?'Estimated recurring charges: '+fmt(s.subEst)+'/mo (subscriptions + memberships). Actual amounts will vary.':'Estimate based on 8% of FCF — actual recovery depends on your subscription mix.',
+        scoreImpact:2,cashImpact:'+'+fmt(_auditAmt)+'/mo',timeToStart:'This week',
         category:'grow',
         scores:{urgency:3,impact:4,feasibility:9,confidence:5,modeAlignment:7}
       });
@@ -1827,9 +1840,22 @@
     var sc=c.scores;
     var modeMap={today:['safety','debt'],home:['home','safety'],debt:['debt','safety'],grow:['grow','retire'],retire:['retire','grow']};
     var modeBoost=(modeMap[s.active]||[]).indexOf(c.category)>-1?1:0;
-    var raw=sc.urgency*0.30+sc.impact*0.30+sc.feasibility*0.20+sc.confidence*0.10+(sc.modeAlignment+modeBoost)*0.10;
+    var raw=sc.urgency*0.275+sc.impact*0.275+sc.feasibility*0.20+sc.confidence*0.10+(sc.modeAlignment+modeBoost)*0.15;
     var confMult=s.confidence==='high'?1:s.confidence==='medium'?0.92:0.82;
-    return raw*confMult;
+    // ── BSE archetype weighting ──────────────────────────────────────
+    // BSE's behavioral signal (archetype + stage) amplifies or suppresses
+    // candidates so the engine's output aligns with the user's actual state.
+    var _bse  = window.BSE || {};
+    var _arch = _bse.archetype || '';
+    var _archMult = 1;
+    if      (_arch === 'anxious_overwhelmed' && c.category !== 'safety')  _archMult = 0.72;
+    else if (_arch === 'avoider'             && c.scores.feasibility <= 7) _archMult = 0.85;
+    else if (_arch === 'optimizer'           && (c.category === 'grow' || c.category === 'retire')) _archMult = 1.12;
+    else if (_arch === 'in_retirement' || _arch === 'pre_retirement') {
+      if (c.category === 'retire')                     _archMult = 1.18;
+      else if (c.id === 'cc_attack' || c.id === 'car_paydown') _archMult = 0.88;
+    }
+    return raw * confMult * _archMult;
   }
 
   function applySafetyFilters(candidates,s){
@@ -1850,7 +1876,14 @@
   function rankCandidates(candidates,s){
     return candidates
       .map(function(c){ return {c:c,score:scoreCandidate(c,s)}; })
-      .sort(function(a,b){ return b.score-a.score; })
+      .sort(function(a,b){
+        if(b.score!==a.score) return b.score-a.score;          // 1. final score desc
+        var ia=a.c.scores.impact, ib=b.c.scores.impact;
+        if(ib!==ia) return ib-ia;                              // 2. impact desc
+        var ua=a.c.scores.urgency, ub=b.c.scores.urgency;
+        if(ub!==ua) return ub-ua;                              // 3. urgency desc
+        return (a.c.id<b.c.id?-1:a.c.id>b.c.id?1:0);         // 4. alpha by id (stable)
+      })
       .map(function(item){ return item.c; });
   }
 
@@ -1859,6 +1892,10 @@
   ═══════════════════════════════════════════════════════ */
   function getEngineRankedMoves(){
     if(typeof G==='undefined'||!G.scoreFinal) return [_fallback()];
+    // Completeness gate — require meaningful data before running engine
+    var _gComp = Number((window.G||{}).profileCompleteness||0);
+    var _gInf  = Array.isArray((window.G||{})._inferredFields)?(window.G||{})._inferredFields.length:0;
+    if(_gComp < 60 || _gInf > 5) return [_insufficientData()];
     var s=buildState();
     var raw=buildCandidates(s);
     if(!raw.length) return [_fallback()];
@@ -1884,6 +1921,20 @@
       scoreImpact:1,cashImpact:'Steady',timeToStart:'Weekly',
       category:'safety',scores:{urgency:1,impact:1,feasibility:10,confidence:8,modeAlignment:5},
       _alternatives:[],_rankingReason:'No specific high-priority actions identified for current position.'
+    };
+  }
+
+  function _insufficientData(){
+    return {
+      id:'insufficient_data',
+      title:'Add a few more details to unlock recommendations',
+      why:'Your next best move will appear once your income, housing cost, and debt balances are on file.',
+      action:'Tap Settings to complete your profile — it takes under 2 minutes.',
+      impact:'—',timing:'Now',
+      confidenceNote:'Recommendations only appear when your numbers are complete enough to be meaningful.',
+      scoreImpact:0,cashImpact:'—',timeToStart:'Now',
+      category:'setup',scores:{urgency:10,impact:10,feasibility:10,confidence:0,modeAlignment:5},
+      _alternatives:[],_rankingReason:'Profile completion required before engine recommendations can be generated.'
     };
   }
 
@@ -1916,6 +1967,24 @@
     var idx=Math.min(window._v21MoveIndex||0,moves.length-1);
     var move=moves[idx]||moves[0];
     var f=function(id){ return document.getElementById(id); };
+
+    // Incomplete profile — show completion-oriented state, not an engine recommendation
+    if(move.id==='insufficient_data'){
+      if(f('v21-nbm-title'))      f('v21-nbm-title').textContent      = move.title;
+      if(f('v21-nbm-why'))        f('v21-nbm-why').textContent        = move.why;
+      if(f('v21-nbm-desc'))       f('v21-nbm-desc').textContent       = move.action;
+      if(f('v21-nbm-impact'))     f('v21-nbm-impact').textContent     = '—';
+      if(f('v21-nbm-cash'))       f('v21-nbm-cash').textContent       = '—';
+      if(f('v21-nbm-time'))       f('v21-nbm-time').textContent       = '—';
+      if(f('v21-nbm-confidence')) f('v21-nbm-confidence').textContent = '';
+      var whyBtnId=f('v21-nbm-why-btn');
+      if(whyBtnId) whyBtnId.style.display='none';
+      var easierBtnId=f('v21-nbm-easier-btn');
+      if(easierBtnId) easierBtnId.style.display='none';
+      card.style.display='block';
+      return;
+    }
+
     if(f('v21-nbm-title'))      f('v21-nbm-title').textContent      = move.title;
     if(f('v21-nbm-why'))        f('v21-nbm-why').textContent        = move.why||'';
     if(f('v21-nbm-desc'))       f('v21-nbm-desc').textContent       = move.action||'';
@@ -1973,11 +2042,21 @@
   /* ═══════════════════════════════════════════════════════
      8. CSS
   ═══════════════════════════════════════════════════════ */
+  // ── Internal export for debug layer (no production side-effects) ──
+  window.__nbmEngine__ = {
+    buildState:          buildState,
+    buildCandidates:     buildCandidates,
+    applySafetyFilters:  applySafetyFilters,
+    scoreCandidate:      scoreCandidate,
+    rankCandidates:      rankCandidates,
+    getEngineRankedMoves: getEngineRankedMoves
+  };
+
   var style=document.createElement('style');
   style.textContent=[
     '.v21-nbm-why{font-size:14px;color:rgba(255,255,255,0.80);line-height:1.6;margin-bottom:10px;}',
     '.v21-nbm-action-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:rgba(255,255,255,0.35);margin-bottom:4px;}',
-    '.v21-nbm-confidence{font-size:11px;color:rgba(255,255,255,0.38);line-height:1.5;margin-top:10px;margin-bottom:4px;font-style:italic;}',
+    '.v21-nbm-confidence{display:none;}', /* internal engine metadata — not user-facing */
     '.v21-nbm-why-btn.active,.v21-nbm-why-btn:focus{background:rgba(0,168,232,0.15)!important;}',
     '.v21-nbm-disclosure{margin-top:14px;border-top:1px solid rgba(255,255,255,0.08);padding-top:14px;}',
     '.v21-nbm-disc-section{margin-bottom:14px;}',
@@ -1991,6 +2070,211 @@
     '.v21-nbm-disc-noalt{font-size:12px;color:rgba(255,255,255,0.38);font-style:italic;}',
   ].join('\n');
   document.head.appendChild(style);
+
+})();
+
+
+/* ═══ MODULE: NBM Debug + Scenario Validator ═══
+   Dev-only. Zero UI. Zero production rendering changes.
+   Entry points (browser console):
+     window.nbmDebug()                        — run against live G/BSE
+     window.nbmTest()                         — run all 12 scenarios
+     window.nbmScenario(mockG, mockBSE, label)— run one custom scenario
+   All output to console only. G and BSE are restored after each run.
+═══════════════════════════════════════════════ */
+(function(){
+  'use strict';
+  if (window.__TRACENT_NBM_DBG__) return;
+  window.__TRACENT_NBM_DBG__ = true;
+
+  var _eng = window.__nbmEngine__;
+  if (!_eng) {
+    console.warn('[NBM Debug] __nbmEngine__ not exposed — debug layer inactive.');
+    return;
+  }
+
+  /* ── Score decomposition (mirrors scoreCandidate maths, returns parts) ── */
+  function _decompose(c, s, arch) {
+    var sc = c.scores;
+    var modeMap = {today:['safety','debt'],home:['home','safety'],debt:['debt','safety'],grow:['grow','retire'],retire:['retire','grow']};
+    var modeBoost = (modeMap[s.active]||[]).indexOf(c.category) > -1 ? 1 : 0;
+    var raw = sc.urgency*0.275 + sc.impact*0.275 + sc.feasibility*0.20 + sc.confidence*0.10 + (sc.modeAlignment+modeBoost)*0.15;
+    var confMult = s.confidence==='high' ? 1 : s.confidence==='medium' ? 0.92 : 0.82;
+    var archMult = 1;
+    if      (arch==='anxious_overwhelmed' && c.category!=='safety')              archMult = 0.72;
+    else if (arch==='avoider'             && sc.feasibility <= 7)                archMult = 0.85;
+    else if (arch==='optimizer'           && (c.category==='grow'||c.category==='retire')) archMult = 1.12;
+    else if (arch==='in_retirement'||arch==='pre_retirement') {
+      if   (c.category==='retire')                         archMult = 1.18;
+      else if (c.id==='cc_attack'||c.id==='car_paydown')   archMult = 0.88;
+    }
+    return { raw:+raw.toFixed(3), confMult:confMult, archMult:archMult, final:+(raw*confMult*archMult).toFixed(3) };
+  }
+
+  /* ── Filter reason (mirrors applySafetyFilters conditions) ── */
+  function _filterReason(c, s) {
+    var criticalEF = s.efMonths < 1, highDebt = s.totalDebt > 5000;
+    var severeCC   = s.ccDebt > 8000, tightCash = s.fcf < 200, nearZero = s.fcf < 50;
+    if (criticalEF && highDebt && (c.id==='invest_surplus'||c.id==='optimize_fcf')) return 'criticalEF+highDebt';
+    if (severeCC   && (c.id==='home_deposit'||c.id==='home_dti_prep'))              return 'severeCC';
+    if (tightCash  && (c.id==='retire_contrib'||c.id==='invest_surplus'))           return 'tightCash';
+    if (nearZero   && c.id!=='deficit' && c.id!=='ef_zero')                         return 'nearZero';
+    return null;
+  }
+
+  /* ── Anomaly detection ── */
+  function _anomalies(rows, s) {
+    var out = [];
+    var winner  = rows.find(function(r){ return !r.filtered; });
+    // Safety candidate filtered — always wrong
+    rows.filter(function(r){ return r.filtered && r.category==='safety'; }).forEach(function(r){
+      out.push('ANOMALY: safety candidate "'+r.id+'" was filtered out (reason: '+r.filterReason+')');
+    });
+    // invest_surplus / optimize_fcf survived criticalEF+highDebt
+    rows.filter(function(r){ return !r.filtered && (r.id==='invest_surplus'||r.id==='optimize_fcf'); }).forEach(function(r){
+      if (s.efMonths<1 && s.totalDebt>5000) out.push('ANOMALY: "'+r.id+'" survived filter despite criticalEF+highDebt — safety filter broken');
+    });
+    // career_gap present but benchmark confidence is null
+    rows.filter(function(r){ return r.id==='career_gap'; }).forEach(function(){
+      var _cbm = window.G && window.G.careerBenchmark;
+      if (!_cbm || _cbm.confidence===null) out.push('ANOMALY: career_gap candidate appeared despite null/missing benchmark confidence');
+    });
+    // Non-winner has materially higher impact AND score close to winner
+    if (winner) {
+      rows.filter(function(r){ return !r.filtered && r.id!==winner.id; }).forEach(function(r){
+        if (r.scores.impact > winner.scores.impact+2 && r.final >= winner.final*0.90)
+          out.push('NOTE: "'+r.id+'" (impact='+r.scores.impact+') ranked below winner "'+winner.id+'" (impact='+winner.scores.impact+') — verify archMult/modeAlignment suppression is intentional');
+      });
+    }
+    return out.length ? out : ['None detected'];
+  }
+
+  /* ── Core run function — saves/restores G and BSE ── */
+  function _run(label, mockG, mockBSE) {
+    var savedG = window.G, savedBSE = window.BSE;
+    try {
+      if (mockG)   window.G   = Object.assign({}, mockG,   {scoreFinal:true, score:mockG.score||55});
+      if (mockBSE) window.BSE = Object.assign({}, savedBSE||{archetype:'stable_confident'}, mockBSE);
+      var s    = _eng.buildState();
+      var arch = (window.BSE && window.BSE.archetype) || '';
+      var raw  = _eng.buildCandidates(s);
+      var kept = _eng.applySafetyFilters(raw, s);
+      var keptIds = kept.map(function(c){ return c.id; });
+      var rows = raw.map(function(c){
+        var d  = _decompose(c, s, arch);
+        var fr = _filterReason(c, s);
+        var filtered = keptIds.indexOf(c.id) === -1;
+        return {
+          id:c.id, category:c.category, scores:c.scores,
+          title55: c.title.slice(0,55)+(c.title.length>55?'…':''),
+          raw:d.raw, confMult:d.confMult, archMult:d.archMult, final:d.final,
+          filtered:filtered, filterReason: filtered ? (fr||'all-filtered-fallback') : ''
+        };
+      }).sort(function(a,b){ return b.final-a.final; });
+
+      var ranked = _eng.rankCandidates(kept.length ? kept : raw, s);
+      var winner = ranked[0];
+      var anomalies = _anomalies(rows, s);
+
+      console.group('[NBM] ' + label);
+      console.log('State  →', {mode:s.active, fcf:s.fcf, efMo:s.efMonths, ccDebt:s.ccDebt, totDebt:s.totalDebt, dti:s.dti, score:s.score, conf:s.confidence, arch:arch});
+      console.log('Winner →', winner ? winner.id+' | '+winner.title.slice(0,60) : '(fallback)');
+      console.table(rows.map(function(r){
+        return {id:r.id, cat:r.category, raw:r.raw, 'confX':r.confMult, 'archX':r.archMult, final:r.final, filtered:r.filtered, reason:r.filterReason};
+      }));
+      anomalies[0]!=='None detected' ? console.warn('Anomalies →', anomalies) : console.log('Anomalies → none');
+      console.groupEnd();
+      return {label:label, state:s, arch:arch, rows:rows, winner:winner?winner.id:null, anomalies:anomalies};
+    } finally {
+      window.G   = savedG;
+      window.BSE = savedBSE;
+    }
+  }
+
+  /* ═══════════════════════════════════════════════════════
+     SCENARIO DEFINITIONS — 12 representative states
+  ═══════════════════════════════════════════════════════ */
+  var SCENARIOS = [
+    { label:'S01 deficit — neg FCF, no EF, CC debt',
+      g:{income:54000,takeHome:3240,fcf:-280,ccDebt:4500,ccRate:22,carDebt:0,studentDebt:0,otherDebt:0,emergency:'0',dti:52,score:38,primaryIntent:'today'},
+      bse:{archetype:'anxious_overwhelmed'} },
+
+    { label:'S02 zero EF, positive FCF, debt-free',
+      g:{income:72000,takeHome:4320,fcf:420,ccDebt:0,carDebt:0,studentDebt:0,otherDebt:0,emergency:'0',dti:18,score:52,primaryIntent:'today'},
+      bse:{archetype:'stable_confident'} },
+
+    { label:'S03 low EF (1mo) + severe CC debt, debt mode',
+      g:{income:65000,takeHome:3900,fcf:310,ccDebt:9500,ccRate:21,carDebt:0,studentDebt:0,otherDebt:0,emergency:'1',dti:44,score:46,primaryIntent:'debt'},
+      bse:{archetype:'anxious_overwhelmed'} },
+
+    { label:'S04 nearZero FCF — only deficit/ef_zero should survive',
+      g:{income:48000,takeHome:2880,fcf:35,ccDebt:12000,ccRate:24,carDebt:0,studentDebt:0,otherDebt:0,emergency:'0',dti:58,score:31,primaryIntent:'today'},
+      bse:{archetype:'anxious_overwhelmed'} },
+
+    { label:'S05 EF adequate, CC cleared, employer match missed, grow mode',
+      g:{income:85000,takeHome:5100,fcf:850,ccDebt:0,carDebt:0,studentDebt:0,otherDebt:0,emergency:'4',dti:22,score:68,retMatch:'partial',primaryIntent:'grow'},
+      bse:{archetype:'stable_confident'} },
+
+    { label:'S06 home buyer — deposit gap + marginal DTI, home mode',
+      g:{income:95000,takeHome:5700,fcf:700,ccDebt:2000,ccRate:18,carDebt:8000,carPayment:350,studentDebt:0,otherDebt:0,emergency:'3',dti:38,score:61,homePrice:420000,depositSaved:18000,primaryIntent:'home'},
+      bse:{archetype:'stable_confident'} },
+
+    { label:'S07 career gap — confident BLS benchmark, 28% below market',
+      g:{income:72000,takeHome:4320,fcf:600,ccDebt:0,carDebt:0,studentDebt:0,otherDebt:0,emergency:'4',dti:20,score:70,
+         careerBenchmark:{confidence:'high',aboveMedian:false,gapFromMedian:28000,pctOfMedian:72,median:100000,roleTitle:'Senior Engineer',state:'NY'},
+         primaryIntent:'today'},
+      bse:{archetype:'optimizer'} },
+
+    { label:'S08 optimizer — EF full, debt-free, surplus to deploy, grow mode',
+      g:{income:120000,takeHome:7200,fcf:2100,ccDebt:0,carDebt:0,studentDebt:0,otherDebt:0,emergency:'6',dti:15,score:82,retMatch:'full',primaryIntent:'grow'},
+      bse:{archetype:'optimizer'} },
+
+    { label:'S09 pre-retirement — student debt remaining, retire mode',
+      g:{income:88000,takeHome:5280,fcf:920,ccDebt:0,carDebt:0,studentDebt:5000,studentRate:5.5,otherDebt:0,emergency:'5',dti:24,score:74,retMatch:'partial',primaryIntent:'retire',currentAge:58},
+      bse:{archetype:'pre_retirement'} },
+
+    { label:'S10 in-retirement — no career/invest candidates expected',
+      g:{income:36000,takeHome:3000,fcf:280,ccDebt:0,carDebt:0,studentDebt:0,otherDebt:0,emergency:'8',dti:12,score:78,primaryIntent:'retire',currentAge:67},
+      bse:{archetype:'in_retirement'} },
+
+    { label:'S11 avoider — feasibility penalty suppresses complex moves',
+      g:{income:58000,takeHome:3480,fcf:180,ccDebt:3200,ccRate:21,carDebt:0,studentDebt:8000,studentRate:5.5,otherDebt:0,emergency:'1',dti:36,score:49,primaryIntent:'today'},
+      bse:{archetype:'avoider'} },
+
+    { label:'S12 car loan only (no CC), EF adequate, debt mode',
+      g:{income:70000,takeHome:4200,fcf:580,ccDebt:0,carDebt:11000,carPayment:320,studentDebt:0,otherDebt:0,emergency:'3',dti:28,score:65,primaryIntent:'debt'},
+      bse:{archetype:'stable_confident'} }
+  ];
+
+  /* ── Public entry points ── */
+  window.nbmDebug = function(){
+    return _run('Live — '+new Date().toLocaleTimeString());
+  };
+
+  window.nbmScenario = function(mockG, mockBSE, label){
+    return _run(label||'Custom', mockG, mockBSE);
+  };
+
+  window.nbmTest = function(){
+    console.group('[NBM Test Suite] '+SCENARIOS.length+' scenarios — '+new Date().toLocaleTimeString());
+    var results = SCENARIOS.map(function(sc){ return _run(sc.label, sc.g, sc.bse); });
+    var summary = results.map(function(r){
+      return {
+        scenario: r.label.slice(0,48),
+        arch: r.arch,
+        winner: r.winner||'(fallback)',
+        candidates: r.rows.length,
+        filtered: r.rows.filter(function(x){return x.filtered;}).length,
+        anomalies: r.anomalies[0]==='None detected' ? 0 : r.anomalies.length
+      };
+    });
+    console.log('\n── SUMMARY ──');
+    console.table(summary);
+    var total = results.reduce(function(n,r){ return n+(r.anomalies[0]==='None detected'?0:r.anomalies.length); },0);
+    console.log('Total anomalies: '+total+(total===0?' — all clear':''));
+    console.groupEnd();
+    return results;
+  };
 
 })();
 
@@ -2310,6 +2594,26 @@ window.bseRenderFocusCard = function() {
   if (!el) return;
   var BSE = window.BSE || {};
   var g = window.G || {};
+
+  // State gate: don't render if no analysis has run
+  if (!g.scoreFinal) return;
+
+  // Partial-data gate: if completeness < 60, show a neutral completion prompt
+  var _bseComp = Number(g.profileCompleteness || 0);
+  if (_bseComp < 60) {
+    el.innerHTML =
+      '<div class="bse-focus-wrap">' +
+        '<div class="bse-focus-eyebrow">Getting started</div>' +
+        '<div class="bse-action-card">' +
+          '<div class="bse-action-label">Complete your profile to unlock your plan</div>' +
+          '<div class="bse-action-why">Add your income, housing cost, and debt balances so Tracent can give you a meaningful, specific recommendation.</div>' +
+          '<button class="bse-action-cta" onclick="openSettingsEdit()">Update your details \u2192</button>' +
+        '</div>' +
+      '</div>';
+    el.style.display = 'block';
+    return;
+  }
+
   var fcf = g.fcf||0, efMo = parseInt(g.emergency||'0'), cc = g.ccDebt||0;
   var dti = g.dti||0, score = g.score||0, at = BSE.archetype;
 

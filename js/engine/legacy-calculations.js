@@ -1698,7 +1698,7 @@ function haptic(style) {
 
 
 function _0x701dc98() {
-  const sub = window._progressSub || 'goals';
+  const sub = window._progressSub || 'networth';
   showProgressSub(sub);
 }
 
@@ -1740,7 +1740,8 @@ function renderGoalFocus() {
   var msText= document.getElementById('goal-focus-milestone-text');
   var label = document.getElementById('ai-advice-goal-label');
   var chatIntro = document.getElementById('ai-chat-intro');
-  if (!card || !G || !G.goal) return;
+  if (!card || !G || !G.goal || !G.scoreFinal) return;
+  var _gfComp = Number(G.profileCompleteness || 0);
 
   var goals = {
     build_savings:    { icon:'🛡️', title:'Build savings & emergency fund',      sub:'Your advice is focused on growing your cash buffer and financial resilience.',    milestone: 'Hit 3 months of expenses saved' },
@@ -1769,7 +1770,7 @@ function renderGoalFocus() {
     milestoneText = months + ' months saved — target: 3 months (' + g.milestone + ')';
   }
   if (msText) msText.textContent = milestoneText;
-  if (ms)     ms.style.display   = 'block';
+  if (ms)     ms.style.display   = _gfComp >= 60 ? 'block' : 'none';
 
   // Update sub-header label
   if (label) label.textContent = 'Focused on: ' + g.title.toLowerCase();
@@ -3573,6 +3574,14 @@ function _0x5517bf6() {
   } else {
     _0x30a56de(monthlyIncome);
   }
+
+  // Authoritative bind: ensure the edit button always routes to openSettingsEdit('assets').
+  // Inline onclick attribute survives textContent changes but can be lost if the element is
+  // ever re-created by another render path. Rebinding here makes it deterministic.
+  var _nwEditBtn = document.getElementById('nw-edit-btn');
+  if (_nwEditBtn) {
+    _nwEditBtn.onclick = function() { if (typeof openSettingsEdit === 'function') openSettingsEdit('assets'); };
+  }
 }
 
 function _0x4b08b5e(monthlyIncome) {
@@ -3735,14 +3744,16 @@ function _0x30a56de(monthlyIncome) {
       ${monthsAway === 0 ? ' ✅ You already have enough for a 10% deposit.' : monthsAway < 999 ? ` You're ~${monthsAway} months from a 10% deposit at your current saving rate.` : ''}
     </div>` : '';
 
+  // Write to visible unlocked rows (primary) and compat hidden rows
+  const assetRowsUnlocked = document.getElementById('nw-asset-rows-unlocked');
   const assetRows = document.getElementById('nw-asset-rows');
-  if (assetRows) {
-    // Only real cash assets — no hypothetical house price
-    assetRows.innerHTML = bannerHtml + _0xb7aa5c8('💵', 'Savings / deposit fund', cashSavings, 'positive');
-  }
+  const _aHtml = bannerHtml + _0xb7aa5c8('💵', 'Savings / deposit fund', cashSavings, 'positive');
+  if (assetRowsUnlocked) assetRowsUnlocked.innerHTML = _aHtml;
+  if (assetRows) assetRows.innerHTML = _aHtml;
 
+  const liabRowsUnlocked = document.getElementById('nw-liability-rows-unlocked');
   const liabRows = document.getElementById('nw-liability-rows');
-  if (liabRows) {
+  if (liabRowsUnlocked || liabRows) {
     // Actual debts only — no projected mortgage
     let lHtml = '';
     if (G.ccDebt  > 0) lHtml += _0xb7aa5c8('💳', 'Credit card debt', G.ccDebt,  'negative');
@@ -3750,7 +3761,8 @@ function _0x30a56de(monthlyIncome) {
     if (G.studentDebt > 0) lHtml += _0xb7aa5c8('🎓', 'Student loans', G.studentDebt, 'negative');
     if (G.otherDebt > 0) lHtml += _0xb7aa5c8('📋', 'Other loans',     G.otherDebt, 'negative');
     if (!lHtml) lHtml = '<div class="nw-row" style="color:var(--green);font-size:13px;padding:12px 0;">✅ No consumer debts — great position to buy from</div>';
-    liabRows.innerHTML = lHtml;
+    if (liabRowsUnlocked) liabRowsUnlocked.innerHTML = lHtml;
+    if (liabRows) liabRows.innerHTML = lHtml;
   }
 
   const rent = G.rentAmt || 0;
@@ -4968,36 +4980,42 @@ function _0x0e84774() {
   var gapAmt=Math.abs(gap.gapFromMedian||0),pct=gap.pctOfMedian||100;
   var SN={NY:'New York',CA:'California',TX:'Texas',FL:'Florida',WA:'Washington',MA:'Massachusetts',IL:'Illinois',CO:'Colorado',NJ:'New Jersey',CT:'Connecticut',DC:'Washington DC',GA:'Georgia',NC:'North Carolina',VA:'Virginia',AZ:'Arizona',PA:'Pennsylvania',OH:'Ohio',MN:'Minnesota',MD:'Maryland',OR:'Oregon',MI:'Michigan',TN:'Tennessee',MO:'Missouri',WI:'Wisconsin',IN:'Indiana',NV:'Nevada',LA:'Louisiana',UT:'Utah',KY:'Kentucky',OK:'Oklahoma',SC:'South Carolina',AL:'Alabama',AR:'Arkansas',DE:'Delaware',HI:'Hawaii',ID:'Idaho',IA:'Iowa',KS:'Kansas',ME:'Maine',MT:'Montana',NE:'Nebraska',NH:'New Hampshire',NM:'New Mexico',ND:'North Dakota',RI:'Rhode Island',SD:'South Dakota',VT:'Vermont',WV:'West Virginia',WY:'Wyoming'};
   var sn=SN[state]||state||'your area';
+  // ── Strict state machine: every branch fully defines all elements ──
+  // No branch may leave any onclick, display, or text from a prior render.
   if(_cbmConfident && gap.aboveMedian){
+    // State A: READY — above market
     var ah=Math.round((income-gap.marketMedian)/1000),ng=gap.nextTierSalary-income;
-    if(vn){vn.textContent='+$'+ah+'k above market';vn.style.color='#34D399';vn.style.fontSize='28px';}
-    if(vl)vl.textContent='Strong position \u2014 above the '+gap.roleTitle+' median in '+sn+'.';
+    if(vn){vn.textContent='+$'+ah+'k above market';vn.style.color='#34D399';vn.style.fontSize='28px';vn.style.cursor='';vn.onclick=null;}
+    if(vl){vl.textContent='Strong position \u2014 above the '+gap.roleTitle+' median in '+sn+'.';vl.style.cursor='';vl.onclick=null;}
     if(mf){mf.style.width=Math.min(100,pct)+'%';mf.style.background='#10B981';}
     if(mp){mp.textContent=pct+'% of median';mp.style.color='#10B981';}
     if(am)am.textContent=ng>0?'$'+Math.round(ng/1000)+'k to '+(gap.nextTierLabel||'').split('/')[0].trim()+'. Your next milestone.':'At or above senior median.';
     if(ab){ab.textContent='See trajectory \u203a';ab.style.display='';ab.onclick=function(){var c=el('career-chart-card');if(c)c.scrollIntoView({behavior:'smooth'});};}
   }else if(_cbmConfident && pct>=85){
-    if(vn){vn.textContent='$'+Math.round(gapAmt/1000)+'k below market';vn.style.color='#F8A750';vn.style.fontSize='28px';}
-    if(vl)vl.textContent='Near median \u2014 '+pct+'% of market rate for '+gap.roleTitle+'. Worth a conversation.';
+    // State B: READY — near market
+    if(vn){vn.textContent='$'+Math.round(gapAmt/1000)+'k below market';vn.style.color='#F8A750';vn.style.fontSize='28px';vn.style.cursor='';vn.onclick=null;}
+    if(vl){vl.textContent='Near median \u2014 '+pct+'% of market rate for '+gap.roleTitle+'. Worth a conversation.';vl.style.cursor='';vl.onclick=null;}
     if(mf){mf.style.width=pct+'%';mf.style.background='#F8A750';}
     if(mp){mp.textContent=pct+'% of median';mp.style.color='#F8A750';}
     if(am)am.textContent='Asking for '+fmt(gap.marketMedian)+' puts you at market. The data backs you up.';
-    if(ab){ab.textContent='Get raise script \u203a';ab.style.display='';}
+    if(ab){ab.textContent='Get raise script \u203a';ab.style.display='';ab.onclick=function(){if(typeof openSalaryNegotiation==='function')openSalaryNegotiation();};}
   }else if(_cbmConfident){
-    if(vn){vn.textContent='$'+Math.round(gapAmt/1000)+'k below market';vn.style.color='#ff6b7a';vn.style.fontSize='28px';}
-    if(vl)vl.textContent='Undervalued. Market median for '+gap.roleTitle+' in '+sn+' is '+fmt(gap.marketMedian)+'.';
+    // State C: READY — below market
+    if(vn){vn.textContent='$'+Math.round(gapAmt/1000)+'k below market';vn.style.color='#ff6b7a';vn.style.fontSize='28px';vn.style.cursor='';vn.onclick=null;}
+    if(vl){vl.textContent='Undervalued. Market median for '+gap.roleTitle+' in '+sn+' is '+fmt(gap.marketMedian)+'.';vl.style.cursor='';vl.onclick=null;}
     if(mf){mf.style.width=Math.max(5,pct)+'%';mf.style.background='#E63946';}
     if(mp){mp.textContent=pct+'% of median \u2014 undervalued';mp.style.color='#E63946';}
     if(am)am.textContent='Closing this gap = +'+fmt(Math.round(gapAmt/12))+'/mo. Use the AI coach.';
-    if(ab){ab.textContent='Get raise script \u203a';ab.style.display='';}
+    if(ab){ab.textContent='Get raise script \u203a';ab.style.display='';ab.onclick=function(){if(typeof openSalaryNegotiation==='function')openSalaryNegotiation();};}
   }else{
-    // No confident benchmark — show neutral state, suppress market claims
-    if(vn){vn.textContent='Add your title & state';vn.style.color='rgba(255,255,255,0.35)';vn.style.fontSize='16px';}
-    if(vl)vl.textContent='Refine your job title and work location to unlock market positioning.';
-    if(mf)mf.style.width='0%';
-    if(mp)mp.textContent='';
+    // State D: NO_DATA — no confident benchmark (title and/or state missing)
+    // Primary CTA is the button only. vn/vl are secondary affordances, not the only entry point.
+    if(vn){vn.textContent='Add your title & state';vn.style.color='rgba(255,255,255,0.35)';vn.style.fontSize='16px';vn.style.cursor='pointer';vn.onclick=function(){if(typeof openSettingsEdit==='function')openSettingsEdit('career');};}
+    if(vl){vl.textContent='Add your job title and work state to unlock your market position, salary gap, and negotiation data.';vl.style.cursor='pointer';vl.onclick=function(){if(typeof openSettingsEdit==='function')openSettingsEdit('career');};}
+    if(mf){mf.style.width='0%';mf.style.background='';}
+    if(mp){mp.textContent='';mp.style.color='';}
     if(am)am.textContent='';
-    if(ab)ab.style.display='none';
+    if(ab){ab.textContent='Add your title & state \u2192';ab.style.display='';ab.onclick=function(){if(typeof openSettingsEdit==='function')openSettingsEdit('career');};}
   }
   if(_cbmConfident && cc){cc.style.display='block';
     var ct=el('career-compare-title');if(ct)ct.textContent=(gap.roleTitle||'Your role')+' \u00b7 '+sn+' benchmarks';

@@ -152,6 +152,8 @@
     var el = document.getElementById('v21-position-label');
     if (!el) return;
     if (!window.G || !window.G.score || !window.G.scoreFinal) return;
+    // Partial-data gate: position labels (including "Under Pressure") require complete data
+    if (Number((window.G||{}).profileCompleteness||0) < 60) { el.style.display = 'none'; return; }
 
     var label = computePositionLabel();
     var meta  = POSITION_META[label] || POSITION_META.stabilizing;

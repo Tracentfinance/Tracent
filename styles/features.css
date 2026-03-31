@@ -471,6 +471,9 @@
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
+  pointer-events: auto !important;
+  position: relative;
+  z-index: 1;
   transition: background 0.15s, border-color 0.15s;
 }
 .nw-edit-btn:active {

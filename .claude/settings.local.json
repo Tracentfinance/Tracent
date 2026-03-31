@@ -8,7 +8,10 @@
       "Bash(du -sh *)",
       "Bash(grep -v \"^#\\\\|//\")",
       "Bash(grep -n G.w+s*= '/c/Users/damia/OneDrive/My Businesses/2. Tracent Finance/Tracent/js/engine/legacy-calculations.js')",
-      "Bash(xargs grep:*)"
+      "Bash(xargs grep:*)",
+      "Bash(powershell -Command \":*)",
+      "Read(//c/Users/damia/OneDrive/**)",
+      "Read(//c/Users/damia/.claude/projects/c--Users-damia-OneDrive-My-Businesses-2--Tracent-Finance-Tracent/e27d425b-ab76-435a-b745-2bf3c67a6471/tool-results/**)"
     ]
   }
 }

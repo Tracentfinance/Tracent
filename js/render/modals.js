@@ -81,6 +81,10 @@ function openSettingsEdit(section) {
   _prefill('se-car-debt',     g.carDebt      ? Math.round(g.carDebt)      : '');
   _prefill('se-student-debt', g.studentDebt  ? Math.round(g.studentDebt)  : '');
   _prefill('se-other-debt',   g.otherDebt    ? Math.round(g.otherDebt)    : '');
+  // Career fields
+  _prefill('se-job-title', g.jobTitle || '');
+  var _seStateEl = document.getElementById('se-state');
+  if (_seStateEl && g.state) _seStateEl.value = g.state;
   // Rates — only prefill if explicitly stored (not default)
   if (g.ccRate      && g.ccRate      !== 21)  _prefill('se-cc-rate',      g.ccRate);
   if (g.carRate     && g.carRate     !== 7.5) _prefill('se-car-rate',     g.carRate);
@@ -94,7 +98,7 @@ function openSettingsEdit(section) {
   openModal('settings-edit-sheet');
   // Scroll to section anchor if requested (e.g. 'assets' → savings field, 'debt' → debt section)
   if (section) {
-    var _sectionMap = { assets: 'se-assets-section', networth: 'se-assets-section', debt: 'se-cc-debt', apr: 'se-apr-section', emergency: 'se-emergency' };
+    var _sectionMap = { career: 'se-career-section', assets: 'se-assets-section', networth: 'se-assets-section', debt: 'se-cc-debt', apr: 'se-apr-section', emergency: 'se-emergency' };
     var _anchorId = _sectionMap[section] || 'se-income';
     setTimeout(function() {
       var _anchor = document.getElementById(_anchorId);
@@ -133,6 +137,8 @@ function saveSettingsEdit() {
   var studentDebt = _num('se-student-debt');
   var otherDebt   = _num('se-other-debt');
   var emergency   = _str('se-emergency');
+  var jobTitle    = _str('se-job-title');
+  var stateInput  = _str('se-state');
   // Rates — 0 means "not entered", keep existing default
   var ccRateInput      = _num('se-cc-rate');
   var carRateInput     = _num('se-car-rate');
@@ -183,6 +189,23 @@ function saveSettingsEdit() {
   _setInput('other-payment',   othPmt);
   var efEl = document.getElementById('emergency');
   if (efEl && emergency) efEl.value = emergency;
+  // Assets — write to housing-path DOM inputs so recompute reads the saved values.
+  // Bug fix: renter path reads #renter-savings, buying path reads #deposit-saved,
+  // owner path reads #home-value. Without these writes they revert to 0 on recompute.
+  _setInput('renter-savings', savings);
+  _setInput('deposit-saved',  savings);
+  if (homeValue > 0) _setInput('home-value', homeValue);
+  // Career — write job title and state to engine DOM inputs
+  if (jobTitle) {
+    _g.jobTitle = jobTitle; window.G && (window.G.jobTitle = jobTitle);
+    _setInput('job-title', jobTitle);
+  }
+  if (stateInput) {
+    _g.state = stateInput; window.G && (window.G.state = stateInput);
+    var _stEl = document.getElementById('state');
+    if (_stEl) _stEl.value = stateInput;
+    _setInput('work-state', stateInput);
+  }
 
   // Close sheet and rerun engine — stays on dashboard, switches to home tab
   closeModal('settings-edit-sheet');

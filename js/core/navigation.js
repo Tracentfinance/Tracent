@@ -211,6 +211,9 @@ function runTabRenderers(tab) {
         var _hasData = (_gp.income > 0) || (_gp.ccDebt > 0) || (_gp.carDebt > 0) ||
                        (_gp.studentDebt > 0) || (_gp.otherDebt > 0) || (_gp.homeValue > 0);
         _nwBtn.textContent = _hasData ? 'Edit my numbers \u270F' : 'Add your numbers \u2192';
+        // Authoritative onclick rebind on every Progress tab activation — ensures the button
+        // is always live regardless of render order or whether _0x5517bf6 has run yet.
+        _nwBtn.onclick = function() { if (typeof openSettingsEdit === 'function') openSettingsEdit('assets'); };
       }
     } catch(e) {}
   }

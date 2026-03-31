@@ -1382,9 +1382,10 @@ function v21RenderPostAnalysis() {
   _v21MoveIndex = 0;
   v21RenderNBMCard();
 
-  // Show retention card
+  // Show retention card — only when data is complete enough (READY state)
   var retCard = document.getElementById('v21-retention-card');
-  if (retCard) retCard.style.display = 'block';
+  var _retComp = typeof G !== 'undefined' ? Number(G.profileCompleteness || 0) : 0;
+  if (retCard) retCard.style.display = _retComp >= 60 ? 'block' : 'none';
 
   // Show premium teaser only after repeat use (deferred trust pattern)
   // shouldShowPremium() defined in the board-pass IIFE; hide by default until ready
