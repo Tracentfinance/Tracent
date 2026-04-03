@@ -322,7 +322,8 @@ function startFreshAnalysis()  {
   } catch(e) {}
   closeModal('confirm-analysis-sheet');
   var _g = (typeof G !== 'undefined') ? G : (window.G || {});
-  var hasSession = !!(_g.income);
+  // Retirement-mode users always go to refine — never back to onboarding age/intent phases.
+  var hasSession = !!(_g.income) || !!(_g.isRetirementMode);
   if (hasSession) {
     window._v21_settingsMode = true;
     showScreen('screen-onboarding');

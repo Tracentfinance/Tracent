@@ -134,6 +134,7 @@
     var intent   = g.primaryIntent || ps.activeModule || 'stable';
     var age      = parseInt(g.currentAge||g.age||0);
     var retAge   = parseInt(g.retireAge||g.retirementAge||65);
+    var ageRange = g.ageRange || '';
 
     /* stress 0-10 */
     var s=0;
@@ -164,8 +165,10 @@
                      : 'neutral'; // 'somewhat' or missing → neutral preserves original behaviour
 
     var at;
-    if (intent==='retire' && age>=retAge-2)       at='in_retirement';
-    else if (intent==='retire' && age>=retAge-10) at='pre_retirement';
+    // Retirement age bands are authoritative — activate retirement mode even without
+    // an explicit 'retire' intent. 65plus = in_retirement; 55_64 = pre_retirement.
+    if ((intent==='retire' && age>=retAge-2) || ageRange==='65plus')         at='in_retirement';
+    else if ((intent==='retire' && age>=retAge-10) || ageRange==='55_64')    at='pre_retirement';
     else if (_onbBaseline==='confident') {
       // Self-reported confident: only collapse on truly extreme stress or severe avoidance.
       // Debt exists? User still sees the sophisticated app — debt is prioritised, not punished.
@@ -209,6 +212,9 @@
     BSE.homeOrder     = cfg.homeOrder.slice();
     BSE.debtLayer     = Math.max(cfg.debtLayer||1, _mem.debtLayerMax||1);
     Object.assign(BSE.show, cfg.show);
+
+    /* G.isRetirementMode — single derived source of truth, readable by all modules */
+    if (typeof G !== 'undefined') G.isRetirementMode = (BSE.navStyle === 'retirement');
 
     /* premium: only for eligible optimizers */
     if(BSE.stress>=5||at==='in_retirement'||at==='pre_retirement') BSE.show.premiumTeaser=false;

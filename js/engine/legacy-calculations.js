@@ -1698,7 +1698,9 @@ function haptic(style) {
 
 
 function _0x701dc98() {
-  const sub = window._progressSub || 'networth';
+  var _isRet = !!(window.G && window.G.isRetirementMode) ||
+    (window.BSE && window.BSE.navStyle === 'retirement');
+  var sub = window._progressSub || (_isRet ? 'retirement' : 'networth');
   showProgressSub(sub);
 }
 
@@ -1743,6 +1745,10 @@ function renderGoalFocus() {
   if (!card || !G || !G.goal || !G.scoreFinal) return;
   var _gfComp = Number(G.profileCompleteness || 0);
 
+  // Retirement mode: hide home-buying narrative entirely; reframe retire_early as stability
+  var _isRetMode = !!(G.isRetirementMode) || (window.BSE && window.BSE.navStyle === 'retirement');
+  if (_isRetMode && G.goal === 'buy_home') { card.style.display = 'none'; return; }
+
   var goals = {
     build_savings:    { icon:'🛡️', title:'Build savings & emergency fund',      sub:'Your advice is focused on growing your cash buffer and financial resilience.',    milestone: 'Hit 3 months of expenses saved' },
     invest_more:      { icon:'📈', title:'Invest & grow wealth',                 sub:'Every recommendation is aimed at freeing up and deploying more of your income.',  milestone: 'Invest 15% of gross income monthly' },
@@ -1751,6 +1757,16 @@ function renderGoalFocus() {
     property_invest:  { icon:'🏢', title:'Invest in property',                   sub:'Focused on building the financial position to acquire investment real estate.',    milestone: 'Reach 20% deposit on investment property' },
     pay_off_debt:     { icon:'💳', title:'Pay off debt',                         sub:'Your recommendations are ordered by the fastest path to becoming debt-free.',     milestone: 'Clear highest-rate debt first' },
   };
+
+  // Retirement mode: retire_early becomes a stability/income framing, not FIRE accumulation
+  if (_isRetMode) {
+    goals.retire_early = {
+      icon: '🌅',
+      title: 'Retirement income stability',
+      sub: 'Your plan focuses on monthly income security, withdrawal readiness, and protecting your long-term financial position.',
+      milestone: 'Maintain 6+ months safety buffer'
+    };
+  }
 
   var g = goals[G.goal] || { icon:'🎯', title:'Improve financial position', sub:'Personalised to your numbers and situation.', milestone: 'Improve Tracent score by 10 points' };
 

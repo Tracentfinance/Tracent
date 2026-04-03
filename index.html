@@ -201,7 +201,8 @@
         <!-- ── PHASE 2b: AGE RANGE ── -->
         <div class="v21-phase" id="v21-phase-age">
           <h1 class="onb-step-title">One more thing</h1>
-          <p class="onb-step-sub">Which age range are you in? This helps Tracent set the right priorities for your stage.</p>
+          <p class="onb-step-sub">Which age range are you in? This helps Tracent set the right priorities for your
+            stage.</p>
           <div class="v21-choice-grid">
             <div class="v21-choice" onclick="v21SelectAgeRange('under30',this)">
               <div>
@@ -587,7 +588,8 @@
 
         <!-- Score zone — visible for score-showing archetypes only -->
         <!-- BSE suppresses via .bse-score-hidden on #dash-header  -->
-        <div class="bse-score-zone" id="bse-score-zone" style="display:flex;align-items:center;gap:var(--s2);margin-bottom:var(--s2);">
+        <div class="bse-score-zone" id="bse-score-zone"
+          style="display:flex;align-items:center;gap:var(--s2);margin-bottom:var(--s2);">
           <div class="score-ring-wrap" onclick="openScoreBreakdown()" style="cursor:pointer;">
             <div class="score-ring-glow" id="score-ring-glow"></div>
             <svg class="score-ring-svg" width="96" height="96" viewBox="0 0 96 96">
@@ -876,38 +878,52 @@
             <div class="field-group">
               <label class="field-label">Cash &amp; savings</label>
               <div class="field-prefix-wrap"><span class="field-prefix-sign">$</span>
-                <input type="text" inputmode="decimal" id="ge-savings" class="field-input" placeholder="0" autocomplete="off"></div>
+                <input type="text" inputmode="decimal" id="ge-savings" class="field-input" placeholder="0"
+                  autocomplete="off">
+              </div>
             </div>
             <div class="field-group">
               <label class="field-label">Home value (if owner)</label>
               <div class="field-prefix-wrap"><span class="field-prefix-sign">$</span>
-                <input type="text" inputmode="decimal" id="ge-home-value" class="field-input" placeholder="0" autocomplete="off"></div>
+                <input type="text" inputmode="decimal" id="ge-home-value" class="field-input" placeholder="0"
+                  autocomplete="off">
+              </div>
             </div>
             <div class="grow-fs-section-label" style="margin-top:14px;">Liabilities</div>
             <div class="field-group">
               <label class="field-label">Mortgage balance (if owner)</label>
               <div class="field-prefix-wrap"><span class="field-prefix-sign">$</span>
-                <input type="text" inputmode="decimal" id="ge-mortgage" class="field-input" placeholder="0" autocomplete="off"></div>
+                <input type="text" inputmode="decimal" id="ge-mortgage" class="field-input" placeholder="0"
+                  autocomplete="off">
+              </div>
             </div>
             <div class="field-group">
               <label class="field-label">Credit card balance</label>
               <div class="field-prefix-wrap"><span class="field-prefix-sign">$</span>
-                <input type="text" inputmode="decimal" id="ge-cc-debt" class="field-input" placeholder="0" autocomplete="off"></div>
+                <input type="text" inputmode="decimal" id="ge-cc-debt" class="field-input" placeholder="0"
+                  autocomplete="off">
+              </div>
             </div>
             <div class="field-group">
               <label class="field-label">Car loan balance</label>
               <div class="field-prefix-wrap"><span class="field-prefix-sign">$</span>
-                <input type="text" inputmode="decimal" id="ge-car-debt" class="field-input" placeholder="0" autocomplete="off"></div>
+                <input type="text" inputmode="decimal" id="ge-car-debt" class="field-input" placeholder="0"
+                  autocomplete="off">
+              </div>
             </div>
             <div class="field-group">
               <label class="field-label">Student loan balance</label>
               <div class="field-prefix-wrap"><span class="field-prefix-sign">$</span>
-                <input type="text" inputmode="decimal" id="ge-student-debt" class="field-input" placeholder="0" autocomplete="off"></div>
+                <input type="text" inputmode="decimal" id="ge-student-debt" class="field-input" placeholder="0"
+                  autocomplete="off">
+              </div>
             </div>
             <div class="field-group">
               <label class="field-label">Other debt</label>
               <div class="field-prefix-wrap"><span class="field-prefix-sign">$</span>
-                <input type="text" inputmode="decimal" id="ge-other-debt" class="field-input" placeholder="0" autocomplete="off"></div>
+                <input type="text" inputmode="decimal" id="ge-other-debt" class="field-input" placeholder="0"
+                  autocomplete="off">
+              </div>
             </div>
             <div class="grow-fs-section-label" style="margin-top:14px;">Investments &amp; capacity</div>
             <div class="field-group" style="margin-bottom:20px;">
@@ -1629,8 +1645,10 @@
       <div class="signin-body">
         <div
           style="background:rgba(0,119,182,0.06);border:1px solid var(--sky-border);border-radius:var(--r-sm);padding:12px 14px;font-size:13px;color:var(--teal);margin-bottom:20px;">
-          For now, this app runs from your current device session. Your data is stored locally and no account is required.</div>
-        <button onclick="closeSignInSheet();startOnboarding()" class="btn-cta" style="margin-bottom:10px;">Continue on this device →</button>
+          For now, this app runs from your current device session. Your data is stored locally and no account is
+          required.</div>
+        <button onclick="closeSignInSheet();startOnboarding()" class="btn-cta" style="margin-bottom:10px;">Continue on
+          this device →</button>
         <button onclick="closeSignInSheet()" class="btn-ghost"
           style="color:var(--gray-4);border-color:var(--gray-2);">Close</button>
       </div>
@@ -1934,72 +1952,145 @@
     onclick="if(event.target===this)closeModal('settings-edit-sheet')">
     <div class="modal-sheet" style="padding:24px 24px 40px;overflow-y:auto;max-height:88vh;">
       <div class="modal-handle"></div>
-      <div style="font-family:var(--font-display);font-size:20px;color:var(--navy);margin-bottom:4px;">Edit your numbers</div>
-      <div style="font-size:13px;color:var(--gray-3);line-height:1.6;margin-bottom:24px;">Update your numbers anytime — we'll instantly recalculate your plan.</div>
+      <div style="font-family:var(--font-display);font-size:20px;color:var(--navy);margin-bottom:4px;">Edit your numbers
+      </div>
+      <div style="font-size:13px;color:var(--gray-3);line-height:1.6;margin-bottom:24px;">Update your numbers anytime —
+        we'll instantly recalculate your plan.</div>
 
       <div class="field-group">
         <label class="field-label">Annual income</label>
         <div class="field-prefix-wrap"><span class="field-prefix-sign">$</span>
-          <input type="text" inputmode="decimal" id="se-income" class="field-input" placeholder="0" autocomplete="off"></div>
+          <input type="text" inputmode="decimal" id="se-income" class="field-input" placeholder="0" autocomplete="off">
+        </div>
       </div>
 
       <div class="field-group" style="margin-bottom:24px;">
-        <label class="field-label">Monthly take-home pay <span style="font-weight:400;">— after tax, or leave blank to estimate</span></label>
+        <label class="field-label">Monthly take-home pay <span style="font-weight:400;">— after tax, or leave blank to
+            estimate</span></label>
         <div class="field-prefix-wrap"><span class="field-prefix-sign">$</span>
-          <input type="text" inputmode="decimal" id="se-takehome" class="field-input" placeholder="0" autocomplete="off"></div>
+          <input type="text" inputmode="decimal" id="se-takehome" class="field-input" placeholder="0"
+            autocomplete="off">
+        </div>
       </div>
 
-      <div id="se-career-section" style="font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--gray-3);margin:0 0 14px;">Career</div>
+      <div id="se-career-section"
+        style="font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--gray-3);margin:0 0 14px;">
+        Career</div>
 
       <div class="field-group">
         <label class="field-label">Job title <span style="font-weight:400;">— unlocks market positioning</span></label>
-        <input type="text" id="se-job-title" class="field-input" placeholder="e.g. Software Engineer" autocomplete="off">
+        <input type="text" id="se-job-title" class="field-input" placeholder="e.g. Software Engineer"
+          autocomplete="off">
       </div>
       <div class="field-group" style="margin-bottom:24px;">
         <label class="field-label">Work state</label>
         <select id="se-state" class="field-input">
           <option value="">— keep current —</option>
-          <option value="NY">New York</option><option value="CA">California</option><option value="TX">Texas</option><option value="FL">Florida</option><option value="WA">Washington</option><option value="MA">Massachusetts</option><option value="IL">Illinois</option><option value="CO">Colorado</option><option value="NJ">New Jersey</option><option value="CT">Connecticut</option><option value="GA">Georgia</option><option value="NC">North Carolina</option><option value="VA">Virginia</option><option value="AZ">Arizona</option><option value="PA">Pennsylvania</option><option value="OH">Ohio</option><option value="MN">Minnesota</option><option value="MD">Maryland</option><option value="OR">Oregon</option><option value="MI">Michigan</option><option value="TN">Tennessee</option><option value="MO">Missouri</option><option value="WI">Wisconsin</option><option value="IN">Indiana</option><option value="NV">Nevada</option><option value="LA">Louisiana</option><option value="UT">Utah</option><option value="KY">Kentucky</option><option value="OK">Oklahoma</option><option value="SC">South Carolina</option><option value="AL">Alabama</option><option value="AR">Arkansas</option><option value="DE">Delaware</option><option value="HI">Hawaii</option><option value="ID">Idaho</option><option value="IA">Iowa</option><option value="KS">Kansas</option><option value="ME">Maine</option><option value="MT">Montana</option><option value="NE">Nebraska</option><option value="NH">New Hampshire</option><option value="NM">New Mexico</option><option value="ND">North Dakota</option><option value="RI">Rhode Island</option><option value="SD">South Dakota</option><option value="VT">Vermont</option><option value="WV">West Virginia</option><option value="WY">Wyoming</option><option value="DC">Washington DC</option><option value="AK">Alaska</option>
+          <option value="NY">New York</option>
+          <option value="CA">California</option>
+          <option value="TX">Texas</option>
+          <option value="FL">Florida</option>
+          <option value="WA">Washington</option>
+          <option value="MA">Massachusetts</option>
+          <option value="IL">Illinois</option>
+          <option value="CO">Colorado</option>
+          <option value="NJ">New Jersey</option>
+          <option value="CT">Connecticut</option>
+          <option value="GA">Georgia</option>
+          <option value="NC">North Carolina</option>
+          <option value="VA">Virginia</option>
+          <option value="AZ">Arizona</option>
+          <option value="PA">Pennsylvania</option>
+          <option value="OH">Ohio</option>
+          <option value="MN">Minnesota</option>
+          <option value="MD">Maryland</option>
+          <option value="OR">Oregon</option>
+          <option value="MI">Michigan</option>
+          <option value="TN">Tennessee</option>
+          <option value="MO">Missouri</option>
+          <option value="WI">Wisconsin</option>
+          <option value="IN">Indiana</option>
+          <option value="NV">Nevada</option>
+          <option value="LA">Louisiana</option>
+          <option value="UT">Utah</option>
+          <option value="KY">Kentucky</option>
+          <option value="OK">Oklahoma</option>
+          <option value="SC">South Carolina</option>
+          <option value="AL">Alabama</option>
+          <option value="AR">Arkansas</option>
+          <option value="DE">Delaware</option>
+          <option value="HI">Hawaii</option>
+          <option value="ID">Idaho</option>
+          <option value="IA">Iowa</option>
+          <option value="KS">Kansas</option>
+          <option value="ME">Maine</option>
+          <option value="MT">Montana</option>
+          <option value="NE">Nebraska</option>
+          <option value="NH">New Hampshire</option>
+          <option value="NM">New Mexico</option>
+          <option value="ND">North Dakota</option>
+          <option value="RI">Rhode Island</option>
+          <option value="SD">South Dakota</option>
+          <option value="VT">Vermont</option>
+          <option value="WV">West Virginia</option>
+          <option value="WY">Wyoming</option>
+          <option value="DC">Washington DC</option>
+          <option value="AK">Alaska</option>
         </select>
       </div>
 
-      <div id="se-assets-section" style="font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--gray-3);margin:0 0 14px;">Assets</div>
+      <div id="se-assets-section"
+        style="font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--gray-3);margin:0 0 14px;">
+        Assets</div>
 
       <div class="field-group">
         <label class="field-label">Cash &amp; savings</label>
         <div class="field-prefix-wrap"><span class="field-prefix-sign">$</span>
-          <input type="text" inputmode="decimal" id="se-savings" class="field-input" placeholder="0" autocomplete="off"></div>
+          <input type="text" inputmode="decimal" id="se-savings" class="field-input" placeholder="0" autocomplete="off">
+        </div>
       </div>
       <div class="field-group" style="margin-bottom:24px;">
         <label class="field-label">Home value <span style="font-weight:400;">— if you own your home</span></label>
         <div class="field-prefix-wrap"><span class="field-prefix-sign">$</span>
-          <input type="text" inputmode="decimal" id="se-home-value" class="field-input" placeholder="0" autocomplete="off"></div>
+          <input type="text" inputmode="decimal" id="se-home-value" class="field-input" placeholder="0"
+            autocomplete="off">
+        </div>
       </div>
 
-      <div style="font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--gray-3);margin:0 0 14px;">Debt balances</div>
+      <div
+        style="font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--gray-3);margin:0 0 14px;">
+        Debt balances</div>
 
       <div class="field-group">
         <label class="field-label">Credit card balance</label>
         <div class="field-prefix-wrap"><span class="field-prefix-sign">$</span>
-          <input type="text" inputmode="decimal" id="se-cc-debt" class="field-input" placeholder="0" autocomplete="off"></div>
+          <input type="text" inputmode="decimal" id="se-cc-debt" class="field-input" placeholder="0" autocomplete="off">
+        </div>
       </div>
 
       <div class="field-group">
         <label class="field-label">Car loan balance</label>
         <div class="field-prefix-wrap"><span class="field-prefix-sign">$</span>
-          <input type="text" inputmode="decimal" id="se-car-debt" class="field-input" placeholder="0" autocomplete="off"></div>
+          <input type="text" inputmode="decimal" id="se-car-debt" class="field-input" placeholder="0"
+            autocomplete="off">
+        </div>
       </div>
 
       <div class="field-group">
         <label class="field-label">Student loan balance</label>
         <div class="field-prefix-wrap"><span class="field-prefix-sign">$</span>
-          <input type="text" inputmode="decimal" id="se-student-debt" class="field-input" placeholder="0" autocomplete="off"></div>
+          <input type="text" inputmode="decimal" id="se-student-debt" class="field-input" placeholder="0"
+            autocomplete="off">
+        </div>
       </div>
 
       <div class="field-group" style="margin-bottom:24px;">
-        <label class="field-label">Other debt <span style="font-weight:400;">— personal loans, medical, other</span></label>
+        <label class="field-label">Other debt <span style="font-weight:400;">— personal loans, medical,
+            other</span></label>
         <div class="field-prefix-wrap"><span class="field-prefix-sign">$</span>
-          <input type="text" inputmode="decimal" id="se-other-debt" class="field-input" placeholder="0" autocomplete="off"></div>
+          <input type="text" inputmode="decimal" id="se-other-debt" class="field-input" placeholder="0"
+            autocomplete="off">
+        </div>
       </div>
 
       <!-- APR rates + credit score — collapsible, BSE-aware -->
@@ -2010,38 +2101,49 @@
           <span id="se-apr-chevron">&#9656;</span> Advanced details (optional)
         </button>
         <div id="se-apr-fields" style="display:none;">
-          <div id="se-apr-helper" style="display:none;font-size:12px;color:var(--teal);line-height:1.5;margin-bottom:14px;">Rates affect how we prioritize your payoff strategy</div>
+          <div id="se-apr-helper"
+            style="display:none;font-size:12px;color:var(--teal);line-height:1.5;margin-bottom:14px;">Rates affect how
+            we prioritize your payoff strategy</div>
           <div class="field-group">
             <label class="field-label">Credit card APR</label>
             <div class="field-prefix-wrap" style="max-width:120px;">
-              <input type="text" inputmode="decimal" id="se-cc-rate" class="field-input" placeholder="21" autocomplete="off">
-              <span style="position:absolute;right:12px;top:50%;transform:translateY(-50%);color:var(--gray-3);font-size:14px;">%</span>
+              <input type="text" inputmode="decimal" id="se-cc-rate" class="field-input" placeholder="21"
+                autocomplete="off">
+              <span
+                style="position:absolute;right:12px;top:50%;transform:translateY(-50%);color:var(--gray-3);font-size:14px;">%</span>
             </div>
           </div>
           <div class="field-group">
             <label class="field-label">Car loan APR</label>
             <div class="field-prefix-wrap" style="max-width:120px;">
-              <input type="text" inputmode="decimal" id="se-car-rate" class="field-input" placeholder="7.5" autocomplete="off">
-              <span style="position:absolute;right:12px;top:50%;transform:translateY(-50%);color:var(--gray-3);font-size:14px;">%</span>
+              <input type="text" inputmode="decimal" id="se-car-rate" class="field-input" placeholder="7.5"
+                autocomplete="off">
+              <span
+                style="position:absolute;right:12px;top:50%;transform:translateY(-50%);color:var(--gray-3);font-size:14px;">%</span>
             </div>
           </div>
           <div class="field-group">
             <label class="field-label">Student loan APR</label>
             <div class="field-prefix-wrap" style="max-width:120px;">
-              <input type="text" inputmode="decimal" id="se-student-rate" class="field-input" placeholder="5.5" autocomplete="off">
-              <span style="position:absolute;right:12px;top:50%;transform:translateY(-50%);color:var(--gray-3);font-size:14px;">%</span>
+              <input type="text" inputmode="decimal" id="se-student-rate" class="field-input" placeholder="5.5"
+                autocomplete="off">
+              <span
+                style="position:absolute;right:12px;top:50%;transform:translateY(-50%);color:var(--gray-3);font-size:14px;">%</span>
             </div>
           </div>
           <div class="field-group">
             <label class="field-label">Other debt APR</label>
             <div class="field-prefix-wrap" style="max-width:120px;">
-              <input type="text" inputmode="decimal" id="se-other-rate" class="field-input" placeholder="9" autocomplete="off">
-              <span style="position:absolute;right:12px;top:50%;transform:translateY(-50%);color:var(--gray-3);font-size:14px;">%</span>
+              <input type="text" inputmode="decimal" id="se-other-rate" class="field-input" placeholder="9"
+                autocomplete="off">
+              <span
+                style="position:absolute;right:12px;top:50%;transform:translateY(-50%);color:var(--gray-3);font-size:14px;">%</span>
             </div>
           </div>
           <div class="field-group" style="margin-bottom:4px;">
             <label class="field-label">Credit score <span style="font-weight:400;">— optional</span></label>
-            <div id="se-credit-helper" style="display:none;font-size:12px;color:var(--gray-3);margin-bottom:6px;">Helps us refine future recommendations</div>
+            <div id="se-credit-helper" style="display:none;font-size:12px;color:var(--gray-3);margin-bottom:6px;">Helps
+              us refine future recommendations</div>
             <select id="se-credit" class="field-input">
               <option value="">— keep current —</option>
               <option value="excellent">Excellent (760+)</option>

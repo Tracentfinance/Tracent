@@ -307,11 +307,12 @@
   var _prevRPA = window.v21RenderPostAnalysis;
   window.v21RenderPostAnalysis = function(){
     if (typeof _prevRPA === 'function') _prevRPA();
-    // If retire mode is active or user is in retire intent, refresh retirement subview
+    // If retire mode is active, refresh retirement subview
     var g = gv();
     var mode   = g.v21Mode || 'today';
     var intent = g.primaryIntent || 'stable';
-    if (mode === 'retire' || intent === 'retire') {
+    var _isRet = !!(g.isRetirementMode) || (window.BSE && window.BSE.navStyle === 'retirement');
+    if (mode === 'retire' || intent === 'retire' || _isRet) {
       try { _renderRetirementSub(); } catch(e){}
     }
   };

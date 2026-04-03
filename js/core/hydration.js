@@ -50,7 +50,8 @@
         'income','takeHome','state','filingStatus','jobType','expenses',
         'ccDebt','ccRate','studentDebt','carDebt','otherDebt','emergency',
         'retMatch','homePrice','depositSaved','currentRent','purchasePrice',
-        'housingType','credit','savingsAmt'
+        'housingType','credit','savingsAmt',
+        'ageRange','primaryIntent'
       ];
       fields.forEach(function(key) {
         if (fi[key] !== null && fi[key] !== undefined) g[key] = fi[key];

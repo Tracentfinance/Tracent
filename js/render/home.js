@@ -1565,6 +1565,9 @@
     var inferred  = Array.isArray(gv._inferredFields)?gv._inferredFields.length:0;
     var confidence= completeness>=80&&inferred===0?'high':completeness>=60&&inferred<=2?'medium':'low';
     var currentAge = parseInt(gv.currentAge||gv.age||'0');
+    var isRetirementMode = !!(gv.isRetirementMode) ||
+      (window.BSE && window.BSE.navStyle === 'retirement') ||
+      (gv.ageRange === '55_64' || gv.ageRange === '65plus');
     // ── cashflow structure (from cashflow.js, if computed) ────────
     var _cf = gv.cashflow || null;
     var effectiveFCF  = _cf ? _cf.effectiveFCF  : fcf;
@@ -1579,7 +1582,7 @@
       retMatch:retMatch,matchMissed:matchMissed,
       score:gv.score||55,intent:gv.primaryIntent||'stable',
       completeness:completeness,inferred:inferred,confidence:confidence,
-      currentAge:currentAge,
+      currentAge:currentAge,isRetirementMode:isRetirementMode,
       effectiveFCF:effectiveFCF,leakRisk:leakRisk,leakItems:leakItems,nmMonthly:nmMonthly,subEst:subEst
     };
   }
@@ -1869,6 +1872,8 @@
       if(severeCC&&(c.id==='home_deposit'||c.id==='home_dti_prep')) return false;
       if(tightCash&&(c.id==='retire_contrib'||c.id==='invest_surplus')) return false;
       if(nearZero&&c.id!=='deficit'&&c.id!=='ef_zero') return false;
+      // Retirement mode: home-buying and career advancement are never the right NBM
+      if(s.isRetirementMode&&(c.category==='home'||c.id==='career_gap')) return false;
       return true;
     });
   }
@@ -1913,6 +1918,7 @@
 
   function _fallback(){
     return {
+      id:'fallback',
       title:'Keep reviewing your position monthly',
       why:'Your score is solid — small consistent improvements compound over time.',
       action:'Check in weekly and update your numbers when anything changes.',
@@ -2911,3 +2917,1149 @@ window.bseApplyModuleVis = function() {
     else tabDebt.classList.remove('bse-debt-strategy-hidden');
   }
 };
+
+
+/* ═══ MODULE: Decision Flow Renderer ═══
+   Transforms the Focus screen into a single-thread decision flow
+   with context sufficiency checks and micro input collection.
+
+   Modes:
+     DECISION MODE        — sufficient context, renders full 6-block flow
+     CONTEXT REQUEST MODE — decision-type inputs missing, prompts inline
+
+   Confidence levels:
+     high        — full data, shows NBM + outcome projections
+     medium      — most data present, shows NBM without projections
+     low         — decision-type inputs missing (≥2), shows context request
+     directional — global data too sparse (engine: insufficient_data)
+
+   Blocks (in order):
+     A. Situation         — factual snapshot of current position
+     B. Interpretation    — what this means given archetype
+     C. NBM / Context Req — single action OR targeted input request
+     D. Outcome Preview   — expected impact (high confidence only)
+     E. Confidence        — badge + explanation
+     F. System Reasoning  — why this ranked first (high/medium only)
+
+   Rules:
+     - One CTA only. No "What if?" or "Next option" buttons.
+     - Retirement mode: engine already filters home/career.
+     - Respects BSE.show.focusCard === false.
+     - Runs last in the v21RenderPostAnalysis chain.
+     - Also overrides bseRenderFocusCard so tab switches stay consistent.
+
+   Required inputs per decision type (defined in CTX_REQ):
+     home    — homePrice, depositSaved, currentRent
+     debt    — ccDebt, ccRate (studentDebt optional)
+     retire  — retMatch, savingsAmt
+     general — income, expenses, emergency
+═══════════════════════════════════════════════ */
+(function() {
+  'use strict';
+  if (window.__TRACENT_DECISION_FLOW__) return;
+  window.__TRACENT_DECISION_FLOW__ = true;
+
+  // ═══════════════════════════════════════════════════════
+  // REQUIRED INPUTS PER DECISION TYPE
+  // ═══════════════════════════════════════════════════════
+  var CTX_REQ = {
+    home: {
+      context:    'You\u2019re in a position to consider buying a home.',
+      limitation: 'We need a few more details to estimate your real monthly cost and readiness timeline.',
+      actionLabel:'This takes under a minute \u2014 then we can show you a real plan.',
+      inputs: [
+        { key:'homePrice',    label:'Target home price',         type:'money',   placeholder:'400000', hint:'e.g. $400,000' },
+        { key:'depositSaved', label:'Down payment saved so far', type:'money',   placeholder:'20000',  hint:'e.g. $20,000'  },
+        { key:'currentRent',  label:'Current monthly rent',      type:'money',   placeholder:'1800',   hint:'e.g. $1,800'   }
+      ]
+    },
+    debt: {
+      context:    'Reducing debt is your highest-leverage action right now.',
+      limitation: 'Add your balances so we can show you a specific paydown plan with real savings numbers.',
+      actionLabel:'This takes 30 seconds \u2014 then you\u2019ll see exactly what to do.',
+      inputs: [
+        { key:'ccDebt',      label:'Credit card balance',        type:'money',   placeholder:'3500',   hint:'e.g. $3,500'    },
+        { key:'ccRate',      label:'Card interest rate',          type:'percent', placeholder:'22',     hint:'e.g. 22%'       },
+        { key:'studentDebt', label:'Student loan balance',        type:'money',   placeholder:'25000',  hint:'optional \u2014 e.g. $25,000', optional:true }
+      ]
+    },
+    retire: {
+      context:    'Your retirement readiness is the priority focus at this stage.',
+      limitation: 'A few more details will let us give you specific contribution and withdrawal guidance.',
+      actionLabel:'Add these to see your retirement readiness picture clearly.',
+      inputs: [
+        // retMatch is optional: in_retirement users have no employer — only savingsAmt is required
+        { key:'retMatch',   label:'Employer match (%)',          type:'percent', placeholder:'3',      hint:'e.g. 3%', optional:true },
+        { key:'savingsAmt', label:'Current retirement savings',  type:'money',   placeholder:'150000', hint:'e.g. $150,000'  }
+      ]
+    },
+    general: {
+      context:    'Your financial position gives us a starting point.',
+      limitation: 'A few more details will unlock a specific, targeted recommendation.',
+      actionLabel:'Add your key numbers to get a real recommendation.',
+      inputs: [
+        { key:'income',    label:'Monthly gross income',         type:'money',   placeholder:'6000',   hint:'e.g. $6,000'    },
+        { key:'expenses',  label:'Monthly total expenses',       type:'money',   placeholder:'4000',   hint:'e.g. $4,000'    },
+        { key:'emergency', label:'Emergency savings (months)',   type:'number',  placeholder:'2',      hint:'e.g. 3 months'  }
+      ]
+    }
+  };
+
+  // ── Suppress secondary cards ──────────────────────────────
+  var SUPPRESS_IDS = [
+    'v21-verdict-block','v21-compact-score','home-metrics',
+    'v21-retention-card','v21-premium-teaser','v21-mode-rail-home',
+    'v21-driver-strip','v21-mode-strategy','v21-authority-card','v21-nbm-card'
+  ];
+  function _hideEl(id) { var el=document.getElementById(id); if(el) el.style.display='none'; }
+  function _suppressSecondaryCards() { SUPPRESS_IDS.forEach(_hideEl); }
+
+  // ── Helpers ───────────────────────────────────────────────
+  function _fmt(n) { return '$'+Math.round(Math.abs(n||0)).toLocaleString(); }
+
+  // ═══════════════════════════════════════════════════════
+  // CONTEXT ASSESSMENT
+  // ═══════════════════════════════════════════════════════
+
+  function _determineDecisionType(g, BSE, move) {
+    var intent = g.primaryIntent || '';
+    var goal   = g.goal          || '';
+    var cat    = (move && move.id !== 'insufficient_data' && move.category) || '';
+    var at     = (BSE && BSE.archetype) || '';
+    // G.isRetirementMode is the authoritative flag — check before any secondary signal
+    if (g.isRetirementMode)                                                                return 'retire';
+    if (intent==='buy_home' || goal==='buy_home' || cat==='home')                          return 'home';
+    if (at==='pre_retirement' || at==='in_retirement' ||
+        g.ageRange==='55_64'  || g.ageRange==='65plus' || intent==='retire')               return 'retire';
+    if (cat==='debt' || (g.ccDebt||0) > 3000)                                             return 'debt';
+    return 'general';
+  }
+
+  function _checkMissingInputs(g, decisionType) {
+    var reqs = CTX_REQ[decisionType] || CTX_REQ.general;
+    return reqs.inputs.filter(function(inp) {
+      if (inp.optional) return false;
+      var v = g[inp.key];
+      return (v===null || v===undefined || v==='');
+    });
+  }
+
+  /**
+   * _assessContext(g, BSE, move)
+   * Returns: { confidence, decisionType, missingInputs }
+   *
+   * confidence:
+   *   'directional' — engine returned insufficient_data (global data too sparse)
+   *   'low'         — 2+ decision-type inputs missing  -> Context Request Mode
+   *   'medium'      — 1 input missing OR comp 60-79 OR inferred fields present
+   *   'high'        — all decision-type inputs present AND comp >= 80
+   */
+  function _assessContext(g, BSE, move) {
+    if (!move || move.id==='insufficient_data') {
+      return { confidence:'directional', decisionType:'general', missingInputs:[] };
+    }
+    var comp    = Number(g.profileCompleteness||0);
+    var infer   = Array.isArray(g._inferredFields) ? g._inferredFields.length : 0;
+    var dt      = _determineDecisionType(g, BSE, move);
+    var missing = _checkMissingInputs(g, dt);
+
+    var conf;
+    if      (missing.length >= 2)                    conf = 'low';
+    else if (missing.length===1 || comp<80 || infer) conf = 'medium';
+    else                                             conf = 'high';
+
+    return { confidence:conf, decisionType:dt, missingInputs:missing };
+  }
+
+  // ═══════════════════════════════════════════════════════
+  // BLOCK BUILDERS
+  // ═══════════════════════════════════════════════════════
+
+  function _buildSituation(g) {
+    var rows = [];
+    if (g.takeHome||g.income)
+      rows.push({ label:g.takeHome ? 'Take-home' : 'Income', value:_fmt(g.takeHome||g.income)+'/mo' });
+    var td = (g.ccDebt||0)+(g.studentDebt||0)+(g.carDebt||0)+(g.otherDebt||0);
+    if (td>0) rows.push({ label:'Total debt', value:_fmt(td) });
+    var ef = parseInt(g.emergency||'0');
+    // Only show emergency buffer row when we have other financial data (avoids orphaned "None" for empty-state users)
+    if (ef > 0 || rows.length > 0)
+      rows.push({ label:'Emergency buffer', value:ef>0 ? ef+' month'+(ef!==1?'s':'') : 'None' });
+    var risk='', fcf=g.fcf||0;
+    // Only flag "no buffer" when the user explicitly provided a value — absence of data is not a confirmed zero
+    var emergencyProvided = g.emergency !== null && g.emergency !== undefined && g.emergency !== '';
+    if      (fcf<0)              risk='Cash flow negative \u2014 spending exceeds income';
+    else if ((g.ccDebt||0)>3000) risk='High-rate debt is your biggest cost drag';
+    // DTI threshold is a lending/mortgage signal — not relevant in retirement mode
+    else if (!g.isRetirementMode && (g.dti||0)>43) risk='DTI above lender threshold';
+    else if (emergencyProvided && ef<1) risk='No emergency buffer \u2014 high fragility';
+    return { rows:rows, risk:risk };
+  }
+
+  function _buildInterpretation(g, BSE) {
+    var at = BSE.archetype||'';
+    var MAP = {
+      anxious_overwhelmed:'Your position shows stress signals. One small, manageable step is more valuable than a full restructure right now.',
+      avoider:            'You have the data. The main barrier is getting started \u2014 one concrete action is enough to break the pattern.',
+      stable_confident:   'Your position is solid. The focus is maintaining momentum and staying ahead of the next transition.',
+      optimizer:          'Your fundamentals are sound. Targeted optimisation in one area will have the clearest compounding effect.',
+      pre_retirement:     'You\u2019re in the window where contributions carry maximum weight. Protect your runway and maximise consistency.',
+      in_retirement:      'Stability and longevity protection are the priority. Income reliability outweighs growth at this stage.',
+      first_job:          'You\u2019re at the start of the compounding curve. Building a foundation now is the highest-return action available.',
+      career_climber:     'Income trajectory is strong. Directing the new cash flow intentionally is what matters most.',
+      homebuyer_ready:    'Your financial position supports a home purchase path. The focus is qualification and deposit readiness.',
+      debt_overwhelmed:   'Debt load is the dominant constraint. Reducing it directly improves every other metric.',
+      rebuilding:         'You\u2019re in recovery mode. Consistent small wins restore both your position and your confidence.'
+    };
+    if (MAP[at]) return MAP[at];
+    var s=g.score||0;
+    if (s>=70) return 'Your position is stable. Targeted action in one area will drive the next phase of progress.';
+    if (s>=55) return 'You\u2019re making progress. One focused action will accelerate the trajectory.';
+    return 'Your position has room to improve. The engine has identified where to focus first.';
+  }
+
+  function _buildOutcome(move, conf) {
+    if (conf!=='high') return null;
+    if (!move||move.id==='insufficient_data'||move.id==='fallback') return null;
+    var si=move.scoreImpact, ci=move.cashImpact;
+    if (!si&&(!ci||ci==='—'||ci==='\u2014')) return null;
+    return {
+      scoreImpact: si>0?'+'+si+' pts':si<0?si+' pts':null,
+      cashImpact:  (ci&&ci!=='—'&&ci!=='\u2014')?ci:null
+    };
+  }
+
+  // ── Confidence metadata ───────────────────────────────────
+  var CONF_LABEL = {
+    high:'High confidence', medium:'Medium confidence',
+    low:'More data needed', directional:'More data needed'
+  };
+  var CONF_SUB = {
+    high:        'Based on complete financial data. Recommendations are specific and reliable.',
+    medium:      'Based on most key inputs. Projected numbers are directional estimates.',
+    low:         'Decision-type details are incomplete. The direction is correct; numbers sharpen once you add them.',
+    directional: 'Add your key financial details to unlock a specific recommendation.'
+  };
+  // low and directional share the same label ("More data needed") — same color for consistency
+  var CONF_COLOR = { high:'#4CAF7D', medium:'#D4954A', low:'#9e9e9e', directional:'#9e9e9e' };
+
+  // ═══════════════════════════════════════════════════════
+  // MICRO INPUT FLOW
+  // ═══════════════════════════════════════════════════════
+
+  function _buildMicroInputHTML(missingInputs, decisionType) {
+    if (!missingInputs||!missingInputs.length) return '';
+    var fieldsHtml = missingInputs.map(function(inp) {
+      var inner;
+      if (inp.type==='money') {
+        inner = '<div class="tdf-mi-field-wrap">'+
+          '<span class="tdf-mi-affix tdf-mi-prefix">$</span>'+
+          '<input id="tdf-input-'+inp.key+'" class="tdf-mi-input" type="tel" inputmode="numeric" placeholder="'+inp.placeholder+'" />'+
+          '</div>';
+      } else if (inp.type==='percent') {
+        inner = '<div class="tdf-mi-field-wrap">'+
+          '<input id="tdf-input-'+inp.key+'" class="tdf-mi-input" type="tel" inputmode="numeric" placeholder="'+inp.placeholder+'" />'+
+          '<span class="tdf-mi-affix tdf-mi-suffix">%</span>'+
+          '</div>';
+      } else {
+        inner = '<input id="tdf-input-'+inp.key+'" class="tdf-mi-input tdf-mi-input-solo" type="tel" inputmode="numeric" placeholder="'+inp.placeholder+'" />';
+      }
+      return '<div class="tdf-mi-field">'+
+        '<label class="tdf-mi-label" for="tdf-input-'+inp.key+'">'+inp.label+'</label>'+
+        inner+
+        (inp.hint ? '<div class="tdf-mi-hint">'+inp.hint+'</div>' : '')+
+      '</div>';
+    }).join('');
+
+    return '<div id="tdf-micro-input" class="tdf-micro-input" style="display:none;" '+
+      'data-decision-type="'+decisionType+'" '+
+      'data-keys="'+missingInputs.map(function(i){return i.key;}).join(',')+'">'+
+      '<div class="tdf-mi-fields">'+fieldsHtml+'</div>'+
+      '<button class="tdf-mi-submit" onclick="window._tdfSubmitMicroInput()">Save &amp; show my plan &#x2192;</button>'+
+    '</div>';
+  }
+
+  // ── Toggle micro input expand ─────────────────────────────
+  window._tdfToggleMicroInput = function(btn) {
+    var mi = document.getElementById('tdf-micro-input');
+    if (!mi) return;
+    var isOpen = mi.style.display !== 'none';
+    mi.style.display = isOpen ? 'none' : 'block';
+    if (btn) {
+      if (isOpen) {
+        var n = (mi.getAttribute('data-keys')||'').split(',').filter(Boolean).length;
+        btn.textContent = 'Add '+n+' quick detail'+(n!==1?'s':'')+' \u2192';
+      } else {
+        btn.textContent = 'Cancel';
+      }
+    }
+    if (!isOpen) {
+      var first = mi.querySelector('input');
+      if (first) setTimeout(function(){ first.focus(); }, 50);
+    }
+  };
+
+  // ── Submit micro inputs — save to G and re-render ─────────
+  window._tdfSubmitMicroInput = function() {
+    var mi = document.getElementById('tdf-micro-input');
+    if (!mi) return;
+    var keys   = (mi.getAttribute('data-keys')||'').split(',').filter(Boolean);
+    var g      = window.G || {};
+    var saved  = 0;
+
+    keys.forEach(function(key) {
+      var el  = document.getElementById('tdf-input-'+key);
+      if (!el) return;
+      var raw = (el.value||'').replace(/[^0-9.]/g,'');
+      if (raw) { g[key] = parseFloat(raw); saved++; }
+    });
+
+    if (!saved) return;
+
+    // Aliases — keep engine happy with both name variants
+    if (g.homePrice    && !g.targetHomePrice) g.targetHomePrice = g.homePrice;
+    if (g.depositSaved && !g.downPayment)     g.downPayment     = g.depositSaved;
+    window.G = g;
+
+    // Persist to Supabase/localStorage
+    if (window.TracentHydration && typeof TracentHydration.scheduleSave==='function') {
+      TracentHydration.scheduleSave();
+    }
+
+    // Re-trigger full engine if available — cascades RPA chain -> renderDecisionFlow
+    if (window.TracentHydration && typeof TracentHydration.triggerRecalculation==='function') {
+      try { TracentHydration.triggerRecalculation(); return; } catch(e) {}
+    }
+    // Fallback: direct re-render
+    renderDecisionFlow();
+  };
+
+
+  // ═══════════════════════════════════════════════════════
+  // NBM PROGRESSION SPINE
+  // ═══════════════════════════════════════════════════════
+
+  /** Module-local last-move ID — cheap continuity without external writes. */
+  var _lastNBMId = null;
+
+  /**
+   * TIER MAP — move id → tier classification.
+   * 'stabilize'  → immediate fragility / acute pressure
+   * 'unlock'     → blocker / missing prerequisite
+   * 'optimize'   → improve an already-stable position
+   * 'advance'    → execute on a cleared goal
+   *
+   * Rule: when ambiguous, choose the more conservative tier.
+   */
+  var TIER_BY_ID = {
+    deficit:        'stabilize',
+    ef_zero:        'stabilize',
+    ef_low:         'stabilize',
+    cc_attack:      'stabilize',
+    car_paydown:    'stabilize',    // re-assessed below when position is stable
+    home_research:  'unlock',
+    home_dti_prep:  'unlock',
+    dti_reduce:     'unlock',       // re-assessed by decisionType
+    home_deposit:   'advance',
+    match_capture:  'optimize',
+    retire_contrib: 'optimize',
+    invest_surplus: 'optimize',
+    optimize_fcf:   'optimize',
+    recurring_leak: 'optimize',
+    career_gap:     'optimize'
+  };
+
+  var TIER_BY_CAT = {
+    safety: 'stabilize',
+    debt:   'stabilize',
+    home:   'unlock',
+    grow:   'optimize',
+    retire: 'optimize'
+  };
+
+  var TIER_ORDER = ['stabilize', 'unlock', 'optimize', 'advance'];
+
+  /**
+   * _getProgressionTier(move, g, decisionType, assessment)
+   * Returns the progression tier for the current validated move.
+   * No write side-effects.
+   */
+  function _getProgressionTier(move, g, decisionType, assessment) {
+    if (!move || move.id === 'insufficient_data' || move.id === 'fallback') {
+      return (g.fcf || 0) < 0 ? 'stabilize' : 'unlock';
+    }
+
+    var id  = move.id  || '';
+    var cat = move.category || '';
+
+    // Look up in id map first
+    var tier = TIER_BY_ID[id];
+
+    // Contextual overrides — same id can be different tiers depending on state
+    if (id === 'car_paydown') {
+      // Only stabilize when cash is tight; otherwise it's optimization
+      tier = (g.fcf || 0) < 400 ? 'stabilize' : 'optimize';
+    }
+    if (id === 'dti_reduce') {
+      // Unlock for home mode (lender blocker); stabilize for general debt drag
+      tier = decisionType === 'home' ? 'unlock' : 'stabilize';
+    }
+    if (id === 'home_deposit') {
+      // Only advance when no missing inputs remain; otherwise still unlock
+      var missing = assessment && assessment.missingInputs ? assessment.missingInputs.length : 0;
+      tier = missing === 0 ? 'advance' : 'unlock';
+    }
+    if (id === 'invest_surplus' && (window.pbfdeState || {}).stage === 'habit') {
+      tier = 'advance';
+    }
+
+    // Fall back to category map if id not in map
+    if (!tier) tier = TIER_BY_CAT[cat];
+
+    // Final safe default
+    return tier || 'optimize';
+  }
+
+  /**
+   * _getProgressionContext(move, g, assessment, signals)
+   * Infers where the user is in their progression journey.
+   * Returns { currentTier, nextLikelyTier, isBlocked, isStalled, isAdvancing, progressionReason }
+   */
+  function _getProgressionContext(move, g, assessment, signals) {
+    var conf         = assessment ? assessment.confidence : 'directional';
+    var decisionType = assessment ? assessment.decisionType : 'general';
+    var missingCount = assessment && assessment.missingInputs ? assessment.missingInputs.length : 0;
+
+    var currentTier = _getProgressionTier(move, g, decisionType, assessment);
+
+    var tierIdx = TIER_ORDER.indexOf(currentTier);
+    var nextLikelyTier = tierIdx < TIER_ORDER.length - 1 ? TIER_ORDER[tierIdx + 1] : 'advance';
+
+    var isBlocked   = missingCount > 0;
+    // Stalled: avoidance flag, or repeated ignores of same tier move as last session
+    var avoidance   = !!(window.pbfdeState && window.pbfdeState.psych && window.pbfdeState.psych.avoidance);
+    var isStalled   = avoidance || signals.ignored >= 3 || signals.hesit >= 4;
+    // Same-tier stall: last NBM was same id or same category, user hasn't acted
+    var sameTier    = _lastNBMId && move && (_lastNBMId === move.id);
+    if (sameTier && signals.ignored >= 2) isStalled = true;
+
+    var isAdvancing = !isBlocked && !isStalled && conf === 'high' &&
+                      (currentTier === 'optimize' || currentTier === 'advance');
+
+    var progressionReason;
+    if      (currentTier === 'stabilize') progressionReason = 'fragility';
+    else if (currentTier === 'unlock')    progressionReason = isBlocked ? 'blocked' : 'prerequisite';
+    else if (currentTier === 'optimize')  progressionReason = isStalled ? 'stalled_optimize' : 'improvement';
+    else                                  progressionReason = isAdvancing ? 'executing' : 'ready';
+
+    return {
+      currentTier:       currentTier,
+      nextLikelyTier:    nextLikelyTier,
+      isBlocked:         isBlocked,
+      isStalled:         isStalled,
+      isAdvancing:       isAdvancing,
+      progressionReason: progressionReason
+    };
+  }
+
+  /**
+   * _shouldHoldTier(context, signals)
+   * Returns true when the system should stay in the current tier
+   * rather than allowing assertive/forward-pushing CTA language.
+   *
+   * Rule A: stabilize conditions unresolved → hold
+   * Rule B: unlock blocker present → hold
+   * Rule C: user is stalled → hold regardless of tier
+   */
+  function _shouldHoldTier(context, signals) {
+    if (context.isStalled) return true;
+    if (context.currentTier === 'stabilize') return true;   // always hold until stabilized
+    if (context.currentTier === 'unlock' && context.isBlocked) return true;
+    return false;
+  }
+
+  /**
+   * _getProgressionSupportLine(context)
+   * Returns a short, calm support line based on current progression context.
+   * Returns '' if no line is warranted.
+   * Caller merges this with the formatter's behavioral support line:
+   *   effectiveSupport = copy.supportLine || _getProgressionSupportLine(context)
+   * Formatter's behavioral line takes priority (it is more specific).
+   */
+  function _getProgressionSupportLine(context) {
+    if (context.isStalled) {
+      if (context.currentTier === 'stabilize') return 'This is still the first thing to clear.';
+      if (context.currentTier === 'unlock')    return 'This removes the main blocker.';
+      return 'This is still the clearest next step.';
+    }
+    if (context.currentTier === 'stabilize') return 'This reduces the pressure first.';
+    if (context.currentTier === 'unlock')    return 'This unlocks the next reliable step.';
+    if (context.currentTier === 'optimize')  return 'This improves an already-stable position.';
+    if (context.currentTier === 'advance')   return 'You\u2019re in a position to move this forward.';
+    return '';
+  }
+
+  // ═══════════════════════════════════════════════════════
+  // BEHAVIORAL SIGNAL READER
+  // ═══════════════════════════════════════════════════════
+
+  /**
+   * _readBehavioralSignals()
+   * Reads safely from pbfdeState and session storage.
+   * Returns a clean signal object; all fields have safe defaults.
+   * Never throws — used in the render path.
+   */
+  function _readBehavioralSignals() {
+    var ps = {};
+    try { ps = window.pbfdeState || {}; } catch(e) {}
+    var psych   = ps.psych || {};
+    var anxiety = psych.anxiety  || 'unknown';   // 'high' | 'low' | 'unknown'
+    var avoid   = !!(psych.avoidance);            // boolean
+    var stage   = ps.stage || 'observe';          // 'observe'|'insight'|'action'|'habit'
+    var ignored = Number(ps.nbmIgnoreCount || 0); // times NBM was shown but not clicked
+    var hesit   = Number(ps.hesitationCount || 0);// pauses detected
+    // Return session: ≥2 sessions means user has been here before
+    var returnSession = false;
+    try { returnSession = Number(localStorage.getItem('tracent_seen') || '0') >= 2; } catch(e) {}
+    return { anxiety:anxiety, avoid:avoid, stage:stage, ignored:ignored, hesit:hesit, returnSession:returnSession };
+  }
+
+  // ═══════════════════════════════════════════════════════
+  // NBM COPY FORMATTER
+  // ═══════════════════════════════════════════════════════
+
+  /**
+   * _formatNBMCopy(move, g, conf, decisionType, signals)
+   * Returns { why, ctaText, supportLine } for the validated decision card.
+   *
+   * Strategy:
+   *   - Engine `move.why` is already data-anchored — use it as the base.
+   *   - When a behavioral or mode signal meaningfully changes the emphasis,
+   *     return a tone-adjusted why instead.
+   *   - ctaText and supportLine are always copy-layer decisions.
+   *   - Never invents facts. If no real anchor justifies tone adjustment,
+   *     passes move.why through unchanged.
+   */
+  function _formatNBMCopy(move, g, conf, decisionType, signals) {
+    var cat    = move.category || '';
+    var arch   = (window.BSE || {}).archetype || '';
+    var why    = move.why || '';       // engine base — always data-anchored
+    var support = '';                  // optional support line — empty by default
+
+    // ── 1. CTA text — confidence + mode based ────────────────────────
+    var ctaText;
+    if (conf === 'medium') {
+      // Mode-specific soft CTA for medium confidence
+      if (cat === 'debt')                ctaText = 'Check this plan \u2192';
+      else if (cat === 'home')           ctaText = 'Review readiness \u2192';
+      else if (decisionType === 'retire') ctaText = 'Refine this plan \u2192';
+      else                               ctaText = 'Review this move \u2192';
+    } else {
+      // High confidence — action-specific CTA where possible
+      if (cat === 'safety' && move.id === 'deficit')   ctaText = 'Address this now \u2192';
+      else if (cat === 'safety')                        ctaText = 'Start this step \u2192';
+      else if (cat === 'debt')                          ctaText = 'See the payoff plan \u2192';
+      else if (cat === 'home')                          ctaText = 'Review readiness \u2192';
+      else if (cat === 'retire')                        ctaText = 'See retirement view \u2192';
+      else if (cat === 'grow' && move.id === 'career_gap') ctaText = 'See income benchmark \u2192';
+      else                                              ctaText = 'Do this now \u2192';
+    }
+
+    // ── 2. Tone + why adjustment by archetype ─────────────────────────
+    // Only applied when archetype provides a meaningful signal.
+    // Falls through to engine why if no clear adjustment is warranted.
+
+    if (arch === 'anxious_overwhelmed') {
+      // Simplify — reduce cognitive load, frame as one small step
+      if (cat === 'safety') {
+        why = 'One small action here protects against the next unexpected expense. You do not need to solve everything at once.';
+      } else if (cat === 'debt') {
+        why = 'Targeting one balance keeps this simple. The goal is momentum, not perfection.';
+      } else {
+        why = move.why; // pass through — engine why is already specific
+      }
+      support = 'One step at a time is enough to move this forward.';
+
+    } else if (arch === 'avoider') {
+      // Frame as decisively low-friction
+      if (cat === 'debt') {
+        why = 'This is the highest-leverage debt action available. The decision is simple — everything else follows from it.';
+      } else if (cat === 'safety') {
+        why = 'This is the one action that removes the most financial risk right now. It takes less than ten minutes to start.';
+      } else {
+        why = move.why;
+      }
+      support = 'Starting is the only thing that matters here.';
+
+    } else if (arch === 'optimizer') {
+      // Keep engine why — it is precise. Add efficiency framing to support line only.
+      why = move.why;
+      if (cat === 'debt' || cat === 'grow') {
+        support = 'This ranks above the alternatives on both impact and feasibility.';
+      }
+
+    } else if (g.isRetirementMode || arch === 'in_retirement') {
+      // Calm + protective framing
+      if (cat === 'retire') {
+        why = 'At this stage, income durability matters more than growth. ' + move.why;
+      } else if (cat === 'safety') {
+        why = 'A stable cash reserve is the foundation for everything else in retirement. ' + move.why;
+      } else {
+        why = move.why;
+      }
+
+    } else if (arch === 'pre_retirement') {
+      // Contributions carry maximum weight in this window
+      if (cat === 'retire') {
+        why = 'You are in the window where contributions carry maximum compounding weight. ' + move.why;
+      } else {
+        why = move.why;
+      }
+
+    } else if (arch === 'debt_overwhelmed') {
+      // Focus on relief, not optimization
+      if (cat === 'debt') {
+        why = 'Reducing one balance changes the monthly pressure immediately. ' + move.why;
+      } else {
+        why = move.why;
+      }
+
+    } else if (arch === 'homebuyer_ready') {
+      if (cat === 'home') {
+        why = 'Your position supports the path to home ownership. ' + move.why;
+      } else {
+        why = move.why;
+      }
+
+    } else {
+      why = move.why; // all other archetypes: pass engine why through unchanged
+    }
+
+    // ── 3. Hesitation / ignore signal ────────────────────────────────
+    // Only applied if a reliable ignore or hesitation count exists.
+    // Does NOT fabricate intent — only fires when the signal clearly exists.
+    if (signals.ignored >= 3 || signals.hesit >= 4) {
+      if (!support) {
+        support = 'This is still the clearest next step for your situation.';
+      }
+    }
+
+    // ── 4. Return session: slightly softer CTA for new return visitors ─
+    // (not for hesitators — they get the support line instead)
+    if (signals.returnSession && conf === 'medium' && signals.ignored < 3) {
+      if (!support) {
+        support = 'Based on what we know so far \u2014 this is the most actionable next step.';
+      }
+    }
+
+    // ── 5. Clamp why length ──────────────────────────────────────────
+    // Never allow why to become a paragraph — two short sentences max.
+    // If the adjusted why is very long, fall back to the engine's original.
+    if (why && why.length > 220) why = move.why;
+
+    return { why:why, ctaText:ctaText, supportLine:support };
+  }
+
+  // ═══════════════════════════════════════════════════════
+  // NBM VALIDITY VALIDATOR
+  // ═══════════════════════════════════════════════════════
+
+  /**
+   * _validateNBM(move, g, conf, decisionType)
+   * Evaluates whether a move has earned the right to render as a real financial decision.
+   *
+   * Returns: { isValidDecision:bool, reason:string, fallbackType:string|null }
+   *
+   * reason:       'ok' | 'insufficient_data' | 'wrong_mode' | 'missing_support' | 'generic'
+   * fallbackType: 'profile' | 'refine' | 'context' | null
+   *
+   * Rules:
+   *   A. Weak confidence (low/directional) → never render a real financial move
+   *   B. Medium confidence → only valid if FCF-dependent move has confirmed income
+   *   C. Mode conflict (retirement) → reject wrong-domain moves at render layer
+   *   D. Missing support inputs for the move's category → downgrade to context
+   *   E. Data-collection stubs are not financial decisions
+   */
+  function _validateNBM(move, g, conf, decisionType) {
+    // Defensive: upstream should have caught these, but guard here too
+    if (!move || move.id === 'insufficient_data' || move.id === 'fallback') {
+      return { isValidDecision:false, reason:'insufficient_data', fallbackType:'profile' };
+    }
+
+    // Rule A — weak confidence cannot render a real financial decision
+    if (conf === 'low' || conf === 'directional') {
+      return { isValidDecision:false, reason:'insufficient_data', fallbackType:'context' };
+    }
+
+    var cat  = move.category || '';
+    var arch = (window.BSE || {}).archetype || '';
+
+    // Rule C — retirement mode purity (render-layer defence, engine already filters most)
+    if (g.isRetirementMode) {
+      // Home moves should never reach retirement users
+      if (cat === 'home') {
+        return { isValidDecision:false, reason:'wrong_mode', fallbackType:'refine' };
+      }
+      // Employer-match framing is meaningless for in_retirement users — no employer
+      if (arch === 'in_retirement' && move.id === 'match_capture') {
+        return { isValidDecision:false, reason:'wrong_mode', fallbackType:'refine' };
+      }
+      // DTI / lender framing is mortgage-domain — not relevant in retirement
+      if (move.id === 'dti_reduce') {
+        return { isValidDecision:false, reason:'wrong_mode', fallbackType:'refine' };
+      }
+    }
+
+    // Rule D — missing support inputs for category-specific moves
+    if (cat === 'home') {
+      // Any home move requires at minimum a target price to produce real numbers
+      if (!(g.homePrice || g.targetHomePrice || g.purchasePrice)) {
+        return { isValidDecision:false, reason:'missing_support', fallbackType:'context' };
+      }
+    }
+    if (move.id === 'retire_contrib') {
+      // Contribution projection excluded at draw age — engine gates this but render defends
+      var _age = parseInt(g.currentAge || g.age || '0');
+      if (_age >= 65) {
+        return { isValidDecision:false, reason:'wrong_mode', fallbackType:'refine' };
+      }
+      // Requires income to project any meaningful increase amount
+      if (!(g.income || g.takeHome)) {
+        return { isValidDecision:false, reason:'missing_support', fallbackType:'context' };
+      }
+    }
+
+    // Rule E — data-collection stubs are preparation steps, not financial decisions
+    // home_research prompts the user to set a target price — it is setup, not an NBM
+    if (move.id === 'home_research') {
+      return { isValidDecision:false, reason:'generic', fallbackType:'context' };
+    }
+
+    // Rule B — medium confidence: FCF-dependent moves require confirmed income
+    // Safety, debt, and grow moves all use FCF amounts in their calculations
+    if (conf === 'medium') {
+      var _fcfDependent = (cat === 'safety' || cat === 'grow' || cat === 'debt');
+      if (_fcfDependent && !(g.income || g.takeHome)) {
+        return { isValidDecision:false, reason:'missing_support', fallbackType:'profile' };
+      }
+    }
+
+    return { isValidDecision:true, reason:'ok', fallbackType:null };
+  }
+
+  /**
+   * _buildRefineCard(g, decisionType)
+   * Shown when a move fails validation due to mode conflict or domain mismatch.
+   * Mode-aware, calm, no fake precision. CTA routes to settings, not onboarding.
+   */
+  function _buildRefineCard(g, decisionType) {
+    var COPY = {
+      retire:  { title:'Refine your retirement picture',
+                 why:  'Add key details so we can give you specific guidance for your retirement stage.',
+                 cta:  'Refine this plan \u2192' },
+      home:    { title:'Add your target home details',
+                 why:  'We need your target price and savings to show you a specific readiness plan.',
+                 cta:  'Add home details \u2192' },
+      debt:    { title:'Add the debt details needed to rank your next move',
+                 why:  'Your balance and rate are needed before we can recommend a specific paydown strategy.',
+                 cta:  'Add debt details \u2192' },
+      general: { title:'Add key financial details',
+                 why:  'We need a clearer picture to guide your next move.',
+                 cta:  'Add your details \u2192' }
+    };
+    var copy = (g.isRetirementMode ? COPY.retire : COPY[decisionType]) || COPY.general;
+    return '<div class="nbm-card nbm-card-fallback">'+
+      '<div class="nbm-eyebrow">Your next move</div>'+
+      '<div class="nbm-title">'+copy.title+'</div>'+
+      '<div class="nbm-why">'+copy.why+'</div>'+
+      '<button class="nbm-cta" onclick="openSettingsEdit()">'+copy.cta+'</button>'+
+    '</div>';
+  }
+
+  // ═══════════════════════════════════════════════════════
+  // PRIMARY CARD BUILDERS
+  // ═══════════════════════════════════════════════════════
+
+  /**
+   * _buildPrimaryNBMCard(move, conf, g, assessment)
+   * Builds the dominant NBM card HTML for three states:
+   *   1. Fallback (no move / directional) — profile prompt
+   *   2. Context Request Mode (low conf)  — micro input flow
+   *   3. Decision Mode (medium/high)      — full NBM card
+   */
+  function _buildPrimaryNBMCard(move, conf, g, assessment) {
+    // ── 1. Fallback ───────────────────────────────────────
+    if (!move || move.id === 'insufficient_data') {
+      var isRetire = !!(g.isRetirementMode);
+      var fbTitle  = isRetire
+        ? 'Refine your retirement picture'
+        : 'Add key financial details';
+      var fbWhy = isRetire
+        ? 'A few more details will let us give you specific guidance for your retirement stage.'
+        : 'We need a clearer picture to guide your next move.';
+      var fbCta = isRetire ? 'Add your details \u2192' : 'Complete your profile \u2192';
+      return '<div class="nbm-card nbm-card-fallback">'+
+        '<div class="nbm-eyebrow">Your next move</div>'+
+        '<div class="nbm-title">'+fbTitle+'</div>'+
+        '<div class="nbm-why">'+fbWhy+'</div>'+
+        '<button class="nbm-cta" onclick="openSettingsEdit()">'+fbCta+'</button>'+
+      '</div>';
+    }
+
+    // ── 2. Context Request Mode ───────────────────────────
+    if (conf === 'low') {
+      var reqs     = CTX_REQ[assessment.decisionType] || CTX_REQ.general;
+      var n        = assessment.missingInputs.length;
+      var ctaLabel = n > 0
+        ? 'Add ' + n + ' quick detail' + (n !== 1 ? 's' : '') + ' \u2192'
+        : 'Complete your details \u2192';
+      return '<div class="nbm-card nbm-card-ctx">'+
+        '<div class="nbm-eyebrow">To give you a real recommendation</div>'+
+        '<div class="nbm-title">'+reqs.context+'</div>'+
+        '<div class="nbm-why">'+reqs.limitation+'</div>'+
+        '<div class="nbm-action">'+reqs.actionLabel+'</div>'+
+        '<button class="nbm-cta" onclick="window._tdfToggleMicroInput(this)">'+ctaLabel+'</button>'+
+        _buildMicroInputHTML(assessment.missingInputs, assessment.decisionType)+
+      '</div>';
+    }
+
+    // ── 3. Decision Mode (medium / high) — validate before rendering ──
+    var validation = _validateNBM(move, g, conf, assessment.decisionType);
+    if (!validation.isValidDecision) {
+      // Failed validation: route to the appropriate safe fallback
+      if (validation.fallbackType === 'context') return _buildContextRequestSection(assessment);
+      return _buildRefineCard(g, assessment.decisionType);
+    }
+
+    var ctaFn   = move.category === 'debt' ? "switchTab('debtrank')" : 'bseOpenPlan()';
+    var outcome = _buildOutcome(move, conf);
+
+    // Copy formatter — tone + CTA + optional support line
+    var signals = _readBehavioralSignals();
+    var copy    = _formatNBMCopy(move, g, conf, assessment.decisionType, signals);
+
+    // ── Progression context ──────────────────────────────────
+    var progCtx  = _getProgressionContext(move, g, assessment, signals);
+    var holdTier = _shouldHoldTier(progCtx, signals);
+
+    // Rule: if system should hold tier, don't let assertive CTA escape
+    // ('Do this now' is only appropriate at advance tier under high confidence)
+    if (holdTier && copy.ctaText === 'Do this now \u2192') {
+      copy.ctaText = progCtx.currentTier === 'stabilize'
+        ? 'Address this first \u2192'
+        : 'Review this move \u2192';
+    }
+
+    // Merge support lines: formatter's behavioral line takes priority (more specific);
+    // progression line fills in when formatter hasn't set one.
+    var progSupportLine = _getProgressionSupportLine(progCtx);
+    var effectiveSupport = copy.supportLine || progSupportLine;
+
+    // Record move id for same-tier continuity check on next render
+    try { _lastNBMId = move.id; } catch(e) {}
+
+    // Inline impact line (high confidence only)
+    var impactHtml = '';
+    if (outcome) {
+      var parts = [];
+      if (outcome.scoreImpact) parts.push(
+        '<span class="nbm-impact-val nbm-impact-score">'+outcome.scoreImpact+'</span>'+
+        '<span class="nbm-impact-lbl">\u00a0score</span>'
+      );
+      if (outcome.cashImpact) parts.push(
+        '<span class="nbm-impact-val nbm-impact-cash">'+outcome.cashImpact+'</span>'+
+        '<span class="nbm-impact-lbl">\u00a0cash flow</span>'
+      );
+      if (parts.length) impactHtml =
+        '<div class="nbm-impact">'+
+          parts.join('<span class="nbm-impact-sep">&nbsp;&middot;&nbsp;</span>')+
+        '</div>';
+    }
+
+    var medNote = conf === 'medium'
+      ? '<div class="nbm-conf-note">Based on what we know so far \u2014 numbers sharpen as you add more details</div>'
+      : '';
+
+    var supportHtml = effectiveSupport
+      ? '<div class="nbm-support">'+effectiveSupport+'</div>'
+      : '';
+
+    return '<div class="nbm-card">'+
+      '<div class="nbm-eyebrow">Your next move</div>'+
+      '<div class="nbm-title">'+(move.title||'')+'</div>'+
+      '<div class="nbm-why">'+(copy.why||move.why||'')+'</div>'+
+      (move.action ? '<div class="nbm-action">'+(move.action||'')+'</div>' : '')+
+      medNote+
+      impactHtml+
+      supportHtml+
+      '<button class="nbm-cta" onclick="'+ctaFn+'">'+copy.ctaText+'</button>'+
+    '</div>';
+  }
+
+  /**
+   * _buildConfidenceLayer(conf)
+   * One-line confidence indicator shown directly below the NBM card.
+   * Directional state shows "More data needed" — not Medium.
+   */
+  function _buildConfidenceLayer(conf) {
+    var LABEL = {
+      high:'High confidence', medium:'Medium confidence',
+      low:'More data needed', directional:'More data needed'
+    };
+    var COLOR = {
+      high:'#4CAF7D', medium:'#D4954A',
+      low:'#9e9e9e',  directional:'#9e9e9e'
+    };
+    var label = LABEL[conf] || LABEL.medium;
+    var color = COLOR[conf]  || COLOR.medium;
+    return '<div class="nbm-confidence" style="color:'+color+';">'+label+'</div>';
+  }
+
+  /**
+   * _buildFullPicture(sit, interp, outcome, rankReason, alts, conf)
+   * Collapsible panel containing all secondary detail sections.
+   * Hidden by default — toggled by nbm-expand-toggle button.
+   */
+  function _buildFullPicture(sit, interp, outcome, rankReason, alts, conf) {
+    // Situation
+    var sitHtml = '<div class="tdf-section tdf-section-situation">'+
+      '<div class="tdf-eyebrow">Your situation</div>'+
+      '<div class="tdf-sit-grid">'+
+        sit.rows.map(function(r){
+          return '<div class="tdf-sit-row">'+
+            '<span class="tdf-sit-label">'+r.label+'</span>'+
+            '<span class="tdf-sit-value">'+r.value+'</span>'+
+          '</div>';
+        }).join('')+
+      '</div>'+
+      (sit.risk ? '<div class="tdf-risk-flag">'+sit.risk+'</div>' : '')+
+    '</div>';
+
+    // Interpretation
+    var interpHtml = '<div class="tdf-section tdf-section-interp">'+
+      '<div class="tdf-eyebrow">What this means</div>'+
+      '<div class="tdf-interp-body">'+interp+'</div>'+
+    '</div>';
+
+    // Outcome detail
+    var outcomeHtml = '';
+    if (outcome) {
+      var items = [];
+      if (outcome.scoreImpact) items.push(
+        '<div class="tdf-outcome-item">'+
+          '<div class="tdf-outcome-val">'+outcome.scoreImpact+'</div>'+
+          '<div class="tdf-outcome-lbl">Score impact</div>'+
+        '</div>'
+      );
+      if (outcome.cashImpact) items.push(
+        '<div class="tdf-outcome-item">'+
+          '<div class="tdf-outcome-val tdf-outcome-cash">'+outcome.cashImpact+'</div>'+
+          '<div class="tdf-outcome-lbl">Cash flow impact</div>'+
+        '</div>'
+      );
+      if (items.length) outcomeHtml =
+        '<div class="tdf-section tdf-section-outcome">'+
+          '<div class="tdf-eyebrow">Expected outcome</div>'+
+          '<div class="tdf-outcome-row">'+items.join('')+'</div>'+
+        '</div>';
+    }
+
+    // Confidence detail
+    var confHtml = '<div class="tdf-section tdf-section-conf">'+
+      '<div class="tdf-eyebrow">Confidence</div>'+
+      '<div class="tdf-conf-badge" style="color:'+(CONF_COLOR[conf]||'#9e9e9e')+';">'+CONF_LABEL[conf]+'</div>'+
+      '<div class="tdf-conf-sub">'+CONF_SUB[conf]+'</div>'+
+    '</div>';
+
+    // System Reasoning
+    var reasoningHtml = '';
+    if ((conf==='high'||conf==='medium') && (rankReason||alts.length)) {
+      var altsHtml = alts.length
+        ? '<div class="tdf-alts-label">Considered but ranked lower:</div>'+
+          alts.map(function(a){
+            return '<div class="tdf-alt-row">'+
+              '<span class="tdf-alt-title">'+a.title+'</span> \u2014 '+
+              '<span class="tdf-alt-why">'+a.whyLower+'</span>'+
+            '</div>';
+          }).join('')
+        : '';
+      reasoningHtml = '<div class="tdf-section tdf-section-reasoning">'+
+        '<div class="tdf-eyebrow">How this was chosen</div>'+
+        (rankReason ? '<div class="tdf-reasoning-body">'+rankReason+'</div>' : '')+
+        altsHtml+
+      '</div>';
+    }
+
+    return '<div id="nbm-full-picture" class="nbm-full-picture" style="display:none;">'+
+      sitHtml + interpHtml + outcomeHtml + confHtml + reasoningHtml +
+    '</div>';
+  }
+
+  // ═══════════════════════════════════════════════════════
+  // MAIN RENDER
+  // ═══════════════════════════════════════════════════════
+
+  function renderDecisionFlow() {
+    var el  = document.getElementById('bse-focus-mode');
+    if (!el) return;
+    var g   = window.G   || {};
+    var BSE = window.BSE || {};
+
+    if (BSE.show && BSE.show.focusCard===false) return; // BSE suppression
+    if (!g.scoreFinal) return;                          // state gate
+
+    _suppressSecondaryCards();
+
+    // NBM move from engine
+    var move = null;
+    try {
+      var moves = window.v21GetRankedMoves ? window.v21GetRankedMoves() : [];
+      move = moves[0] || null;
+    } catch(e) {}
+
+    // Unified context assessment
+    var assessment = _assessContext(g, BSE, move);
+    var conf       = assessment.confidence;
+
+    // Data for full-picture collapsible
+    var sit        = _buildSituation(g);
+    var interp     = _buildInterpretation(g, BSE);
+    var outcome    = _buildOutcome(move, conf);
+    var alts       = (move && move._alternatives)  ? move._alternatives.slice(0,2)  : [];
+    var rankReason = (move && move._rankingReason) ? move._rankingReason            : '';
+
+    // ── PRIMARY: NBM card ────────────────────────────────
+    var primaryHtml = _buildPrimaryNBMCard(move, conf, g, assessment);
+
+    // ── CONFIDENCE LAYER ─────────────────────────────────
+    var confLayerHtml = _buildConfidenceLayer(conf);
+
+    // ── EXPAND TOGGLE + FULL PICTURE (when detail exists) ─
+    var hasDetail = sit.rows.length > 0;
+    var toggleHtml = hasDetail
+      ? '<button class="nbm-expand-toggle" onclick="window._tdfExpandToggle(this)">See full picture</button>'
+      : '';
+    var fullPictureHtml = hasDetail
+      ? _buildFullPicture(sit, interp, outcome, rankReason, alts, conf)
+      : '';
+
+    el.innerHTML = '<div class="tdf-wrap nbm-wrap">'+
+      primaryHtml+
+      confLayerHtml+
+      toggleHtml+
+      fullPictureHtml+
+    '</div>';
+    el.style.display = 'block';
+  }
+
+  // ── Toggle full-picture collapsible ──────────────────────
+  window._tdfExpandToggle = function(btn) {
+    var panel = document.getElementById('nbm-full-picture');
+    if (!panel) return;
+    var isOpen = panel.style.display !== 'none';
+    panel.style.display = isOpen ? 'none' : 'block';
+    if (btn) btn.textContent = isOpen ? 'See full picture' : 'Hide details';
+  };
+
+  // ── Wire into bseRenderFocusCard (tab switch path) ────────
+  window.bseRenderFocusCard = function() {
+    if ((window.G||{}).scoreFinal) {
+      try { renderDecisionFlow(); return; } catch(e) {
+        console.warn('[Tracent:DecisionFlow] render failed:', e);
+      }
+    }
+  };
+
+  // ── Wire into v21RenderPostAnalysis (analysis path) ──────
+  var _prevRPA = window.v21RenderPostAnalysis;
+  window.v21RenderPostAnalysis = function() {
+    if (typeof _prevRPA==='function') _prevRPA();
+    try { renderDecisionFlow(); } catch(e) {
+      console.warn('[Tracent:DecisionFlow] post-analysis render failed:', e);
+    }
+  };
+
+  window.renderDecisionFlow = renderDecisionFlow;
+
+  // ═══════════════════════════════════════════════════════
+  // CSS
+  // ═══════════════════════════════════════════════════════
+  var _tdfStyle = document.createElement('style');
+  _tdfStyle.textContent = [
+    // ── Shared wrap ──
+    '.tdf-wrap{display:flex;flex-direction:column;gap:0;}',
+    '.nbm-wrap{display:flex;flex-direction:column;gap:0;}',
+    // ── Primary NBM card ──
+    '.nbm-card{padding:20px 0 16px;}',
+    '.nbm-eyebrow{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.9px;color:rgba(0,168,232,0.65);margin-bottom:10px;}',
+    '.nbm-title{font-size:20px;font-weight:700;color:#fff;line-height:1.3;margin-bottom:10px;}',
+    '.nbm-why{font-size:14px;color:rgba(255,255,255,0.72);line-height:1.6;margin-bottom:8px;}',
+    '.nbm-action{font-size:13px;font-weight:600;color:rgba(255,255,255,0.55);line-height:1.5;margin-bottom:12px;}',
+    '.nbm-conf-note{font-size:11px;color:rgba(255,255,255,0.35);margin-bottom:12px;font-style:italic;}',
+    '.nbm-support{font-size:12px;color:rgba(255,255,255,0.38);line-height:1.55;margin-bottom:12px;font-style:italic;}',
+    '.nbm-impact{font-size:13px;margin-bottom:14px;}',
+    '.nbm-impact-val{font-weight:700;}',
+    '.nbm-impact-score{color:#4CAF7D;}',
+    '.nbm-impact-cash{color:rgba(255,255,255,0.70);}',
+    '.nbm-impact-sep{color:rgba(255,255,255,0.25);}',
+    '.nbm-impact-lbl{color:rgba(255,255,255,0.40);font-size:12px;}',
+    '.nbm-cta{display:inline-flex;align-items:center;justify-content:center;padding:13px 28px;border-radius:999px;background:var(--sky,#00A8E8);color:#fff;font-size:14px;font-weight:700;border:none;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:opacity 0.15s ease;margin-top:4px;}',
+    '.nbm-cta:active{opacity:0.8;}',
+    '.nbm-card-fallback .nbm-cta,.nbm-card-ctx .nbm-cta{background:rgba(0,168,232,0.15);color:rgba(0,168,232,0.90);border:1px solid rgba(0,168,232,0.28);}',
+    // ── Confidence layer ──
+    '.nbm-confidence{font-size:13px;font-weight:700;padding:10px 0 14px;border-bottom:1px solid rgba(255,255,255,0.07);}',
+    // ── Expand toggle ──
+    '.nbm-expand-toggle{display:block;width:100%;padding:13px;margin-top:14px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.10);border-radius:12px;color:rgba(255,255,255,0.55);font-size:13px;font-weight:600;cursor:pointer;text-align:center;-webkit-tap-highlight-color:transparent;box-sizing:border-box;}',
+    '.nbm-expand-toggle:active{opacity:0.7;}',
+    // ── Full picture panel ──
+    '.nbm-full-picture{margin-top:4px;}',
+    // ── Existing tdf-* detail section styles (unchanged) ──
+    '.tdf-section{padding:16px 0;border-bottom:1px solid rgba(255,255,255,0.07);}',
+    '.tdf-section:last-child{border-bottom:none;padding-bottom:6px;}',
+    '.tdf-eyebrow{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.9px;color:rgba(255,255,255,0.32);margin-bottom:8px;}',
+    '.tdf-eyebrow-nbm{color:rgba(0,168,232,0.65);}',
+    '.tdf-sit-grid{display:flex;flex-direction:column;gap:5px;margin-bottom:2px;}',
+    '.tdf-sit-row{display:flex;justify-content:space-between;align-items:baseline;gap:8px;}',
+    '.tdf-sit-label{font-size:12px;color:rgba(255,255,255,0.45);}',
+    '.tdf-sit-value{font-size:13px;font-weight:600;color:rgba(255,255,255,0.80);}',
+    '.tdf-risk-flag{margin-top:10px;padding:8px 11px;background:rgba(192,100,92,0.12);border:1px solid rgba(192,100,92,0.25);border-radius:8px;font-size:12px;font-weight:600;color:#e07070;}',
+    '.tdf-interp-body{font-size:14px;color:rgba(255,255,255,0.72);line-height:1.6;}',
+    '.tdf-section-nbm{padding-top:18px;padding-bottom:18px;}',
+    '.tdf-nbm-title{font-size:17px;font-weight:700;color:#fff;line-height:1.35;margin-bottom:8px;}',
+    '.tdf-nbm-why{font-size:14px;color:rgba(255,255,255,0.72);line-height:1.6;margin-bottom:8px;}',
+    '.tdf-nbm-action{font-size:13px;font-weight:600;color:rgba(255,255,255,0.55);line-height:1.5;margin-bottom:14px;}',
+    '.tdf-nbm-conf-note{font-size:11px;color:rgba(255,255,255,0.35);margin-bottom:12px;font-style:italic;}',
+    '.tdf-nbm-incomplete .tdf-nbm-title{font-size:15px;color:rgba(255,255,255,0.70);}',
+    '.tdf-cta{display:inline-flex;align-items:center;justify-content:center;padding:11px 22px;border-radius:999px;background:var(--sky,#00A8E8);color:#fff;font-size:13px;font-weight:700;border:none;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:opacity 0.15s ease;}',
+    '.tdf-cta:active{opacity:0.8;}',
+    '.tdf-cta-ctx{background:rgba(0,168,232,0.15);color:rgba(0,168,232,0.90);border:1px solid rgba(0,168,232,0.28);}',
+    '.tdf-ctx-context{font-size:15px;font-weight:700;color:#fff;line-height:1.35;margin-bottom:8px;}',
+    '.tdf-ctx-limitation{font-size:13px;color:rgba(255,255,255,0.62);line-height:1.6;margin-bottom:6px;}',
+    '.tdf-ctx-action{font-size:12px;color:rgba(255,255,255,0.40);line-height:1.5;margin-bottom:14px;font-style:italic;}',
+    '.tdf-micro-input{margin-top:14px;padding:14px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.10);border-radius:12px;}',
+    '.tdf-mi-fields{display:flex;flex-direction:column;gap:12px;margin-bottom:14px;}',
+    '.tdf-mi-field{display:flex;flex-direction:column;gap:4px;}',
+    '.tdf-mi-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.7px;color:rgba(255,255,255,0.40);}',
+    '.tdf-mi-field-wrap{display:flex;align-items:center;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);border-radius:8px;overflow:hidden;}',
+    '.tdf-mi-affix{padding:0 10px;font-size:13px;color:rgba(255,255,255,0.40);font-weight:600;flex-shrink:0;}',
+    '.tdf-mi-input{width:100%;padding:10px 12px;background:transparent;border:none;outline:none;font-size:15px;font-weight:600;color:#fff;-webkit-appearance:none;}',
+    '.tdf-mi-field-wrap .tdf-mi-input{padding-left:4px;}',
+    '.tdf-mi-input-solo{background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);border-radius:8px;}',
+    '.tdf-mi-hint{font-size:11px;color:rgba(255,255,255,0.30);}',
+    '.tdf-mi-submit{width:100%;padding:12px;border-radius:999px;background:var(--sky,#00A8E8);color:#fff;font-size:13px;font-weight:700;border:none;cursor:pointer;}',
+    '.tdf-outcome-row{display:flex;gap:10px;flex-wrap:wrap;}',
+    '.tdf-outcome-item{background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.09);border-radius:10px;padding:10px 14px;min-width:90px;}',
+    '.tdf-outcome-val{font-size:16px;font-weight:700;color:#4CAF7D;margin-bottom:3px;}',
+    '.tdf-outcome-cash{color:rgba(255,255,255,0.70);}',
+    '.tdf-outcome-lbl{font-size:11px;color:rgba(255,255,255,0.38);}',
+    '.tdf-conf-badge{font-size:13px;font-weight:700;margin-bottom:5px;}',
+    '.tdf-conf-sub{font-size:12px;color:rgba(255,255,255,0.48);line-height:1.55;}',
+    '.tdf-reasoning-body{font-size:12px;color:rgba(255,255,255,0.48);line-height:1.6;margin-bottom:8px;}',
+    '.tdf-alts-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.7px;color:rgba(255,255,255,0.28);margin-bottom:6px;margin-top:2px;}',
+    '.tdf-alt-row{font-size:12px;color:rgba(255,255,255,0.38);line-height:1.55;margin-bottom:5px;}',
+    '.tdf-alt-title{font-weight:600;color:rgba(255,255,255,0.48);}',
+    '.tdf-alt-why{font-style:italic;}',
+  ].join('\n');
+  document.head.appendChild(_tdfStyle);
+
+})();

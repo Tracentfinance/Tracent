@@ -99,10 +99,15 @@
 
   /* ── Retirement mode detection ────────────────────────── */
   function _isRetirementMode() {
+    // Primary: G.isRetirementMode is the authoritative flag set by BSE._compute()
+    if (window.G && window.G.isRetirementMode) return true;
+    // Secondary checks for before BSE has run
     var navStyle = (window.BSE && window.BSE.navStyle) || '';
     var g = window.G || {};
     var age = parseInt(g.age || g.currentAge || 0);
-    return navStyle === 'retirement' || age >= 60;
+    var ageRange = g.ageRange || '';
+    return navStyle === 'retirement' || age >= 60 ||
+      ageRange === '55_64' || ageRange === '65plus';
   }
 
   /* ── Retirement hero ───────────────────────────────────── */

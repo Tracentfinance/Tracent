@@ -315,10 +315,18 @@ function v21SelectAgeRange(range, el) {
   });
   if (el) el.classList.add('selected');
 
-  // Store age range as a soft signal only — does NOT set G.age or trigger retirement mode.
-  // Full retirement mode requires explicit retire intent or BSE.navStyle === 'retirement'.
+  // ageRange is authoritative for retirement mode: '55_64' → pre_retirement, '65plus' → in_retirement.
+  // BSE._compute() reads G.ageRange and routes archetype accordingly — no explicit retire intent needed.
   if (typeof G !== 'undefined') {
     G.ageRange = range;
+    // Align goal/intent for retirement age bands so the entire intent→goal→NBM chain is coherent.
+    // Only set if the user hasn't already chosen a more specific intent during this session.
+    if ((range === '55_64' || range === '65plus') && !G.primaryIntent) {
+      G.primaryIntent = 'retire';
+      G.goal = 'retire_early';
+      var goalEl = document.getElementById('goal');
+      if (goalEl) goalEl.value = 'retire_early';
+    }
   }
 
   try {

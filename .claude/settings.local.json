@@ -11,7 +11,11 @@
       "Bash(xargs grep:*)",
       "Bash(powershell -Command \":*)",
       "Read(//c/Users/damia/OneDrive/**)",
-      "Read(//c/Users/damia/.claude/projects/c--Users-damia-OneDrive-My-Businesses-2--Tracent-Finance-Tracent/e27d425b-ab76-435a-b745-2bf3c67a6471/tool-results/**)"
+      "Read(//c/Users/damia/.claude/projects/c--Users-damia-OneDrive-My-Businesses-2--Tracent-Finance-Tracent/e27d425b-ab76-435a-b745-2bf3c67a6471/tool-results/**)",
+      "Read(//tmp/**)",
+      "Bash(node -e \":*)",
+      "Bash(grep -v \"^[0-9]*:.*//.*tdf-cta-ctx\")",
+      "Bash(grep -v \"^[0-9]*:.*//.*_validate\\\\|^[0-9]*:.*\\\\*\")"
     ]
   }
 }
