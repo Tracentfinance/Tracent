@@ -19,13 +19,16 @@
   var _anon = _cfg.SUPABASE_ANON || '';
   var _client = null;
 
-  // ── Stable anonymous profile ID ───────────────────────
+  // ── Stable anonymous profile ID (must be valid UUID for Supabase) ──
   var PROFILE_ID_KEY = 'tracent_profile_id';
+  function _isUuid(v) {
+    return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(v);
+  }
   function _getProfileId() {
     var id = null;
     try { id = localStorage.getItem(PROFILE_ID_KEY); } catch(e) {}
-    if (!id) {
-      id = 'u_' + Math.random().toString(36).slice(2) + Date.now().toString(36);
+    if (!id || !_isUuid(id)) {
+      id = crypto.randomUUID();
       try { localStorage.setItem(PROFILE_ID_KEY, id); } catch(e) {}
     }
     return id;
@@ -48,7 +51,7 @@
     'ccDebt','ccRate','studentDebt','carDebt','carPayment','otherDebt','otherPayment',
     'emergency','retMatch','homePrice','depositSaved','currentRent','purchasePrice',
     'housingType','credit','savingsAmt','ageRange','primaryIntent',
-    'firstname','scoreFinal','goal'
+    'firstname','goal'
   ];
 
   function _extractInputs() {

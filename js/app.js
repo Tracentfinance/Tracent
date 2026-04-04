@@ -635,7 +635,7 @@
         var g = window.G || {};
         Object.assign(g, data);
         // Never allow derived values from stored data
-        delete g.fcf; delete g.dti; delete g.totalDebt; delete g.totalPayments;
+        delete g.fcf; delete g.dti; delete g.totalDebt; delete g.totalPayments; delete g.scoreFinal;
         window.G = g;
         console.log('[Tracent:App] Hydrated safely', Object.keys(data).length, 'fields');
       }).catch(function(e) {
