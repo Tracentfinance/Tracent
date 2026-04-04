@@ -16,8 +16,8 @@
   window.TracentConfig = Object.freeze({
 
     // ── Supabase ─────────────────────────────────────────
-    SUPABASE_URL:  '',   // e.g. 'https://your-project.supabase.co'
-    SUPABASE_ANON: '',   // e.g. 'eyJhbGciOi...'
+    SUPABASE_URL:  'https://heaufbbtysviztwntexg.supabase.co',
+    SUPABASE_ANON: 'sb_publishable_1wkxF652tBqh_vDLAnS7rg_Nu63x6bg',
 
     // ── AI Proxy ─────────────────────────────────────────
     // Moved here for future consolidation; state.js still reads

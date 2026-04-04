@@ -538,7 +538,7 @@ function _0x8ee2cd7(principal, annualRate, years) {
 }
 
 // ─── FORMAT HELPERS ───
-function _0x4f66a67(n) { return '$' + Math.abs(Math.round(n)).toLocaleString(); }
+function _0x4f66a67(n) { return '$' + (Number(n) || 0).toLocaleString('en-US', { maximumFractionDigits: 0 }); }
 function _0x3e27a99(n) { return Math.round(n) + '%'; }
 
 // ─── FINANCIAL HEALTH SCORE ───
@@ -556,7 +556,7 @@ function _0x5d74b48() {
   const deposit       = (G.depositSaved || 0) + (G.savingsAmt || 0);
   const targetDeposit = G.targetPrice ? G.targetPrice * 0.10 : monthlyIncome * 36; // 10% or 3yrs income
   const depositPct    = targetDeposit > 0 ? Math.min(deposit / targetDeposit, 1) : 0;
-  const fcf           = G.fcf !== undefined ? G.fcf : (takeHome - (G.payment || G.rentAmt || 0) - (G.ccDebt > 0 ? Math.max(G.ccDebt * 0.02, 25) : 0));
+  const fcf           = takeHome - (G.payment || G.rentAmt || 0) - (G.ccDebt > 0 ? Math.max(G.ccDebt * 0.02, 25) : 0);
 
   // Component scores 0-100
   const dtiScore     = dti <= 0 ? 50 : dti < 28 ? 100 : dti < 36 ? 78 : dti < 43 ? 50 : dti < 50 ? 25 : 5;
@@ -846,8 +846,11 @@ function _0xb70f5a4(dti, fcf, credit, emergency, ccDebt, ccRate, housingType, to
 
 // ─── MAIN COMPUTE ───
 function _0x82f61a0() {
+  // Clear derived state — always recompute from inputs, never trust stale G values
+  delete G.fcf; delete G.dti; delete G.totalDebt; delete G.totalPayments;
+
   const name = (document.getElementById('firstname').value || '').trim();
-  const income = parseFloat(document.getElementById('income').value) || 72000;
+  const income = parseFloat(document.getElementById('income').value) || 0;
   const takeHomeInput = parseFloat(document.getElementById('takehome').value) || 0;
   // Use .value directly — inputs were enabled by nextStep(5) before this runs
   const state     = document.getElementById('state')?.value     || G.state    || 'NY';
@@ -962,7 +965,7 @@ function _0x82f61a0() {
   const totalDTIPayments = allHousingPayments + totalNonHousingPayments;
   const dtiForScore = monthlyIncome > 0 ? Math.round((totalDTIPayments / monthlyIncome) * 100) : 0;
   G.dti = dtiForScore;
-  _0xb70f5a4(dtiForScore, G.fcf || 0, credit, emergency, ccDebt, ccRate, housingType, totalNonHousingDebt, monthlyIncome);
+  _0xb70f5a4(dtiForScore, (G.fcf != null ? G.fcf : 0), credit, emergency, ccDebt, ccRate, housingType, totalNonHousingDebt, monthlyIncome);
 
   // ── [V21] Score history — deterministic delta for monthly review ──
   // Append current score to G._scoreHistory so v21BuildMonthlyReviewData()
@@ -2342,10 +2345,10 @@ let MARKET_RATE_30Y = 6.72;
 
 let G = {
   balance: 342000, currentRate: 7.1, payment: 2380, yearsLeft: 27,
-  income: 72000, expenses: 1100, ccDebt: 4200, ccRate: 21,
-  carDebt: 14500, carPayment: 340, otherDebt: 0, otherPayment: 0,
+  income: 0, expenses: 0, ccDebt: 0, ccRate: 21,
+  carDebt: 0, carPayment: 0, otherDebt: 0, otherPayment: 0,
   homePrice: 0, depositSaved: 0, savingsAmt: 0, rentAmt: 0,
-  fcf: 500, housingType: 'owner', debtMethod: 'avalanche'
+  fcf: 0, housingType: 'owner', debtMethod: 'avalanche'
 };
 
 // ─── RATE SIMULATOR ───
@@ -4045,7 +4048,7 @@ function renderCareerEngine() {
   if (!container) return;
   container.style.display = 'block';
 
-  var income    = G.income || 72000;
+  var income    = (G.income !== undefined && G.income !== null) ? G.income : 0;
   var jobTitle  = G.jobTitle || '';
   var jobtype   = G.jobtype || 'private';
   var state = G.state || 'NY';
@@ -4150,7 +4153,7 @@ function updatePromoSim() {
   var pct   = parseFloat(pctEl.value);
   var yr    = parseInt(yearEl.value);
   var raiseRate = G.raiseRate || 0.03;
-  var income    = G.income || 72000;
+  var income    = (G.income !== undefined && G.income !== null) ? G.income : 0;
 
   // Update labels
   var pLbl = document.getElementById('promo-pct-lbl');
@@ -4194,7 +4197,7 @@ function updatePromoSim() {
   var _si = document.getElementById('promo-system-impact');
   if (_si && fcfGain > 0) {
     var _totalDebt = (G.ccDebt||0)+(G.carDebt||0)+(G.studentDebt||0)+(G.otherDebt||0);
-    var _monthlyTH = G.takeHome || Math.round((G.income||72000)/12*0.72);
+    var _monthlyTH = G.takeHome || Math.round(((G.income !== undefined && G.income !== null) ? G.income : 0)/12*0.72);
     var _curFCF    = G.fcf != null ? G.fcf : 0;
 
     // Savings rate: current → scenario
@@ -4272,7 +4275,7 @@ function renderCareerProjChart() {
   var pct    = pctEl ? parseFloat(pctEl.value) : 10;
   var yr     = yearEl ? parseInt(yearEl.value) : 2;
 
-  var income    = G.income || 72000;
+  var income    = (G.income !== undefined && G.income !== null) ? G.income : 0;
   var raiseRate = G.raiseRate || 0.03;
   var gap       = calcIncomeGap(income, G.jobTitle || '', G.jobtype || 'private', G.state);
 
@@ -4445,7 +4448,17 @@ function _0xf0f2b75() {
     if (!raw) return false;
     var snap = JSON.parse(raw);
     if (!snap.savedAt || Date.now() - snap.savedAt > 90 * 24 * 60 * 60 * 1000) return false;
-    if (snap.G) Object.assign(G, snap.G);
+    if (snap.G) {
+      const DEFAULT_G = {
+        income: 0, expenses: 0, ccDebt: 0, ccRate: 21,
+        carDebt: 0, carPayment: 0, studentDebt: 0, otherDebt: 0, otherPayment: 0,
+        homePrice: 0, depositSaved: 0, savingsAmt: 0, housingType: 'owner', debtMethod: 'avalanche'
+      };
+      G = Object.assign({}, DEFAULT_G, snap.G);
+      // Purge any derived values carried in from old snapshots — always recompute these
+      delete G.fcf; delete G.dti; delete G.totalDebt; delete G.totalPayments;
+      window.G = G;
+    }
     if (snap.goals && typeof goals !== 'undefined') goals = snap.goals;
     if (snap._careerLog && typeof _careerLog !== 'undefined') _careerLog = snap._careerLog;
     if (snap.selectedCredit) selectedCredit = snap.selectedCredit;
@@ -4920,7 +4933,7 @@ function _0x9120003(jobTitle, state) {
 }
 
 function _0xf114ec9() {
-  const base = G.income || 72000;
+  const base = (G.income !== undefined && G.income !== null) ? G.income : 0;
   const userRaise = G.raiseRate || 0.03;
   const bonusMap = { none: 0, small: 0.07, mid: 0.15, large: 0.30, commission: 0.20, irregular: 0.10 };
   const bonusPct = bonusMap[G.bonusType] || 0;
@@ -4977,7 +4990,7 @@ function _0xf114ec9() {
 function _0x0e84774() {
   var el=function(id){return document.getElementById(id);};
   var fmt=function(n){return '$'+(Math.abs(n)>=1000?(Math.round(Math.abs(n)/1000*10)/10)+'k':Math.round(Math.abs(n)));};
-  var income=G.income||72000,state=G.state||'NY',jobTitle=G.jobTitle||'',jobtype=G.jobtype||'private';
+  var income=(G.income !== undefined && G.income !== null) ? G.income : 0,state=G.state||'NY',jobTitle=G.jobTitle||'',jobtype=G.jobtype||'private';
   if (typeof computeCareerBenchmark === 'function') computeCareerBenchmark();
   var _cbm = G.careerBenchmark;
   var _cbmConfident = _cbm && _cbm.confidence !== null;

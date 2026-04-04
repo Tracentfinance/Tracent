@@ -1592,7 +1592,7 @@
   ═══════════════════════════════════════════════════════ */
   function buildCandidates(s){
     var c=[];
-    var fmt=function(n){ return '$'+Math.round(Math.abs(n)).toLocaleString(); };
+    var fmt=function(n){ return '$'+(Number(n)||0).toLocaleString('en-US',{maximumFractionDigits:0}); };
     var mos=function(n){ return n<12?n+'mo':(n/12).toFixed(1)+'yr'; };
 
     /* SAFETY: deficit */
@@ -2299,7 +2299,7 @@
 
   /* ── helpers ─────────────────────────────────────────── */
   function gv(){ return window.G || {}; }
-  function fmt(n){ return '$'+Math.round(Math.abs(n||0)).toLocaleString(); }
+  function fmt(n){ return '$'+(Number(n)||0).toLocaleString('en-US',{maximumFractionDigits:0}); }
   function scoreCol(s){ return s>=85?'#10B981':s>=70?'#0077B6':s>=55?'#F4A261':'#E63946'; }
   function confLabel(s){ return s>=85?'Excellent':s>=70?'Good':s>=55?'Fair':s>=40?'Poor':'Very Poor'; }
 
@@ -2595,7 +2595,7 @@
    Reads: window.BSE (archetype, show, focusOnly), window.G (financial data)
 ═══════════════════════════════════════════════════════════ */
 window.bseRenderFocusCard = function() {
-  var fmtMoney = function(n){ return '$'+Math.round(Math.abs(n||0)).toLocaleString(); };
+  var fmtMoney = function(n){ return '$'+(Number(n)||0).toLocaleString('en-US',{maximumFractionDigits:0}); };
   var el = document.getElementById('bse-focus-mode');
   if (!el) return;
   var BSE = window.BSE || {};
@@ -3006,16 +3006,23 @@ window.bseApplyModuleVis = function() {
   };
 
   // ── Suppress secondary cards ──────────────────────────────
-  var SUPPRESS_IDS = [
-    'v21-verdict-block','v21-compact-score','home-metrics',
-    'v21-retention-card','v21-premium-teaser','v21-mode-rail-home',
-    'v21-driver-strip','v21-mode-strategy','v21-authority-card','v21-nbm-card'
-  ];
-  function _hideEl(id) { var el=document.getElementById(id); if(el) el.style.display='none'; }
-  function _suppressSecondaryCards() { SUPPRESS_IDS.forEach(_hideEl); }
+  // Whitelist-based: hide every direct child of #tab-home except the DFR container.
+  // More durable than a blacklist — new injected blocks are suppressed automatically.
+  var FOCUS_WHITELIST = { 'bse-focus-mode': true, 'xp-retirement-hero': true };
+  function _suppressSecondaryCards() {
+    var tabHome = document.getElementById('tab-home');
+    if (tabHome) {
+      Array.prototype.forEach.call(tabHome.children, function(child) {
+        if (!FOCUS_WHITELIST[child.id]) child.style.display = 'none';
+      });
+    }
+    if (typeof TracentRenderAdaptiveDashboard !== 'undefined' && TracentRenderAdaptiveDashboard.hide) {
+      try { TracentRenderAdaptiveDashboard.hide(); } catch(e) {}
+    }
+  }
 
   // ── Helpers ───────────────────────────────────────────────
-  function _fmt(n) { return '$'+Math.round(Math.abs(n||0)).toLocaleString(); }
+  function _fmt(n) { return '$'+(Number(n)||0).toLocaleString('en-US',{maximumFractionDigits:0}); }
 
   // ═══════════════════════════════════════════════════════
   // CONTEXT ASSESSMENT
@@ -3239,8 +3246,10 @@ window.bseApplyModuleVis = function() {
   // NBM PROGRESSION SPINE
   // ═══════════════════════════════════════════════════════
 
-  /** Module-local last-move ID — cheap continuity without external writes. */
-  var _lastNBMId = null;
+  /** Module-local continuity state — no persistence, no globals. */
+  var _lastNBMId        = null;
+  var _lastTier         = null;   // for tier-transition detection
+  var _lastMissingCount = null;   // for input-added micro-feedback
 
   /**
    * TIER MAP — move id → tier classification.
@@ -3396,6 +3405,122 @@ window.bseApplyModuleVis = function() {
     if (context.currentTier === 'unlock')    return 'This unlocks the next reliable step.';
     if (context.currentTier === 'optimize')  return 'This improves an already-stable position.';
     if (context.currentTier === 'advance')   return 'You\u2019re in a position to move this forward.';
+    return '';
+  }
+
+  // ═══════════════════════════════════════════════════════
+  // EMOTIONAL CONTINUITY LAYER
+  // ═══════════════════════════════════════════════════════
+
+  /**
+   * _getTierTransitionLine(prevTier, currentTier, context)
+   * Returns a single short line when a genuine tier shift has occurred.
+   * Returns '' if no shift, or if the shift cannot be confirmed.
+   * Never implies completion of something the system hasn't verified.
+   */
+  function _getTierTransitionLine(prevTier, currentTier, context) {
+    if (!prevTier || prevTier === currentTier) return '';
+    var from = prevTier, to = currentTier;
+
+    // Only allow forward transitions — do not acknowledge regression
+    var fi = TIER_ORDER.indexOf(from), ti = TIER_ORDER.indexOf(to);
+    if (ti <= fi) return '';
+
+    if (from === 'stabilize' && to === 'unlock')   return 'The immediate pressure is lower. The focus now is removing what is blocking progress.';
+    if (from === 'stabilize' && to === 'optimize') return 'The fragile part is resolved. This step improves the position from here.';
+    if (from === 'unlock'    && to === 'optimize') return 'The main blocker is cleared. The next step improves the position.';
+    if (from === 'unlock'    && to === 'advance')  return 'The prerequisites are in place. You are in a position to move forward.';
+    if (from === 'optimize'  && to === 'advance')  return 'You are no longer just preparing. You are in a position to act on this.';
+    return '';
+  }
+
+  /**
+   * _getMicroFeedback(context, assessment, g)
+   * Returns a single short micro-feedback line when the system can
+   * truthfully acknowledge a change — e.g. fewer missing inputs.
+   * Returns '' when nothing concrete can be said.
+   */
+  function _getMicroFeedback(context, assessment, g) {
+    var missing = assessment && assessment.missingInputs ? assessment.missingInputs.length : 0;
+
+    // Input was added this session: missing count went down
+    if (_lastMissingCount !== null && missing < _lastMissingCount) {
+      var reduced = _lastMissingCount - missing;
+      if (reduced >= 2) return 'That adds two key details. The recommendation is more reliable now.';
+      return 'That sharpens the picture.';
+    }
+
+    // Moved from context/refine state to a real decision (not tracked by tier alone)
+    // Safe signal: last tier was unlock due to blockers, now it isn't blocked
+    if (_lastTier === 'unlock' && context.currentTier !== 'unlock' && !context.isBlocked) {
+      return 'One less blocker. The next step is clearer.';
+    }
+
+    return '';
+  }
+
+  /**
+   * _getEmotionalContinuityLine(context, signals, assessment, move, g)
+   * The single entry point for the emotional continuity layer.
+   * Returns one short line or '' — never stacks multiple lines.
+   *
+   * Internal priority:
+   *   1. Stall-sensitive reassurance (context.isStalled)
+   *   2. Tier transition language (prev → current)
+   *   3. Micro-feedback (input added / blocker cleared)
+   *   4. Tier-active ambient line (what stage the user is in)
+   *   5. '' — nothing
+   *
+   * The caller uses this only as fallback when formatter + progression
+   * support lines are both empty, so this function does not duplicate
+   * those checks.
+   */
+  function _getEmotionalContinuityLine(context, signals, assessment, move, g) {
+    var tier = context.currentTier;
+    var dt   = assessment ? assessment.decisionType : 'general';
+
+    // ── 1. Stall-sensitive reassurance ───────────────────────────────
+    if (context.isStalled) {
+      if (dt === 'retire' || (g && g.isRetirementMode)) {
+        return 'You can keep this simple. One detail at a time.';
+      }
+      if (tier === 'stabilize') return 'We can keep this focused. Start with this part.';
+      if (tier === 'unlock')    return 'Reviewing the numbers is enough for now.';
+      return 'You do not need to solve everything today.';
+    }
+
+    // ── 2. Tier transition ────────────────────────────────────────────
+    var transLine = _getTierTransitionLine(_lastTier, tier, context);
+    if (transLine) return transLine;
+
+    // ── 3. Micro-feedback ────────────────────────────────────────────
+    var feedbackLine = _getMicroFeedback(context, assessment, g);
+    if (feedbackLine) return feedbackLine;
+
+    // ── 4. Tier-active ambient line ──────────────────────────────────
+    // Mode-specific where meaningful; generic otherwise.
+    // Only shown on second+ render to avoid being on-screen from first load.
+    if (_lastNBMId === null) return ''; // first render — stay silent
+
+    if (tier === 'stabilize') {
+      if (dt === 'debt') return 'Reduce the pressure here first.';
+      return 'Pressure first. The rest follows.';
+    }
+    if (tier === 'unlock') {
+      if (dt === 'home')   return 'Clarity before commitment.';
+      if (dt === 'retire' || (g && g.isRetirementMode)) return 'This gives your retirement picture more clarity.';
+      return 'This removes a blocker.';
+    }
+    if (tier === 'optimize') {
+      if (dt === 'retire' || (g && g.isRetirementMode)) return 'The base is in place. This protects the plan from here.';
+      return 'The base is in place. This improves the position.';
+    }
+    if (tier === 'advance') {
+      if (!context.isAdvancing) return ''; // don't claim advance unless earned
+      if (dt === 'home') return 'Readiness is clearer from here.';
+      return 'The preparation is there. This is the next step.';
+    }
+
     return '';
   }
 
@@ -3750,13 +3875,22 @@ window.bseApplyModuleVis = function() {
         : 'Review this move \u2192';
     }
 
-    // Merge support lines: formatter's behavioral line takes priority (more specific);
-    // progression line fills in when formatter hasn't set one.
-    var progSupportLine = _getProgressionSupportLine(progCtx);
-    var effectiveSupport = copy.supportLine || progSupportLine;
+    // ── Single support line — 4-level priority ──────────────────────
+    // 1. Hesitation/reassurance (in copy.supportLine when ignored>=3 or hesit>=4)
+    // 2. Copy formatter behavioral line (archetype/return-session)
+    // 3. Progression support line (tier-based)
+    // 4. Emotional continuity line (transition/micro-feedback/ambient)
+    // Only the highest-priority non-empty line is shown.
+    var progSupportLine  = _getProgressionSupportLine(progCtx);
+    var emotionLine      = _getEmotionalContinuityLine(progCtx, signals, assessment, move, g);
+    var effectiveSupport = copy.supportLine || progSupportLine || emotionLine;
 
-    // Record move id for same-tier continuity check on next render
-    try { _lastNBMId = move.id; } catch(e) {}
+    // Record continuity state for next render
+    try {
+      _lastNBMId        = move.id;
+      _lastTier         = progCtx.currentTier;
+      _lastMissingCount = assessment && assessment.missingInputs ? assessment.missingInputs.length : 0;
+    } catch(e) {}
 
     // Inline impact line (high confidence only)
     var impactHtml = '';

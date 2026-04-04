@@ -585,16 +585,23 @@
     if (el && !window._tracentPlus){
       el.style.display = premiumEligible() ? 'block' : 'none';
     }
-    // ── Supabase persist (debounced via hydration.js) ──
-    if (typeof TracentHydration !== 'undefined' && TracentHydration.scheduleSave) {
-      TracentHydration.scheduleSave();
+    // ── Supabase persist (inputs only) ──
+    if (typeof TracentSupabase !== 'undefined' && TracentSupabase.isConfigured()) {
+      try { TracentSupabase.saveProfile(); } catch(e) {}
     }
     // ── Feature layer renders (after BSE._compute has run) ──
     // Adaptive dashboard + debt experience read G + BSE and render into staged containers.
     // Runs on a short delay to ensure BSE._renderHome has applied its DOM decisions first.
     setTimeout(function() {
+      // Skip adaptive dashboard when Decision Flow Renderer has taken over (scoreFinal users)
+      var _dfrActive = (window.G && window.G.scoreFinal) ||
+                       (function(){ var el = document.getElementById('bse-focus-mode'); return el && el.innerHTML && el.innerHTML.length > 0; }());
       if (typeof TracentRenderAdaptiveDashboard !== 'undefined') {
-        try { TracentRenderAdaptiveDashboard.render(); } catch(e) { console.warn('[Tracent:Features] Dashboard render:', e); }
+        if (_dfrActive) {
+          try { TracentRenderAdaptiveDashboard.hide(); } catch(e) {}
+        } else {
+          try { TracentRenderAdaptiveDashboard.render(); } catch(e) { console.warn('[Tracent:Features] Dashboard render:', e); }
+        }
       }
       if (typeof TracentRenderDebtExperience !== 'undefined') {
         try { TracentRenderDebtExperience.render(); } catch(e) { console.warn('[Tracent:Features] Debt render:', e); }
@@ -602,14 +609,35 @@
     }, 80);
   };
 
+  // ── Global recompute + render utilities ──
+  // Called by settings saves or any module that needs a full refresh.
+  window.recomputeAll = function() {
+    try {
+      if (typeof G !== 'undefined') window.G = G;
+      if (typeof window.computeAndShow === 'function') window.computeAndShow();
+    } catch(e) { console.warn('[Tracent] recomputeAll error', e); }
+  };
+  window.renderAll = function() {
+    try {
+      if (typeof TracentRenderDebtExperience !== 'undefined' && TracentRenderDebtExperience.render) {
+        TracentRenderDebtExperience.render();
+      }
+    } catch(e) { console.warn('[Tracent] renderAll error', e); }
+  };
+
   // Update premium sub-copy to sell continuity, not basic understanding
   document.addEventListener('DOMContentLoaded', function(){
-    // ── Supabase hydration boot ──
-    // Runs once at startup. Restores session, loads profile/goals from Supabase.
-    // Falls back to localStorage if not signed in or not configured.
-    if (typeof TracentHydration !== 'undefined' && TracentHydration.boot) {
-      TracentHydration.boot().catch(function(e){
-        console.warn('[Tracent:App] Hydration boot error:', e);
+    // ── Supabase boot: load inputs, merge into G ──
+    if (typeof TracentSupabase !== 'undefined' && TracentSupabase.isConfigured()) {
+      TracentSupabase.loadProfile().then(function(data) {
+        if (!data) return;
+        var g = window.G || {};
+        Object.assign(g, data);
+        // Never allow derived values from stored data
+        delete g.fcf; delete g.dti; delete g.totalDebt; delete g.totalPayments;
+        window.G = g;
+      }).catch(function(e) {
+        console.warn('[Tracent:App] Profile load error:', e);
       });
     }
 

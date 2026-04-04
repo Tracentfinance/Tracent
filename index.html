@@ -44,7 +44,7 @@
 ══════════════════════════════════════════════════════════ -->
   <!-- Supabase SDK — uncomment when ready to enable backend persistence.
      The anon key is safe to expose; Row Level Security (RLS) protects data. -->
-  <!-- <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script> -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
     (function () {
       var h = window.location.hostname;
@@ -2435,14 +2435,8 @@
   <!-- Core: State Adapter (clean read-only accessor for G/BSE) -->
   <script src="js/core/stateAdapter.js"></script>
 
-  <!-- Services: Supabase client, auth, stores (safe no-ops if not configured) -->
+  <!-- Services: Supabase persistence (inputs only, no auth) -->
   <script src="js/services/supabase.js"></script>
-  <script src="js/services/auth.js"></script>
-  <script src="js/services/profileStore.js"></script>
-  <script src="js/services/goalsStore.js"></script>
-
-  <!-- Core: Hydration (session-aware boot — loads after services) -->
-  <script src="js/core/hydration.js"></script>
 
   <!-- Core: Navigation -->
   <script src="js/core/navigation.js"></script>

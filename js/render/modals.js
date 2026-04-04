@@ -71,7 +71,7 @@ function openSettingsEdit(section) {
   var g = (typeof G !== 'undefined' && G.income) ? G : (window.G || {});
   function _prefill(id, val) {
     var el = document.getElementById(id);
-    if (el && val !== undefined && val !== null && val !== 0 && val !== '') el.value = val;
+    if (el && val !== undefined && val !== null && val !== '') el.value = val;
   }
   _prefill('se-income',       g.income       ? Math.round(g.income)       : '');
   _prefill('se-takehome',     g.takeHome     ? Math.round(g.takeHome)     : '');
@@ -209,10 +209,19 @@ function saveSettingsEdit() {
 
   // Close sheet and rerun engine — stays on dashboard, switches to home tab
   closeModal('settings-edit-sheet');
-  if (typeof window.computeAndShow === 'function') {
+  if (typeof window.recomputeAll === 'function') {
+    try { window.recomputeAll(); } catch(e) { console.error('[SE] recompute error:', e); }
+  } else if (typeof window.computeAndShow === 'function') {
     try { window.computeAndShow(); } catch(e) { console.error('[SE] recompute error:', e); }
   } else if (typeof _0xf1a6af7 === 'function') {
     try { _0xf1a6af7(); } catch(e) { console.error('[SE] recompute error:', e); }
+  }
+  if (typeof window.renderAll === 'function') {
+    try { window.renderAll(); } catch(e) {}
+  }
+  // Persist inputs to Supabase
+  if (typeof TracentSupabase !== 'undefined' && TracentSupabase.isConfigured()) {
+    try { TracentSupabase.saveProfile(); } catch(e) {}
   }
 }
 
@@ -231,7 +240,7 @@ function toggleGrowStructure() {
     var g = (typeof G !== 'undefined' && G.income) ? G : (window.G || {});
     function _pf(id, val) {
       var el = document.getElementById(id);
-      if (el && val !== undefined && val !== null && val !== 0 && val !== '') el.value = val;
+      if (el && val !== undefined && val !== null && val !== '') el.value = val;
     }
     _pf('ge-savings',      g.savingsAmt   ? Math.round(g.savingsAmt)  : '');
     _pf('ge-home-value',   g.homeValue    ? Math.round(g.homeValue)   : '');

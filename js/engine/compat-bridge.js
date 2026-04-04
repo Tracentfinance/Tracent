@@ -110,6 +110,8 @@ function wrapCompute() {
         // Mark G.scoreFinal before dispatching so any listener can check it
         if (typeof G !== 'undefined' && G) { G.scoreFinal = true; G.scoreEstimated = false; G.lastComputedAt = Date.now(); }
         document.dispatchEvent(new CustomEvent('tracent:scoreComputed',{detail:{score:(typeof G!=='undefined'&&G?G.score:null),estimated:false,final:true}}));
+        // Persist inputs on onboarding completion
+        if (typeof TracentSupabase !== 'undefined' && TracentSupabase.isConfigured()) { try { TracentSupabase.saveProfile(); } catch(e) {} }
       } catch(e) {}
       try { window.switchTab('home'); }     catch(e) {}
       try { window.setNavByName('home'); }  catch(e) {}
@@ -870,14 +872,14 @@ function v21BridgeToEngine() {
     if (typeof G !== 'undefined') G.income = incomeVal;
     markReal('income');
   } else {
-    setVal('income', '72000');
-    if (typeof G !== 'undefined') G.income = 72000;
-    markInferred('income (default $72k)');
+    setVal('income', '');
+    if (typeof G !== 'undefined') G.income = 0;
+    markInferred('income (not provided)');
   }
 
   // ── 4. Take-home monthly ─────────────────────────────────────────
   var takeHomeVal = getNum('v21r-takehome');
-  if (takeHomeVal > 100 && takeHomeVal < (incomeVal || 72000)) {
+  if (takeHomeVal > 100 && (incomeVal <= 0 || takeHomeVal < incomeVal)) {
     setVal('takehome', takeHomeVal);
     if (typeof G !== 'undefined') G.takeHome = takeHomeVal;
     markReal('take-home');
