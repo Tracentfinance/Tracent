@@ -630,12 +630,14 @@
     // ── Supabase boot: load inputs, merge into G ──
     if (typeof TracentSupabase !== 'undefined' && TracentSupabase.isConfigured()) {
       TracentSupabase.loadProfile().then(function(data) {
-        if (!data) return;
+        // Guard: skip if data is absent or too sparse to be a real profile
+        if (!data || Object.keys(data).length < 3) return;
         var g = window.G || {};
         Object.assign(g, data);
         // Never allow derived values from stored data
         delete g.fcf; delete g.dti; delete g.totalDebt; delete g.totalPayments;
         window.G = g;
+        console.log('[Tracent:App] Hydrated safely', Object.keys(data).length, 'fields');
       }).catch(function(e) {
         console.warn('[Tracent:App] Profile load error:', e);
       });
