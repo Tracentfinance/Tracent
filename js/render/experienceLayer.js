@@ -105,9 +105,7 @@
     var navStyle = (window.BSE && window.BSE.navStyle) || '';
     var g = window.G || {};
     var age = parseInt(g.age || g.currentAge || 0);
-    var ageRange = g.ageRange || '';
-    return navStyle === 'retirement' || age >= 60 ||
-      ageRange === '55_64' || ageRange === '65plus';
+    return navStyle === 'retirement' || age >= 60;
   }
 
   /* ── Retirement hero ───────────────────────────────────── */
@@ -145,11 +143,24 @@
 
     var headline, sub, label;
     if (arch === 'in_retirement') {
-      label = (_bandClass === 'solid') ? 'Horizon of peace' : 'Stability outlook';
-      headline = takeHome > 0
-        ? fmt(takeHome) + '/mo \u2014 your income foundation'
-        : 'Your plan is focused on monthly stability';
-      sub = _coverageLine;
+      // Gate reserve/stability claims on real user-entered savings balances.
+      // efMonths is a dropdown — not backed by dollar amounts — so we must not
+      // show quantified reserve language unless the user has entered real figures.
+      var _hasRealReserve = (g.retirementSavings > 0) || (g.savingsAmt > 0) || (g.depositSaved > 0)
+        || (g.socialSecurityMonthly > 0) || (g.pensionIncome > 0);
+      if (_hasRealReserve) {
+        label = (_bandClass === 'solid') ? 'Horizon of peace' : 'Stability outlook';
+        headline = takeHome > 0
+          ? fmt(takeHome) + '/mo \u2014 your income foundation'
+          : 'Your plan is focused on monthly stability';
+        sub = _coverageLine;
+      } else {
+        label    = 'Stability outlook';
+        headline = 'Your plan is focused on monthly stability';
+        sub      = 'Reserve picture not yet defined';
+        _bandLabel = 'Stability outlook';
+        _bandClass = 'building';
+      }
     } else {
       // pre_retirement or age-only (≥60 without explicit retire intent)
       label = 'Retirement readiness';

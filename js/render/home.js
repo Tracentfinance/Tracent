@@ -2,6 +2,7 @@
    Board pass, modes, dashboard verdict, score alignment,
    next-best-move engine, score band display.
 ═══════════════════════════════════════════════ */
+console.log('TRACENT LOCAL BUILD — HOME.JS UPDATED — APRIL 7');
 
 /* ═══ MODULE: Board Pass — onboarding completion + dashboard init ═══ */
 (function(){
@@ -64,7 +65,7 @@
   function fmtCurrency(n){
     var v = Number(n || 0);
     var abs = Math.round(Math.abs(v));
-    return (v < 0 ? '-$' : '$') + abs.toLocaleString();
+    return (v < 0 ? '-$' : '$') + abs.toLocaleString('en-US');
   }
   function safeText(el, text){ if (el) el.textContent = text; }
 
@@ -218,7 +219,7 @@
         sub:'Show whether short-term pressure is stealing from long-term compounding.',
         metrics:[
           ['Retirement match', G.retMatch || 'unknown', 'Contribution footing'],
-          ['Liquid savings', fmtCurrency((G.savingsAmt||0)+(G.depositSaved||0)), 'Current reserve base'],
+          ['Liquid savings', fmtCurrency((G.savingsAmt||0)+(G.depositSaved||0)+(G.retirementSavings||0)), 'Current reserve base'],
           ['Free cash flow', fmtCurrency(G.fcf || 0) + '/mo', 'Capacity to increase contributions'],
           ['Debt load', fmtCurrency((G.ccDebt||0)+(G.carDebt||0)+(G.studentDebt||0)+(G.otherDebt||0)), 'Competes with retirement funding']
         ],
@@ -401,33 +402,24 @@
     var sign = v < 0 ? '-$' : '$';
     if (compact && abs >= 1000000) return sign + (abs/1000000).toFixed(1) + 'M';
     if (compact && abs >= 1000)    return sign + (abs/1000).toFixed(1)    + 'k';
-    return sign + abs.toLocaleString();
+    return sign + abs.toLocaleString('en-US');
   }
   function months(n){ n = Math.round(n||0); return n <= 0 ? '—' : n < 12 ? n+'mo' : (n/12).toFixed(1)+'yr'; }
   function pct(n)   { return n == null ? '—' : Math.round(n) + '%'; }
 
   function G(){ return window.G || null; }
 
-  /* ═══════════════════════════════════════════════════════
-     SECTION 1 — MODE STRATEGY BLOCKS
-     Each builder returns an HTML string for the top card.
-  ═══════════════════════════════════════════════════════ */
-
-  function buildHomeStrategy(){
-    var g = G(); if(!g) return '';
-    var takeHome     = g.takeHome || (g.income ? Math.round(g.income / 12 * 0.72) : 0);
+  /* ── Home metrics helper — shared by buildHomeStrategy + _buildHomeHero ── */
+  function _calcHomeMetrics(g) {
+    var takeHome = (g.homeIncomeMode === 'household' && g.homeHouseholdTakeHome > 0)
+      ? g.homeHouseholdTakeHome
+      : g.takeHome || (function(){var i=g.income||0;if(!i)return 0;var s=(window.STATE_TAX&&document.getElementById('state'))?((window.STATE_TAX)[document.getElementById('state').value]||0):0,f=i<=11600?i*0.10:i<=47150?1160+(i-11600)*0.12:i<=100525?5426+(i-47150)*0.22:i<=191950?17169+(i-100525)*0.24:39111+(i-191950)*0.32;f=Math.max(0,f-14600*0.12);var c=Math.min(i,168600)*0.062+i*0.0145;return Math.round(Math.max(i*0.5,i-f-c-i*s)/12)})();
     var targetPrice  = g.homePrice || g.targetHomePrice || g.purchasePrice || 0;
-    var depositSaved = g.depositSaved || g.downPayment || g.savingsAmt || 0;
+    var depositSaved = g.depositSaved || g.downPayment || 0;
     var depositNeed  = targetPrice * 0.10;
-    var depositGap   = Math.max(0, depositNeed - depositSaved);
     var closingEst   = Math.round(targetPrice * 0.03);
-    var totalCash    = depositNeed + closingEst;
-    var cashToClose  = Math.max(0, totalCash - depositSaved);
-    var dtiVal       = g.dti != null ? g.dti : 0;
-    var fcf          = g.fcf || 0;
-    var savingCapacity = Math.max(0, Math.round(fcf * 0.50));
-    var moToReady    = savingCapacity > 0 && cashToClose > 0 ? Math.ceil(cashToClose / savingCapacity) : 0;
-    var depositPct   = depositNeed > 0 ? Math.min(100, Math.round((depositSaved / depositNeed)*100)) : 0;
+    var cashToClose  = Math.max(0, depositNeed + closingEst - depositSaved);
+    var depositGap   = Math.max(0, depositNeed - depositSaved);
     var creditRates  = { excellent:0, good:0.20, fair:0.50, below:1.20, poor:2.10, unknown:0.35 };
     var creditPrem   = creditRates[g.credit || 'unknown'] || 0;
     var estRate      = (g.marketRate || 6.72) + creditPrem;
@@ -437,6 +429,36 @@
       return Math.round((loanAmt * r * Math.pow(1+r,n)) / (Math.pow(1+r,n)-1));
     })() : 0;
     var dtiAfter = takeHome > 0 ? Math.round(((pi + (g.carPayment||0) + (g.otherPayment||0) + Math.max(0,(g.ccDebt||0)*0.02)) / takeHome)*100) : 0;
+    return { takeHome:takeHome, targetPrice:targetPrice, depositSaved:depositSaved,
+             depositNeed:depositNeed, depositGap:depositGap, closingEst:closingEst,
+             cashToClose:cashToClose, creditPrem:creditPrem, estRate:estRate,
+             loanAmt:loanAmt, pi:pi, dtiAfter:dtiAfter };
+  }
+  window._calcHomeMetrics = _calcHomeMetrics;
+
+  /* ═══════════════════════════════════════════════════════
+     SECTION 1 — MODE STRATEGY BLOCKS
+     Each builder returns an HTML string for the top card.
+  ═══════════════════════════════════════════════════════ */
+
+  function buildHomeStrategy(){
+    var g = G(); if(!g) return '';
+    var m            = _calcHomeMetrics(g);
+    var takeHome     = m.takeHome;
+    var targetPrice  = m.targetPrice;
+    var depositSaved = m.depositSaved;
+    var depositNeed  = m.depositNeed;
+    var depositGap   = m.depositGap;
+    var closingEst   = m.closingEst;
+    var cashToClose  = m.cashToClose;
+    var creditPrem   = m.creditPrem;
+    var estRate      = m.estRate;
+    var pi           = m.pi;
+    var dtiAfter     = m.dtiAfter;
+    var fcf          = g.fcf || 0;
+    var savingCapacity = Math.max(0, Math.round(fcf * 0.50));
+    var moToReady    = savingCapacity > 0 && cashToClose > 0 ? Math.ceil(cashToClose / savingCapacity) : 0;
+    var depositPct   = depositNeed > 0 ? Math.min(100, Math.round((depositSaved / depositNeed)*100)) : 0;
     var dtiOk    = dtiAfter <= 43;
     var readinessSignal = depositPct >= 100 && dtiOk ? 'Ready to apply' :
                           depositPct >= 75  ? 'Almost there' :
@@ -462,9 +484,12 @@
         '<div class="tracent-mode-cell"><div class="tracent-mode-cell-label">Cash-to-close gap</div><div class="tracent-mode-cell-value" style="color:'+(cashToClose>0?'var(--red)':'var(--green)')+'">'+fmt(cashToClose,true)+'</div><div class="tracent-mode-cell-note">'+(cashToClose>0?'Deposit + closing costs still needed':'Fully funded')+'</div></div>' +
         '<div class="tracent-mode-cell"><div class="tracent-mode-cell-label">DTI if you buy</div><div class="tracent-mode-cell-value" style="color:'+(dtiOk?'var(--teal)':'var(--red)')+'">'+pct(dtiAfter)+'</div><div class="tracent-mode-cell-note">'+(dtiOk?'Lender-qualifying':'Above 43% threshold')+'</div></div>' +
         '<div class="tracent-mode-cell"><div class="tracent-mode-cell-label">Months to ready</div><div class="tracent-mode-cell-value">'+months(moToReady)+'</div><div class="tracent-mode-cell-note">'+(moToReady>0?'At current saving pace':'Already there')+'</div></div>' +
-        '<div class="tracent-mode-cell"><div class="tracent-mode-cell-label">Est. monthly PITI</div><div class="tracent-mode-cell-value">'+fmt(pi,true)+'/mo</div><div class="tracent-mode-cell-note">At '+estRate.toFixed(2)+'% · '+g.credit+' credit</div></div>' +
+        '<div class="tracent-mode-cell"><div class="tracent-mode-cell-label">Est. monthly PITI</div><div class="tracent-mode-cell-value">'+(targetPrice > 0 ? fmt(pi,true)+'/mo' : '\u2014')+'</div><div class="tracent-mode-cell-note">'+(targetPrice > 0 ? 'At '+estRate.toFixed(2)+'% \u00b7 '+g.credit+' credit' : 'Add a target price to estimate')+'</div></div>' +
       '</div>' +
       '<div class="tracent-mode-insight"><div class="tracent-mode-insight-label">💡 What changes readiness fastest</div><div class="tracent-mode-insight-text">'+whatChangesReadiness+'</div></div>' +
+      (g.homeIncomeMode === 'household' && g.homeHouseholdTakeHome > 0
+        ? '<div class="tracent-mode-income-ctx">Based on the income supporting this purchase</div>'
+        : '') +
     '</div>';
   }
 
@@ -576,55 +601,99 @@
   function buildRetireStrategy(){
     var g = G(); if(!g) return '';
     var income       = g.income || 0;
-    var takeHome     = g.takeHome || 0;
     var fcf          = g.fcf || 0;
     var matchStatus  = g.retMatch || 'none';
     var matchCapture = matchStatus === 'full' || matchStatus === 'maxed';
     var totalDebt    = (g.ccDebt||0)+(g.carDebt||0)+(g.studentDebt||0)+(g.otherDebt||0);
     var annualInt    = totalDebt > 0 ? Math.round((g.ccDebt||0)*(g.ccRate||21)/100 + (g.carDebt||0)*0.075 + (g.studentDebt||0)*0.055 + (g.otherDebt||0)*0.09) : 0;
+    var isRetired    = g.retirementStage === 'retired';
 
-    // Simple retirement trajectory: current contrib rate and projection
-    var currentContrib  = income > 0 ? Math.round(income * 0.06) : 0; // assume 6% default
-    var idealContrib    = Math.round(income * 0.15);
-    var contribGap      = Math.max(0, idealContrib - currentContrib);
-    var monthlyContrib  = Math.round(currentContrib / 12);
-    var monthlyIdeal    = Math.round(idealContrib / 12);
+    // Projection gate: income alone does not support accumulation projections
+    var hasProjectionData = (g.retireSavings > 0) || (g.retirementSavings > 0)
+      || (g.savingsAmt > 0) || (g.depositSaved > 0)
+      || (g.pensionIncome > 0);
+    var canProject = !isRetired && income > 0 && hasProjectionData;
 
-    // Future value approximation: 7% for 30 years
+    // FV helper — only called when canProject
     function fv(monthlyPmt, years){ var r = 0.07/12, n = years*12; return Math.round(monthlyPmt * ((Math.pow(1+r,n)-1)/r)); }
-    var fvCurrent  = fv(monthlyContrib, 30);
-    var fvIdeal    = fv(monthlyIdeal,   30);
-    var fvDebtFree = fv(monthlyContrib + Math.round(totalDebt > 0 ? (takeHome * 0.05) : 0), 30);
 
-    // Debt drag: interest cost = capital that could compound instead
-    var debtDragFV = annualInt > 0 ? fv(Math.round(annualInt/12), 30) : 0;
+    var debtDragFV = (annualInt > 0 && !isRetired) ? fv(Math.round(annualInt/12), 30) : 0;
 
-    var futureImpact = (function(){
-      if (!matchCapture && matchStatus !== 'none') return 'Your employer match is not fully captured. Match contributions typically add 50% instantly. Over 30 years at 7%, that extra '+fmt(Math.round(monthlyContrib*0.5))+'/mo could compound to an additional '+fmt(fv(Math.round(monthlyContrib*0.5),30),true)+'.';
-      if (totalDebt > 0 && annualInt > 500) return 'Your debt costs '+fmt(annualInt,true)+'/yr in interest. That same amount invested monthly would compound to '+fmt(debtDragFV,true)+' over 30 years. Every year of debt is retirement wealth foregone.';
-      if (contribGap > 0) return 'At your current rate, you\'re projected to reach ~'+fmt(fvCurrent,true)+' in 30 years. At the 15% ideal rate, that grows to ~'+fmt(fvIdeal,true)+'. The gap is '+fmt(contribGap,true)+'/yr — equivalent to one intentional decision today.';
-      return 'Your retirement trajectory looks solid. The next lever is consistency over time — don\'t interruptrrupt compounding for short-term liquidity if you can avoid it.';
-    })();
+    // ── Already-retired branch ─────────────────────────────────
+    if (isRetired) {
+      var efMonths = parseInt(g.emergency || '0');
+      var incSrc   = g.retirementIncomeSource || null;
+      var incSrcLabel = { social_security:'Social Security', pension:'Pension income', withdrawals:'Savings / investments', combination:'Multiple sources' }[incSrc] || '—';
+      var stabilityLabel = totalDebt === 0 ? 'Stable' : 'Debt present — review';
+      var stabilityColor = totalDebt === 0 ? 'var(--green)' : 'var(--amber)';
+      var insight = totalDebt > 0
+        ? 'Your debt costs '+fmt(annualInt,true)+'/yr in interest. In retirement, this directly reduces available income. Clearing it improves monthly cash flow by '+fmt(Math.round(annualInt/12))+'.'
+        : efMonths < 6
+        ? 'Maintain at least 6 months of liquid savings as a buffer. This protects your portfolio from forced drawdowns during unexpected costs.'
+        : 'Your position is stable. Consistent withdrawal discipline and an annual review are the most important things now.';
 
+      return '<div class="tracent-mode-header">' +
+        '<div class="tracent-mode-badge" style="background:rgba(139,92,246,0.10);color:#8B5CF6;">🌅 Retire Mode — Retirement Stability</div>' +
+        '<div class="tracent-mode-grid-3">' +
+          '<div class="tracent-mode-cell"><div class="tracent-mode-cell-label">Income source</div><div class="tracent-mode-cell-value">'+incSrcLabel+'</div><div class="tracent-mode-cell-note">Primary retirement income</div></div>' +
+          '<div class="tracent-mode-cell"><div class="tracent-mode-cell-label">Position</div><div class="tracent-mode-cell-value" style="color:'+stabilityColor+'">'+stabilityLabel+'</div><div class="tracent-mode-cell-note">Overall stability signal</div></div>' +
+          '<div class="tracent-mode-cell"><div class="tracent-mode-cell-label">Emergency buffer</div><div class="tracent-mode-cell-value" style="color:'+(efMonths>=6?'var(--green)':efMonths>=3?'var(--amber)':'var(--red)')+'">'+efMonths+' mo</div><div class="tracent-mode-cell-note">'+(efMonths>=6?'Strong buffer':'Build to 6+ months')+'</div></div>' +
+          '<div class="tracent-mode-cell"><div class="tracent-mode-cell-label">Debt drag (annual)</div><div class="tracent-mode-cell-value" style="color:'+(annualInt>0?'var(--red)':'var(--green)')+'">'+fmt(annualInt,true)+'</div><div class="tracent-mode-cell-note">'+(annualInt>0?'Reduces monthly income':'No debt drag')+'</div></div>' +
+        '</div>' +
+        '<div class="tracent-mode-insight"><div class="tracent-mode-insight-label">💡 What matters most now</div><div class="tracent-mode-insight-text">'+insight+'</div></div>' +
+      '</div>';
+    }
+
+    // ── Pre-retirement / working branch ────────────────────────
     var trajectoryLabel = matchCapture && !totalDebt ? 'On track' :
                           matchCapture ? 'Debt drag present' :
                           'Below ideal pace';
     var trajectoryColor = matchCapture && !totalDebt ? 'var(--green)' :
                           matchCapture ? 'var(--amber)' : 'var(--red)';
 
+    var currentContrib = income > 0 ? Math.round(income * 0.06) : 0;
+    var idealContrib   = income > 0 ? Math.round(income * 0.15) : 0;
+    var monthlyContrib = Math.round(currentContrib / 12);
+    var monthlyIdeal   = Math.round(idealContrib / 12);
+    var fvCurrent      = canProject ? fv(monthlyContrib, 30) : 0;
+    var fvIdeal        = canProject ? fv(monthlyIdeal, 30) : 0;
+    var contribGap     = Math.max(0, idealContrib - currentContrib);
+
+    var futureImpact = (function(){
+      if (!matchCapture && matchStatus !== 'none') {
+        var matchExtra = canProject ? ' Over 30 years at 7%, capturing it fully could add significantly to your projected balance.' : '';
+        return 'Your employer match is not fully captured. That\'s an immediate 50–100% guaranteed return.' + matchExtra;
+      }
+      if (totalDebt > 0 && annualInt > 500) {
+        return 'Your debt costs '+fmt(annualInt,true)+'/yr in interest.'+(debtDragFV > 0 ? ' That same capital invested monthly would compound to '+fmt(debtDragFV,true)+' over 30 years.' : ' Clearing it frees capital for compounding.');
+      }
+      if (canProject && contribGap > 0) return 'At your current rate, you\'re on a path toward ~'+fmt(fvCurrent,true)+' in 30 years. At the 15% ideal rate, that grows to ~'+fmt(fvIdeal,true)+'. The gap is '+fmt(contribGap,true)+'/yr.';
+      if (!canProject && income > 0) return 'Add your retirement savings or portfolio balance to see a projection of where your plan is heading.';
+      if (income === 0) return 'Add your income and retirement savings to see how your plan is tracking.';
+      return 'Your retirement trajectory looks solid. Consistency over time is the most important lever now.';
+    })();
+
+    var projCell = canProject
+      ? '<div class="tracent-mode-cell"><div class="tracent-mode-cell-label">Est. 30-yr projection</div><div class="tracent-mode-cell-value">'+fmt(fvCurrent,true)+'</div><div class="tracent-mode-cell-note">Illustrative \u00b7 at current pace \u00b7 7% avg</div></div>'
+      : '<div class="tracent-mode-cell"><div class="tracent-mode-cell-label">Est. 30-yr projection</div><div class="tracent-mode-cell-value">\u2014</div><div class="tracent-mode-cell-note">Add retirement savings to project</div></div>';
+
+    var contribBars = income > 0
+      ? '<div class="tracent-retire-compare">' +
+          '<div class="tracent-mode-section-label">Contribution comparison</div>' +
+          '<div class="tracent-retire-bar-row"><span>Current rate</span><div class="tracent-retire-bar-track"><div class="tracent-retire-bar-fill" style="width:'+Math.min(100,Math.round((currentContrib/Math.max(idealContrib,1))*100))+'%;background:var(--teal)"></div></div><span>'+fmt(currentContrib,true)+'/yr</span></div>' +
+          '<div class="tracent-retire-bar-row"><span>Ideal (15%)</span><div class="tracent-retire-bar-track"><div class="tracent-retire-bar-fill" style="width:100%;background:var(--green)"></div></div><span>'+fmt(idealContrib,true)+'/yr</span></div>' +
+        '</div>'
+      : '';
+
     return '<div class="tracent-mode-header">' +
       '<div class="tracent-mode-badge" style="background:rgba(139,92,246,0.10);color:#8B5CF6;">🌅 Retire Mode — Long-Horizon Security</div>' +
       '<div class="tracent-mode-grid-3">' +
         '<div class="tracent-mode-cell"><div class="tracent-mode-cell-label">Trajectory signal</div><div class="tracent-mode-cell-value" style="color:'+trajectoryColor+'">'+trajectoryLabel+'</div><div class="tracent-mode-cell-note">Based on match + debt position</div></div>' +
-        '<div class="tracent-mode-cell"><div class="tracent-mode-cell-label">Est. 30-yr projection</div><div class="tracent-mode-cell-value">'+fmt(fvCurrent,true)+'</div><div class="tracent-mode-cell-note">At current pace · 7% avg</div></div>' +
+        projCell +
         '<div class="tracent-mode-cell"><div class="tracent-mode-cell-label">Employer match</div><div class="tracent-mode-cell-value" style="color:'+(matchCapture?'var(--green)':'var(--amber)')+'">'+matchStatus+'</div><div class="tracent-mode-cell-note">'+(matchCapture?'Fully captured':'Not fully captured')+'</div></div>' +
         '<div class="tracent-mode-cell"><div class="tracent-mode-cell-label">Debt drag (annual)</div><div class="tracent-mode-cell-value" style="color:'+(annualInt>0?'var(--red)':'var(--green)')+'">'+fmt(annualInt,true)+'</div><div class="tracent-mode-cell-note">'+(annualInt>0?'Competing with contributions':'No debt drag')+'</div></div>' +
       '</div>' +
-      '<div class="tracent-retire-compare">' +
-        '<div class="tracent-mode-section-label">Contribution comparison</div>' +
-        '<div class="tracent-retire-bar-row"><span>Current rate</span><div class="tracent-retire-bar-track"><div class="tracent-retire-bar-fill" style="width:'+Math.min(100,Math.round((currentContrib/Math.max(idealContrib,1))*100))+'%;background:var(--teal)"></div></div><span>'+fmt(currentContrib,true)+'/yr</span></div>' +
-        '<div class="tracent-retire-bar-row"><span>Ideal (15%)</span><div class="tracent-retire-bar-track"><div class="tracent-retire-bar-fill" style="width:100%;background:var(--green)"></div></div><span>'+fmt(idealContrib,true)+'/yr</span></div>' +
-      '</div>' +
+      contribBars +
       '<div class="tracent-mode-insight"><div class="tracent-mode-insight-label">💡 Future impact</div><div class="tracent-mode-insight-text">'+futureImpact+'</div></div>' +
     '</div>';
   }
@@ -838,6 +907,9 @@
     .tracent-mode-insight-text {
       font-size: 13px; color: var(--gray-4); line-height: 1.6;
     }
+    .tracent-mode-income-ctx {
+      font-size: 11px; color: rgba(255,255,255,0.38); margin-top: 10px;
+    }
     .tracent-mode-section-label {
       font-size: 10px; font-weight: 700;
       color: var(--gray-3); text-transform: uppercase;
@@ -969,7 +1041,7 @@
   window.__TRACENT_DASH_PASS__ = true;
 
   /* ── utils ─────────────────────────────────────────────── */
-  function fmt(n,c){var v=Number(n||0),a=Math.abs(Math.round(v)),s=v<0?'-$':'$';if(c&&a>=1e6)return s+(a/1e6).toFixed(1)+'M';if(c&&a>=1e3)return s+(a/1e3).toFixed(1)+'k';return s+a.toLocaleString();}
+  function fmt(n,c){var v=Number(n||0),a=Math.abs(Math.round(v)),s=v<0?'-$':'$';if(c&&a>=1e6)return s+(a/1e6).toFixed(1)+'M';if(c&&a>=1e3)return s+(a/1e3).toFixed(1)+'k';return s+a.toLocaleString('en-US');}
   function g(){return window.G||null;}
 
   /* ── 1. EMOTIONAL VERDICT ──────────────────────────────── */
@@ -983,41 +1055,39 @@
     var totDebt = (gv.ccDebt||0)+(gv.carDebt||0)+(gv.studentDebt||0)+(gv.otherDebt||0);
     var depPct  = (function(){
       var tp = gv.homePrice||gv.targetHomePrice||gv.purchasePrice||0;
-      var ds = gv.depositSaved||gv.downPayment||gv.savingsAmt||0;
+      var ds = gv.depositSaved||gv.downPayment||0;
       return tp>0 ? Math.min(100,Math.round((ds/(tp*0.10))*100)) : 0;
     })();
 
     /* Headline logic */
-    var headline, sub;
+    var fmt2 = function(n){ return '$'+(Number(n)||0).toLocaleString('en-US',{maximumFractionDigits:0}); };
+    /* Verdict is a compact context line — NOT a headline. NBM is the headline. */
+    var ctxLine;
     if(fcf < 0){
-      headline = 'Your spending is outpacing your income right now';
-      sub = 'That\u2019s the single most important thing to address \u2014 everything else depends on fixing this first.';
+      ctxLine = 'Running a ' + fmt2(Math.abs(fcf)) + '/mo deficit \u2014 fix this first, everything else waits.';
     } else if(ccDebt > 5000 || (totDebt > 0 && (totDebt/(gv.takeHome||1)) > 0.5)){
-      headline = 'You\u2019re carrying more financial pressure than you should';
-      sub = 'Here\u2019s what\u2019s shaping this right now \u2014 and what to do next.';
+      var _debtLbl = ccDebt > 5000 ? fmt2(ccDebt) + ' CC debt' : fmt2(totDebt) + ' total debt';
+      ctxLine = _debtLbl + ' is your biggest drag \u2014 reducing it unlocks everything below.';
     } else if(intent === 'home' && depPct < 70){
-      headline = 'You\u2019re on your way \u2014 but not quite ready yet';
-      sub = 'Here\u2019s what\u2019s shaping your readiness \u2014 and the fastest path to change it.';
+      var _tp = gv.homePrice||gv.targetHomePrice||gv.purchasePrice||0;
+      var _ds = gv.depositSaved||gv.downPayment||0;
+      var _gap = _tp > 0 ? Math.max(0, Math.round(_tp * 0.13 - _ds)) : 0;
+      ctxLine = _gap > 0 ? fmt2(_gap) + ' away from deposit + closing \u2014 here\u2019s the fastest path.' : 'Deposit is your current constraint.';
     } else if(score < 55){
-      headline = 'Your foundation needs attention \u2014 let\u2019s fix the biggest lever first';
-      sub = 'Here\u2019s what\u2019s shaping this right now \u2014 and what to do next.';
+      ctxLine = 'Score ' + score + ' \u2014 foundation needs work.' + (fcf > 0 ? ' ' + fmt2(fcf) + '/mo to work with.' : '');
     } else if(score < 70){
-      headline = 'You\u2019re in a stable position with room to improve';
-      sub = 'Here\u2019s what\u2019s shaping this right now \u2014 and what to do next.';
+      ctxLine = 'Score ' + score + ' \u2014 stable, with clear room to improve.' + (fcf > 0 ? ' ' + fmt2(fcf) + '/mo surplus.' : '');
     } else if(score < 85){
-      headline = 'You\u2019re in a strong position \u2014 now it\u2019s about optimisation';
-      sub = 'The foundation is solid. Here\u2019s where the biggest gains still are.';
+      ctxLine = 'Score ' + score + ' \u2014 strong.' + (fcf > 0 ? ' ' + fmt2(fcf) + '/mo to deploy.' : ' Now it\u2019s about optimisation.');
     } else {
-      headline = 'You\u2019re in an excellent position \u2014 protect and compound';
-      sub = 'Here\u2019s what\u2019s keeping you here \u2014 and how to stay on trajectory.';
+      ctxLine = 'Score ' + score + ' \u2014 excellent position.' + (fcf > 0 ? ' ' + fmt2(fcf) + '/mo surplus.' : ' Protect and compound.');
     }
 
     var el = document.getElementById('v21-verdict-block');
     if(!el) return;
     el.innerHTML =
       '<div class="v21-verdict-inner tdp-fade-item">' +
-        '<div class="v21-verdict-headline" id="v21-verdict-headline">' + headline + '</div>' +
-        '<div class="v21-verdict-sub">' + sub + '</div>' +
+        '<div class="v21-verdict-ctx" id="v21-verdict-headline">' + ctxLine + '</div>' +
       '</div>';
     el.style.display = 'block';
   }
@@ -1215,25 +1285,17 @@
   /* ── CSS ────────────────────────────────────────────────── */
   var style = document.createElement('style');
   style.textContent = [
-    /* ── Verdict block ── */
-    '#v21-verdict-block { margin-bottom: 4px; }',
+    /* ── Verdict block — context line only, NOT a headline ── */
+    '#v21-verdict-block { margin-bottom: 8px; }',
     '.v21-verdict-inner {',
-    '  padding: 20px 20px 18px;',
-    '  border-bottom: 1px solid rgba(255,255,255,0.08);',
+    '  padding: 12px 20px 10px;',
     '}',
-    '.v21-verdict-headline {',
-    '  font-family: var(--font-display);',
-    '  font-size: 24px;',
-    '  font-weight: 600;',
-    '  color: var(--white);',
-    '  line-height: 1.25;',
-    '  letter-spacing: -0.3px;',
-    '  margin-bottom: 10px;',
-    '}',
-    '.v21-verdict-sub {',
-    '  font-size: 14px;',
-    '  color: rgba(255,255,255,0.60);',
-    '  line-height: 1.6;',
+    '.v21-verdict-ctx {',
+    '  font-size: 12px;',
+    '  font-weight: 500;',
+    '  color: rgba(255,255,255,0.42);',
+    '  line-height: 1.5;',
+    '  letter-spacing: 0.1px;',
     '}',
     /* ── Compact score ── */
     '#v21-compact-score { margin: 0 var(--s2) var(--s2); }',
@@ -1534,7 +1596,9 @@
       return btn ? btn.id.replace('mode-btn-','') : (gv.primaryIntent || 'today');
     })();
     var income    = gv.income    || 0;
-    var takeHome  = gv.takeHome  || (income ? Math.round(income/12*0.72) : 0);
+    var takeHome  = (active === 'home' && gv.homeIncomeMode === 'household' && gv.homeHouseholdTakeHome > 0)
+      ? gv.homeHouseholdTakeHome
+      : gv.takeHome || (function(){if(!income)return 0;var s=(window.STATE_TAX&&document.getElementById('state'))?((window.STATE_TAX)[document.getElementById('state').value]||0):0,f=income<=11600?income*0.10:income<=47150?1160+(income-11600)*0.12:income<=100525?5426+(income-47150)*0.22:income<=191950?17169+(income-100525)*0.24:39111+(income-191950)*0.32;f=Math.max(0,f-14600*0.12);var c=Math.min(income,168600)*0.062+income*0.0145;return Math.round(Math.max(income*0.5,income-f-c-income*s)/12)})();
     var totalDebt = (gv.ccDebt||0)+(gv.carDebt||0)+(gv.studentDebt||0)+(gv.otherDebt||0);
     var minPmts   = Math.round(
       Math.max(25,(gv.ccDebt||0)*0.02) +
@@ -1545,7 +1609,9 @@
     var housing   = gv.mortgagePayment||gv.rentAmount||gv.rent||0;
     var fixedSpend= minPmts + housing;
     var fcf       = gv.fcf!=null ? gv.fcf : (takeHome - fixedSpend);
-    var efMonths  = parseInt(gv.emergency||'0');
+    var _efRaw    = gv.emergency;
+    var efProvided= _efRaw !== undefined && _efRaw !== null && _efRaw !== '';
+    var efMonths  = efProvided ? parseInt(_efRaw, 10) : 0;
     var efTarget  = 3;
     var ccDebt    = gv.ccDebt||0;
     var ccRate    = gv.ccRate||21;
@@ -1554,7 +1620,7 @@
     var othDebt   = gv.otherDebt||0;
     var dti       = gv.dti!=null ? gv.dti : (takeHome>0?Math.round((minPmts/takeHome)*100):0);
     var homePrice = gv.homePrice||gv.targetHomePrice||gv.purchasePrice||0;
-    var depSaved  = gv.depositSaved||gv.downPayment||gv.savingsAmt||0;
+    var depSaved  = gv.depositSaved||gv.downPayment||0;
     var depNeed   = homePrice>0 ? homePrice*0.10 : 0;
     var closingEst= homePrice>0 ? Math.round(homePrice*0.03) : 0;
     var depositGap= Math.max(0, depNeed+closingEst-depSaved);
@@ -1566,8 +1632,7 @@
     var confidence= completeness>=80&&inferred===0?'high':completeness>=60&&inferred<=2?'medium':'low';
     var currentAge = parseInt(gv.currentAge||gv.age||'0');
     var isRetirementMode = !!(gv.isRetirementMode) ||
-      (window.BSE && window.BSE.navStyle === 'retirement') ||
-      (gv.ageRange === '55_64' || gv.ageRange === '65plus');
+      (window.BSE && window.BSE.navStyle === 'retirement');
     // ── cashflow structure (from cashflow.js, if computed) ────────
     var _cf = gv.cashflow || null;
     var effectiveFCF  = _cf ? _cf.effectiveFCF  : fcf;
@@ -1576,7 +1641,7 @@
     var nmMonthly     = _cf ? _cf.nonMonthlyMonthly : 0;
     var subEst        = _cf ? _cf.subscriptionEst   : 0;
     return {
-      active:active,income:income,takeHome:takeHome,fixedSpend:fixedSpend,fcf:fcf,efMonths:efMonths,efTarget:efTarget,
+      active:active,income:income,takeHome:takeHome,fixedSpend:fixedSpend,fcf:fcf,efMonths:efMonths,efTarget:efTarget,efProvided:efProvided,
       ccDebt:ccDebt,ccRate:ccRate,carDebt:carDebt,studDebt:studDebt,othDebt:othDebt,totalDebt:totalDebt,minPmts:minPmts,dti:dti,
       homePrice:homePrice,depSaved:depSaved,depNeed:depNeed,closingEst:closingEst,depositGap:depositGap,saveCap:saveCap,
       retMatch:retMatch,matchMissed:matchMissed,
@@ -1609,8 +1674,8 @@
       });
     }
 
-    /* SAFETY: zero EF */
-    if(s.efMonths===0&&s.fcf>=0){
+    /* SAFETY: zero EF — only when emergency was explicitly provided */
+    if(s.efProvided&&s.efMonths===0&&s.fcf>=0){
       var efAmt=s.takeHome>0?Math.round(s.takeHome):2000;
       c.push({id:'ef_zero',
         title:'Open a dedicated emergency account — target '+fmt(efAmt)+' to start',
@@ -1624,8 +1689,8 @@
       });
     }
 
-    /* SAFETY: low EF */
-    if(s.efMonths>0&&s.efMonths<s.efTarget&&s.fcf>0){
+    /* SAFETY: low EF — only when emergency was explicitly provided */
+    if(s.efProvided&&s.efMonths>0&&s.efMonths<s.efTarget&&s.fcf>0){
       var efShortfall=s.takeHome>0?Math.round(s.takeHome*(s.efTarget-s.efMonths)):2000;
       var moToEf=s.fcf>0?Math.ceil(efShortfall/(s.fcf*0.40)):0;
       c.push({id:'ef_low',
@@ -1718,6 +1783,23 @@
         category:'home',
         scores:{urgency:6,impact:7,feasibility:7,confidence:7,modeAlignment:s.active==='home'?10:4}
       });
+    }
+
+    /* HOME: overstretched purchase — post-purchase DTI > 50% */
+    if(s.active==='home'&&s.homePrice>0){
+      var _hm=typeof window._calcHomeMetrics==='function'?window._calcHomeMetrics(window.G||{}):null;
+      if(_hm&&_hm.dtiAfter>50){
+        c.push({id:'home_overstretch',
+          title:'At '+_hm.dtiAfter+'% DTI, this purchase would be hard to sustain — let\'s find the workable number',
+          why:'Lenders cap approval at 43–45% DTI, and at '+_hm.dtiAfter+'% your application is likely to be declined or require a co-signer. More importantly, a payment at this level leaves very little room for any unexpected cost.',
+          action:'Work backward from a comfortable monthly payment — typically 28–30% of take-home. That number determines your real price ceiling. You may need a lower target price, a larger deposit, or to build income before applying.',
+          impact:'Prevents a purchase that strains cash flow for years',timing:'Before applying',
+          confidenceNote:'DTI calculated using your estimated mortgage, existing debt payments, and current take-home.',
+          scoreImpact:8,cashImpact:'Avoids payment stress',timeToStart:'Now',
+          category:'home',
+          scores:{urgency:10,impact:10,feasibility:9,confidence:9,modeAlignment:10}
+        });
+      }
     }
 
     /* HOME: missing target price */
@@ -1969,6 +2051,48 @@
   window.v21RenderNBMCard = function(){
     var card=document.getElementById('v21-nbm-card');
     if(!card||typeof G==='undefined'||!G.score||!G.scoreFinal) return;
+    // Home mode is handled entirely by renderDecisionFlow() — skip old card render
+    if(G.primaryIntent==='home') return;
+
+    // Decision gate — tell/ask/hold before running the engine
+    var _dm = typeof window.getDecisionMode === 'function' ? window.getDecisionMode(G, G.primaryIntent) : { mode: 'tell' };
+    if (_dm.mode === 'hold') {
+      var f=function(id){ return document.getElementById(id); };
+      if(f('v21-nbm-title'))      f('v21-nbm-title').textContent      = 'Too early to make a call';
+      if(f('v21-nbm-why'))        f('v21-nbm-why').textContent        = 'Add your income and key details so Tracent can give you a specific, grounded recommendation.';
+      if(f('v21-nbm-desc'))       f('v21-nbm-desc').textContent       = '';
+      if(f('v21-nbm-impact'))     f('v21-nbm-impact').textContent     = '—';
+      if(f('v21-nbm-cash'))       f('v21-nbm-cash').textContent       = '—';
+      if(f('v21-nbm-time'))       f('v21-nbm-time').textContent       = '—';
+      if(f('v21-nbm-confidence')) f('v21-nbm-confidence').textContent = '';
+      var _wb=f('v21-nbm-why-btn'); if(_wb) _wb.style.display='none';
+      var _eb=f('v21-nbm-easier-btn'); if(_eb) _eb.style.display='none';
+      card.style.display='block';
+      return;
+    }
+    if (_dm.mode === 'ask') {
+      var _field = (_dm.missing && _dm.missing[0]) || 'a key detail';
+      var _isAssumed = _dm.reason === 'assumed';
+      var _isHomeAsk = G.primaryIntent === 'home';
+      var f=function(id){ return document.getElementById(id); };
+      if(f('v21-nbm-title'))      f('v21-nbm-title').textContent      = _isAssumed
+        ? (_isHomeAsk ? 'Before I call this, confirm one thing about your home plan' : 'Before I call this, confirm one thing')
+        : (_isHomeAsk ? 'Before I call this, confirm one thing about your home plan' : 'One more detail \u2014 then I can give you a real recommendation');
+      if(f('v21-nbm-why'))        f('v21-nbm-why').textContent        = _isAssumed
+        ? 'Before I call this, confirm: ' + _field + '.'
+        : 'I need one more thing to give you a real recommendation: ' + _field + '.';
+      if(f('v21-nbm-desc'))       f('v21-nbm-desc').textContent       = _isHomeAsk ? 'Update your home details to unlock your readiness picture.' : 'Update your details to unlock your next best move.';
+      if(f('v21-nbm-impact'))     f('v21-nbm-impact').textContent     = '—';
+      if(f('v21-nbm-cash'))       f('v21-nbm-cash').textContent       = '—';
+      if(f('v21-nbm-time'))       f('v21-nbm-time').textContent       = '—';
+      if(f('v21-nbm-confidence')) f('v21-nbm-confidence').textContent = '';
+      var _wb=f('v21-nbm-why-btn'); if(_wb) _wb.style.display='none';
+      var _eb=f('v21-nbm-easier-btn'); if(_eb) _eb.style.display='none';
+      card.style.display='block';
+      return;
+    }
+
+    // mode === 'tell' — proceed to engine
     var moves=window.v21GetRankedMoves();
     var idx=Math.min(window._v21MoveIndex||0,moves.length-1);
     var move=moves[idx]||moves[0];
@@ -1991,9 +2115,11 @@
       return;
     }
 
-    if(f('v21-nbm-title'))      f('v21-nbm-title').textContent      = move.title;
+    // P3: action first — imperative action becomes the headline
+    var _act1 = (move.action||'').split(/[.!?]\s/)[0] || move.action || move.title;
+    if(f('v21-nbm-title'))      f('v21-nbm-title').textContent      = _act1;
     if(f('v21-nbm-why'))        f('v21-nbm-why').textContent        = move.why||'';
-    if(f('v21-nbm-desc'))       f('v21-nbm-desc').textContent       = move.action||'';
+    if(f('v21-nbm-desc'))       f('v21-nbm-desc').textContent       = '';
     if(f('v21-nbm-impact'))     f('v21-nbm-impact').textContent     = move.scoreImpact>0?'+'+move.scoreImpact:String(move.scoreImpact||'—');
     if(f('v21-nbm-cash'))       f('v21-nbm-cash').textContent       = move.cashImpact||'—';
     if(f('v21-nbm-time'))       f('v21-nbm-time').textContent       = move.timeToStart||move.timing||'—';
@@ -2964,7 +3090,7 @@ window.bseApplyModuleVis = function() {
   // ═══════════════════════════════════════════════════════
   var CTX_REQ = {
     home: {
-      context:    'You\u2019re in a position to consider buying a home.',
+      context:    'Home buying is your stated priority \u2014 here\u2019s what we need.',
       limitation: 'We need a few more details to estimate your real monthly cost and readiness timeline.',
       actionLabel:'This takes under a minute \u2014 then we can show you a real plan.',
       inputs: [
@@ -2994,7 +3120,7 @@ window.bseApplyModuleVis = function() {
       ]
     },
     general: {
-      context:    'Your financial position gives us a starting point.',
+      context:    'A real recommendation needs these three numbers.',
       limitation: 'A few more details will unlock a specific, targeted recommendation.',
       actionLabel:'Add your key numbers to get a real recommendation.',
       inputs: [
@@ -3008,7 +3134,7 @@ window.bseApplyModuleVis = function() {
   // ── Suppress secondary cards ──────────────────────────────
   // Whitelist-based: hide every direct child of #tab-home except the DFR container.
   // More durable than a blacklist — new injected blocks are suppressed automatically.
-  var FOCUS_WHITELIST = { 'bse-focus-mode': true, 'xp-retirement-hero': true };
+  var FOCUS_WHITELIST = { 'bse-focus-mode': true, 'xp-retirement-hero': true, 'v21-nbm-card': true };
   function _suppressSecondaryCards() {
     var tabHome = document.getElementById('tab-home');
     if (tabHome) {
@@ -3087,7 +3213,8 @@ window.bseApplyModuleVis = function() {
     if (g.takeHome||g.income)
       rows.push({ label:g.takeHome ? 'Take-home' : 'Income', value:_fmt(g.takeHome||g.income)+'/mo' });
     var td = (g.ccDebt||0)+(g.studentDebt||0)+(g.carDebt||0)+(g.otherDebt||0);
-    if (td>0) rows.push({ label:'Total debt', value:_fmt(td) });
+    var hasDebt = td > 0 || (g.carPayment||0) > 0;
+    if (hasDebt) rows.push({ label:'Total debt', value: td > 0 ? _fmt(td) : _fmt(g.carPayment||0)+'/mo obligations' });
     var ef = parseInt(g.emergency||'0');
     // Only show emergency buffer row when we have other financial data (avoids orphaned "None" for empty-state users)
     if (ef > 0 || rows.length > 0)
@@ -3399,7 +3526,7 @@ window.bseApplyModuleVis = function() {
     if (context.isStalled) {
       if (context.currentTier === 'stabilize') return 'This is still the first thing to clear.';
       if (context.currentTier === 'unlock')    return 'This removes the main blocker.';
-      return 'This is still the clearest next step.';
+      return 'This remains the strongest move available in your position.';
     }
     if (context.currentTier === 'stabilize') return 'This reduces the pressure first.';
     if (context.currentTier === 'unlock')    return 'This unlocks the next reliable step.';
@@ -3574,20 +3701,20 @@ window.bseApplyModuleVis = function() {
     // ── 1. CTA text — confidence + mode based ────────────────────────
     var ctaText;
     if (conf === 'medium') {
-      // Mode-specific soft CTA for medium confidence
-      if (cat === 'debt')                ctaText = 'Check this plan \u2192';
-      else if (cat === 'home')           ctaText = 'Review readiness \u2192';
+      if (cat === 'debt')                 ctaText = 'See the payoff plan \u2192';
+      else if (cat === 'home')            ctaText = 'Check your readiness \u2192';
       else if (decisionType === 'retire') ctaText = 'Refine this plan \u2192';
-      else                               ctaText = 'Review this move \u2192';
+      else                                ctaText = 'Take this step \u2192';
     } else {
-      // High confidence — action-specific CTA where possible
-      if (cat === 'safety' && move.id === 'deficit')   ctaText = 'Address this now \u2192';
-      else if (cat === 'safety')                        ctaText = 'Start this step \u2192';
-      else if (cat === 'debt')                          ctaText = 'See the payoff plan \u2192';
-      else if (cat === 'home')                          ctaText = 'Review readiness \u2192';
-      else if (cat === 'retire')                        ctaText = 'See retirement view \u2192';
-      else if (cat === 'grow' && move.id === 'career_gap') ctaText = 'See income benchmark \u2192';
-      else                                              ctaText = 'Do this now \u2192';
+      // High confidence — specific, imperative CTA
+      if (cat === 'safety' && move.id === 'deficit')       ctaText = 'Fix this first \u2192';
+      else if (cat === 'safety')                            ctaText = 'Build this buffer \u2192';
+      else if (cat === 'debt')                              ctaText = 'See the payoff plan \u2192';
+      else if (cat === 'home')                              ctaText = 'Check your readiness \u2192';
+      else if (cat === 'retire')                            ctaText = 'See retirement view \u2192';
+      else if (cat === 'grow' && move.id === 'career_gap')  ctaText = 'See income benchmark \u2192';
+      else if (cat === 'grow')                              ctaText = 'Start investing \u2192';
+      else                                                  ctaText = 'Take this step \u2192';
     }
 
     // ── 2. Tone + why adjustment by archetype ─────────────────────────
@@ -3595,26 +3722,14 @@ window.bseApplyModuleVis = function() {
     // Falls through to engine why if no clear adjustment is warranted.
 
     if (arch === 'anxious_overwhelmed') {
-      // Simplify — reduce cognitive load, frame as one small step
-      if (cat === 'safety') {
-        why = 'One small action here protects against the next unexpected expense. You do not need to solve everything at once.';
-      } else if (cat === 'debt') {
-        why = 'Targeting one balance keeps this simple. The goal is momentum, not perfection.';
-      } else {
-        why = move.why; // pass through — engine why is already specific
-      }
-      support = 'One step at a time is enough to move this forward.';
+      // Keep the data-anchored why (numbers must stay) — framing goes to support line only
+      why = move.why;
+      support = 'This is the single most important step right now \u2014 one move at a time.';
 
     } else if (arch === 'avoider') {
-      // Frame as decisively low-friction
-      if (cat === 'debt') {
-        why = 'This is the highest-leverage debt action available. The decision is simple — everything else follows from it.';
-      } else if (cat === 'safety') {
-        why = 'This is the one action that removes the most financial risk right now. It takes less than ten minutes to start.';
-      } else {
-        why = move.why;
-      }
-      support = 'Starting is the only thing that matters here.';
+      // Keep the data-anchored why (numbers must stay) — framing goes to support line only
+      why = move.why;
+      support = 'This is the one action that removes the most financial risk right now.';
 
     } else if (arch === 'optimizer') {
       // Keep engine why — it is precise. Add efficiency framing to support line only.
@@ -3665,7 +3780,7 @@ window.bseApplyModuleVis = function() {
     // Does NOT fabricate intent — only fires when the signal clearly exists.
     if (signals.ignored >= 3 || signals.hesit >= 4) {
       if (!support) {
-        support = 'This is still the clearest next step for your situation.';
+        support = 'This remains the strongest move available in your position.';
       }
     }
 
@@ -3673,7 +3788,7 @@ window.bseApplyModuleVis = function() {
     // (not for hesitators — they get the support line instead)
     if (signals.returnSession && conf === 'medium' && signals.ignored < 3) {
       if (!support) {
-        support = 'Based on what we know so far \u2014 this is the most actionable next step.';
+        support = 'Based on your current data, this is the most direct path.';
       }
     }
 
@@ -3802,6 +3917,81 @@ window.bseApplyModuleVis = function() {
   }
 
   // ═══════════════════════════════════════════════════════
+  // RENDER-LAYER COPY CONDENSERS (no engine changes)
+  // ═══════════════════════════════════════════════════════
+
+  // Condense a title to ≤7 words. Splits at em-dash or colon first.
+  function _toHeadline(title) {
+    if (!title) return '';
+    var t = title.split(' \u2014 ')[0].split(': ')[0].trim();
+    var words = t.split(/\s+/);
+    if (words.length <= 7) return t;
+    return words.slice(0, 6).join(' ');
+  }
+
+  // Return only the first sentence of a text block.
+  function _firstSentence(text) {
+    if (!text) return '';
+    var m = text.match(/^.+?[.!?](?:\s|$)/);
+    return m ? m[0].trim() : text;
+  }
+
+  // ═══════════════════════════════════════════════════════
+  // CONSEQUENCE LINE BUILDER (P3 forcing function)
+  // ═══════════════════════════════════════════════════════
+
+  // Returns one short line: what happens if user doesn't act.
+  // max 1 line, no fear language, just reality.
+  function _buildConsequence(move, g) {
+    if (!move) return '';
+    var g2   = g || {};
+    var cc   = g2.ccDebt || 0;
+    var ccR  = g2.ccRate || 21;
+    var dti  = g2.dti || 0;
+    var moInt;
+
+    // Resolve category — explicit field first, fall back to title keyword inference
+    var cat = move.category || '';
+    if (!cat) {
+      var t = (move.title || '').toLowerCase();
+      if (t.indexOf('buffer') !== -1 || t.indexOf('emergency') !== -1) cat = 'safety';
+      else if (t.indexOf('debt') !== -1 || t.indexOf('balance') !== -1 || t.indexOf('payoff') !== -1) cat = 'debt';
+      else if (t.indexOf('home') !== -1 || t.indexOf('deposit') !== -1) cat = 'home';
+      else if (t.indexOf('retire') !== -1 || t.indexOf('pension') !== -1) cat = 'retire';
+      else if (t.indexOf('invest') !== -1 || t.indexOf('contribution') !== -1 || t.indexOf('automate') !== -1) cat = 'grow';
+    }
+
+    if (cat === 'safety' && move.id === 'deficit') {
+      return 'Unchecked, any unexpected cost goes straight to credit.';
+    }
+    if (cat === 'safety') {
+      return 'Without a buffer, one unexpected cost puts you back in debt.';
+    }
+    if (cat === 'debt' && move.id === 'dti_reduce' && dti > 0) {
+      return 'At ' + dti + '% DTI, lenders will flag this position \u2014 cost of borrowing goes up.';
+    }
+    if (cat === 'debt') {
+      moInt = cc > 0 ? Math.round(cc * (ccR / 100) / 12) : 0;
+      return moInt > 30
+        ? 'Each month this runs costs ~\u0024' + moInt.toLocaleString('en-US') + ' in avoidable interest.'
+        : 'Debt pressure is the main drag on your financial flexibility.';
+    }
+    if (cat === 'home') {
+      return 'This is the main constraint on your buying power right now.';
+    }
+    if (cat === 'retire') {
+      return 'Each month of delay reduces the compounding window permanently.';
+    }
+    if (cat === 'grow') {
+      return 'Every month this waits is compounding time you don\u2019t get back.';
+    }
+    if (cat === 'stable') {
+      return 'Without a spending limit, surplus cash disappears into untracked spending.';
+    }
+    return '';
+  }
+
+  // ═══════════════════════════════════════════════════════
   // PRIMARY CARD BUILDERS
   // ═══════════════════════════════════════════════════════
 
@@ -3816,12 +4006,13 @@ window.bseApplyModuleVis = function() {
     // ── 1. Fallback ───────────────────────────────────────
     if (!move || move.id === 'insufficient_data') {
       var isRetire = !!(g.isRetirementMode);
-      var fbTitle  = isRetire
-        ? 'Refine your retirement picture'
-        : 'Add key financial details';
-      var fbWhy = isRetire
-        ? 'A few more details will let us give you specific guidance for your retirement stage.'
-        : 'We need a clearer picture to guide your next move.';
+      var isHome   = g.primaryIntent === 'home';
+      var fbTitle  = isRetire ? 'Add a few details for your retirement picture'
+                  : isHome   ? 'Add income, savings, and a target price for real numbers'
+                  : 'Add key details to unlock your next move';
+      var fbWhy = isRetire ? 'Income, savings rate, and target age are needed to give you specific guidance.'
+                : isHome   ? 'Target price + deposit + income = your real readiness number.'
+                : 'Income and debt are the minimum needed for a grounded recommendation.';
       var fbCta = isRetire ? 'Add your details \u2192' : 'Complete your profile \u2192';
       return '<div class="nbm-card nbm-card-fallback">'+
         '<div class="nbm-eyebrow">Your next move</div>'+
@@ -3911,22 +4102,33 @@ window.bseApplyModuleVis = function() {
     }
 
     var medNote = conf === 'medium'
-      ? '<div class="nbm-conf-note">Based on what we know so far \u2014 numbers sharpen as you add more details</div>'
+      ? '<div class="nbm-conf-note">Est. \u2014 numbers sharpen as you add more details</div>'
       : '';
 
     var supportHtml = effectiveSupport
       ? '<div class="nbm-support">'+effectiveSupport+'</div>'
       : '';
 
+    // P3 order: ACTION → CONSEQUENCE → REASON
+    var _actionLine  = _firstSentence(move.action || '');
+    var _reasonLine  = _firstSentence(copy.why || move.why || '');
+    var _consequence = _buildConsequence(move, g);
+
+    // ── Observation: NBM_SHOWN ──────────────────────────────
+    try { tracentTrack('nbm_shown', { move_id: move.id || '', category: move.category || '', confidence: conf }); } catch(e) {}
+
+    // ── Observation: NBM_CLICKED — prepend track to CTA onclick ─
+    var _trackClick = 'try{tracentTrack(\'nbm_clicked\',{move_id:\'' + (move.id||'') + '\'});}catch(e){}';
+
     return '<div class="nbm-card">'+
       '<div class="nbm-eyebrow">Your next move</div>'+
-      '<div class="nbm-title">'+(move.title||'')+'</div>'+
-      '<div class="nbm-why">'+(copy.why||move.why||'')+'</div>'+
-      (move.action ? '<div class="nbm-action">'+(move.action||'')+'</div>' : '')+
+      '<div class="nbm-title">'+(_actionLine || _toHeadline(move.title || ''))+'</div>'+
+      (_consequence ? '<div class="nbm-consequence">'+_consequence+'</div>' : '')+
+      (_reasonLine  ? '<div class="nbm-why">'+_reasonLine+'</div>'         : '')+
       medNote+
       impactHtml+
       supportHtml+
-      '<button class="nbm-cta" onclick="'+ctaFn+'">'+copy.ctaText+'</button>'+
+      '<button class="nbm-cta" onclick="'+_trackClick+ctaFn+'">'+copy.ctaText+'</button>'+
     '</div>';
   }
 
@@ -4030,6 +4232,45 @@ window.bseApplyModuleVis = function() {
   }
 
   // ═══════════════════════════════════════════════════════
+  // HOME HERO (home intent only — prepended above NBM)
+  // ═══════════════════════════════════════════════════════
+
+  function _buildHomeHero(g) {
+    var _f = function(n,c){ var v=Number(n||0),a=Math.abs(Math.round(v)),s=v<0?'-$':'$';if(c&&a>=1e6)return s+(a/1e6).toFixed(1)+'M';if(c&&a>=1e3)return s+(a/1e3).toFixed(1)+'k';return s+a.toLocaleString('en-US'); };
+    var m = typeof window._calcHomeMetrics === 'function' ? window._calcHomeMetrics(g) : null;
+    if (!m || m.targetPrice === 0) return '';
+    var pi         = m.pi;
+    var dtiAfter   = m.dtiAfter;
+    var cashToClose= m.cashToClose;
+    var takeHome   = m.takeHome;
+    var fcf        = g.fcf || 0;
+
+    var state = (fcf < 0 || dtiAfter > 50)    ? 'NOT_READY'
+              : (cashToClose === 0 && dtiAfter <= 43 && takeHome > 0) ? 'READY'
+              : 'NEAR_READY';
+    var stateText = {
+      READY:     'Proceed with lenders \u2014 numbers support this purchase.',
+      NEAR_READY:'One or two moves to get this ready.',
+      NOT_READY: 'Reconsider your price range \u2014 this exceeds safe limits.'
+    }[state];
+
+    var dtiCls  = dtiAfter <= 36 ? 'hh-val--ok' : dtiAfter <= 43 ? 'hh-val--caution' : 'hh-val--high';
+    var cashCls = cashToClose === 0 ? 'hh-val--ok' : 'hh-val--caution';
+    var sharedLine = (g.homeIncomeMode === 'household' && g.homeHouseholdTakeHome > 0)
+      ? '<div class="hh-shared">Based on the income supporting this purchase</div>' : '';
+
+    return '<div class="hh-hero">'+
+      '<div class="hh-state">'+stateText+'</div>'+
+      '<div class="hh-rows">'+
+        (pi > 0 ? '<div class="hh-row"><span class="hh-lbl">Estimated monthly payment</span><span class="hh-val">'+_f(pi)+'/mo</span></div>' : '')+
+        '<div class="hh-row"><span class="hh-lbl">Cash needed to close</span><span class="hh-val '+cashCls+'">'+(cashToClose > 0 ? _f(cashToClose,true) : 'Covered')+'</span></div>'+
+        (dtiAfter > 0 ? '<div class="hh-row"><span class="hh-lbl">DTI after purchase</span><span class="hh-val '+dtiCls+'">'+dtiAfter+'%<span class="hh-sub"> \u00b7 includes estimated mortgage</span></span></div>' : '')+
+      '</div>'+
+      sharedLine+
+    '</div>';
+  }
+
+  // ═══════════════════════════════════════════════════════
   // MAIN RENDER
   // ═══════════════════════════════════════════════════════
 
@@ -4043,6 +4284,9 @@ window.bseApplyModuleVis = function() {
     if (!g.scoreFinal) return;                          // state gate
 
     _suppressSecondaryCards();
+
+    // Home Hero — only in home intent, only when score is final
+    var homeHeroHtml = (g.primaryIntent === 'home') ? _buildHomeHero(g) : '';
 
     // NBM move from engine
     var move = null;
@@ -4078,8 +4322,8 @@ window.bseApplyModuleVis = function() {
       : '';
 
     el.innerHTML = '<div class="tdf-wrap nbm-wrap">'+
+      homeHeroHtml+
       primaryHtml+
-      confLayerHtml+
       toggleHtml+
       fullPictureHtml+
     '</div>';
@@ -4124,11 +4368,12 @@ window.bseApplyModuleVis = function() {
     '.tdf-wrap{display:flex;flex-direction:column;gap:0;}',
     '.nbm-wrap{display:flex;flex-direction:column;gap:0;}',
     // ── Primary NBM card ──
-    '.nbm-card{padding:20px 0 16px;}',
-    '.nbm-eyebrow{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.9px;color:rgba(0,168,232,0.65);margin-bottom:10px;}',
-    '.nbm-title{font-size:20px;font-weight:700;color:#fff;line-height:1.3;margin-bottom:10px;}',
-    '.nbm-why{font-size:14px;color:rgba(255,255,255,0.72);line-height:1.6;margin-bottom:8px;}',
-    '.nbm-action{font-size:13px;font-weight:600;color:rgba(255,255,255,0.55);line-height:1.5;margin-bottom:12px;}',
+    '.nbm-card{padding:24px 22px 20px;background:var(--navy,#1a1f35);border-radius:16px;}',
+    '.nbm-eyebrow{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.9px;color:rgba(0,168,232,0.80);margin-bottom:12px;}',
+    '.nbm-title{font-size:22px;font-weight:700;color:#fff;line-height:1.25;margin-bottom:8px;}',
+    '.nbm-consequence{font-size:13px;color:rgba(0,168,232,0.70);line-height:1.5;margin-bottom:8px;}',
+    '.nbm-why{font-size:12px;color:rgba(255,255,255,0.40);line-height:1.55;margin-bottom:10px;}',
+    '.nbm-action{font-size:13px;font-weight:600;color:rgba(255,255,255,0.70);line-height:1.5;margin-bottom:14px;}',
     '.nbm-conf-note{font-size:11px;color:rgba(255,255,255,0.35);margin-bottom:12px;font-style:italic;}',
     '.nbm-support{font-size:12px;color:rgba(255,255,255,0.38);line-height:1.55;margin-bottom:12px;font-style:italic;}',
     '.nbm-impact{font-size:13px;margin-bottom:14px;}',
@@ -4137,7 +4382,7 @@ window.bseApplyModuleVis = function() {
     '.nbm-impact-cash{color:rgba(255,255,255,0.70);}',
     '.nbm-impact-sep{color:rgba(255,255,255,0.25);}',
     '.nbm-impact-lbl{color:rgba(255,255,255,0.40);font-size:12px;}',
-    '.nbm-cta{display:inline-flex;align-items:center;justify-content:center;padding:13px 28px;border-radius:999px;background:var(--sky,#00A8E8);color:#fff;font-size:14px;font-weight:700;border:none;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:opacity 0.15s ease;margin-top:4px;}',
+    '.nbm-cta{display:inline-flex;align-items:center;justify-content:center;padding:14px 32px;border-radius:999px;background:var(--sky,#00A8E8);color:#fff;font-size:14px;font-weight:700;border:none;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:opacity 0.15s ease;margin-top:8px;}',
     '.nbm-cta:active{opacity:0.8;}',
     '.nbm-card-fallback .nbm-cta,.nbm-card-ctx .nbm-cta{background:rgba(0,168,232,0.15);color:rgba(0,168,232,0.90);border:1px solid rgba(0,168,232,0.28);}',
     // ── Confidence layer ──
@@ -4193,6 +4438,18 @@ window.bseApplyModuleVis = function() {
     '.tdf-alt-row{font-size:12px;color:rgba(255,255,255,0.38);line-height:1.55;margin-bottom:5px;}',
     '.tdf-alt-title{font-weight:600;color:rgba(255,255,255,0.48);}',
     '.tdf-alt-why{font-style:italic;}',
+    // ── Home Hero ──
+    '.hh-hero{padding:16px 0 14px;border-bottom:1px solid var(--gray-2);margin-bottom:14px;}',
+    '.hh-state{font-size:15px;font-weight:700;color:var(--navy);line-height:1.4;margin-bottom:12px;}',
+    '.hh-rows{display:flex;flex-direction:column;gap:9px;margin-bottom:6px;}',
+    '.hh-row{display:flex;justify-content:space-between;align-items:baseline;gap:10px;}',
+    '.hh-lbl{font-size:12px;color:var(--gray-3);}',
+    '.hh-val{font-size:14px;font-weight:700;color:var(--navy);}',
+    '.hh-val--ok{color:#2A9D5C;}',
+    '.hh-val--caution{color:#B07200;}',
+    '.hh-val--high{color:#C0321E;}',
+    '.hh-sub{font-size:11px;font-weight:400;color:var(--gray-3);}',
+    '.hh-shared{font-size:11px;color:var(--gray-3);margin-top:6px;}',
   ].join('\n');
   document.head.appendChild(_tdfStyle);
 

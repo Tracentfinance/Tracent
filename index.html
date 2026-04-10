@@ -62,28 +62,19 @@
         <span class="wordmark-text">Tracent<span class="wordmark-dot">.</span></span>
         <div class="wordmark-line"></div>
       </div>
-      <p class="splash-tagline">Transcend your financial position.</p>
+      <p class="splash-tagline">Know exactly where you stand.</p>
       <div class="splash-trust">
         <div class="trust-dot"></div>
-        <span class="trust-text">Early access · free to start · no bank login</span>
+        <span class="trust-text">No bank login · your data stays on your device</span>
       </div>
     </div>
 
     <div class="splash-actions">
       <button class="btn-primary"
-        onclick="(window.startOnboarding||window._tracent_startOnboarding||function(){alert('Error: could not start')}).call()">Get
-        my financial position →</button>
-      <button class="btn-ghost" onclick="openLoginPlaceholder()">Log in</button>
-      <p class="splash-footnote">No credit check · Data stays on your device · 2 minutes<br>
-        <span style="font-size:10px;opacity:0.5;">
-          <button onclick="openLegalModal('terms')"
-            style="background:none;border:none;color:inherit;font-size:inherit;cursor:pointer;text-decoration:underline;padding:0;">Terms
-            of Use</button>
-          &nbsp;·&nbsp;
-          <button onclick="openLegalModal('privacy')"
-            style="background:none;border:none;color:inherit;font-size:inherit;cursor:pointer;text-decoration:underline;padding:0;">Privacy
-            Policy</button>
-        </span>
+        onclick="(window.startOnboarding||window._tracent_startOnboarding||function(){alert('Error: could not start')}).call()">Get my financial position →</button>
+      <p class="splash-footnote">
+        Already have an account? <button onclick="openLoginPlaceholder()" class="splash-inline-link">Log in</button>
+        <span class="splash-legal">&nbsp;·&nbsp;<button onclick="openLegalModal('terms')" class="splash-inline-link">Terms</button>&nbsp;·&nbsp;<button onclick="openLegalModal('privacy')" class="splash-inline-link">Privacy</button></span>
       </p>
     </div>
   </div>
@@ -243,6 +234,26 @@
           </div>
         </div>
 
+        <!-- ── PHASE 2b-R: RETIREMENT STAGE BRIDGE (retire intent only) ── -->
+        <div class="v21-phase" id="v21-phase-retirement-stage">
+          <h1 class="onb-step-title">Where are you right now?</h1>
+          <p class="onb-step-sub">This helps Tracent focus on what matters most for your situation.</p>
+          <div class="v21-choice-grid">
+            <div class="v21-choice" onclick="v21SelectRetirementStage('retired',this)">
+              <div>
+                <div class="v21-choice-title">Already retired</div>
+                <div class="v21-choice-sub">Living on retirement income</div>
+              </div>
+            </div>
+            <div class="v21-choice" onclick="v21SelectRetirementStage('near_retirement',this)">
+              <div>
+                <div class="v21-choice-title">Planning to retire soon</div>
+                <div class="v21-choice-sub">Still working, building toward it</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <!-- ── PHASE 3: PSYCHOLOGICAL ALIGNMENT ── -->
         <div class="v21-phase" id="v21-phase-range">
 
@@ -322,56 +333,56 @@
         <input type="text" id="firstname" value="">
         <input type="text" inputmode="decimal" id="income" value="72000">
         <select id="state">
-          <option value="NY" selected>New York</option>
-          <option value="CA">California</option>
-          <option value="TX">Texas</option>
-          <option value="FL">Florida</option>
-          <option value="WA">Washington</option>
-          <option value="MA">Massachusetts</option>
-          <option value="IL">Illinois</option>
-          <option value="CO">Colorado</option>
-          <option value="NJ">New Jersey</option>
-          <option value="CT">Connecticut</option>
-          <option value="GA">Georgia</option>
-          <option value="NC">North Carolina</option>
-          <option value="VA">Virginia</option>
-          <option value="AZ">Arizona</option>
-          <option value="PA">Pennsylvania</option>
-          <option value="OH">Ohio</option>
-          <option value="MN">Minnesota</option>
-          <option value="MD">Maryland</option>
-          <option value="OR">Oregon</option>
-          <option value="MI">Michigan</option>
-          <option value="TN">Tennessee</option>
-          <option value="MO">Missouri</option>
-          <option value="WI">Wisconsin</option>
-          <option value="IN">Indiana</option>
-          <option value="NV">Nevada</option>
-          <option value="LA">Louisiana</option>
-          <option value="UT">Utah</option>
-          <option value="KY">Kentucky</option>
-          <option value="OK">Oklahoma</option>
-          <option value="SC">South Carolina</option>
+          <option value="AK">Alaska</option>
           <option value="AL">Alabama</option>
           <option value="AR">Arkansas</option>
+          <option value="AZ">Arizona</option>
+          <option value="CA">California</option>
+          <option value="CO">Colorado</option>
+          <option value="CT">Connecticut</option>
+          <option value="DC">Washington DC</option>
           <option value="DE">Delaware</option>
+          <option value="FL">Florida</option>
+          <option value="GA">Georgia</option>
           <option value="HI">Hawaii</option>
-          <option value="ID">Idaho</option>
           <option value="IA">Iowa</option>
+          <option value="ID">Idaho</option>
+          <option value="IL">Illinois</option>
+          <option value="IN">Indiana</option>
           <option value="KS">Kansas</option>
+          <option value="KY">Kentucky</option>
+          <option value="LA">Louisiana</option>
+          <option value="MA">Massachusetts</option>
+          <option value="MD">Maryland</option>
           <option value="ME">Maine</option>
+          <option value="MI">Michigan</option>
+          <option value="MN">Minnesota</option>
+          <option value="MO">Missouri</option>
           <option value="MT">Montana</option>
+          <option value="NC">North Carolina</option>
+          <option value="ND">North Dakota</option>
           <option value="NE">Nebraska</option>
           <option value="NH">New Hampshire</option>
+          <option value="NJ">New Jersey</option>
           <option value="NM">New Mexico</option>
-          <option value="ND">North Dakota</option>
+          <option value="NV">Nevada</option>
+          <option value="NY" selected>New York</option>
+          <option value="OH">Ohio</option>
+          <option value="OK">Oklahoma</option>
+          <option value="OR">Oregon</option>
+          <option value="PA">Pennsylvania</option>
           <option value="RI">Rhode Island</option>
+          <option value="SC">South Carolina</option>
           <option value="SD">South Dakota</option>
+          <option value="TN">Tennessee</option>
+          <option value="TX">Texas</option>
+          <option value="UT">Utah</option>
+          <option value="VA">Virginia</option>
           <option value="VT">Vermont</option>
+          <option value="WA">Washington</option>
+          <option value="WI">Wisconsin</option>
           <option value="WV">West Virginia</option>
           <option value="WY">Wyoming</option>
-          <option value="DC">Washington DC</option>
-          <option value="AK">Alaska</option>
         </select>
         <select id="jobtype">
           <option value="private" selected>Private Sector</option>
@@ -488,56 +499,36 @@
 ══════════════════════════════════════════════════════════ -->
   <div id="screen-analysis" class="screen" style="position:relative;">
     <div class="analysis-inner">
-      <div class="analysis-ring-wrap">
-        <svg class="analysis-ring-svg" width="100" height="100" viewBox="0 0 100 100">
-          <circle cx="50" cy="50" r="40" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="6" />
-          <circle id="analysis-ring" cx="50" cy="50" r="40" fill="none" stroke="var(--sky)" stroke-width="6"
-            stroke-dasharray="251" stroke-dashoffset="251" stroke-linecap="round"
-            style="transition:stroke-dashoffset 0.6s ease; transform-origin:center; transform:rotate(-90deg);animation:none;" />
-        </svg>
-        <div class="analysis-icon">
-          <svg width="28" height="28" viewBox="0 0 120 120" fill="none">
-            <defs>
-              <linearGradient id="ag" x1="0" y1="0" x2="120" y2="120">
-                <stop offset="0%" stop-color="#004E7C" />
-                <stop offset="100%" stop-color="#000D1A" />
-              </linearGradient>
-            </defs>
-            <rect width="120" height="120" rx="26" fill="url(#ag)" />
-            <text x="10" y="91" font-family="DM Serif Display,Georgia,serif" font-size="86" fill="white"
-              letter-spacing="-2">T</text>
-            <circle cx="90" cy="88" r="9" fill="#00A8E8" />
-            <rect x="10" y="97" width="66" height="6" rx="3" fill="#00A8E8" />
+
+      <!-- Minimal pulsing indicator -->
+      <div class="analysis-pulse-dot"></div>
+
+      <!-- Main message — rotated by JS -->
+      <div class="analysis-title" id="analysis-greeting">Understanding your financial position</div>
+
+      <!-- Static subtext -->
+      <div class="analysis-status" id="analysis-status-text">This will take a moment</div>
+
+      <!-- Kept for JS compatibility — not visible -->
+      <div aria-hidden="true" style="display:none;">
+        <div class="analysis-ring-wrap">
+          <svg class="analysis-ring-svg" width="100" height="100" viewBox="0 0 100 100">
+            <circle cx="50" cy="50" r="40" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="6" />
+            <circle id="analysis-ring" cx="50" cy="50" r="40" fill="none" stroke="var(--sky)" stroke-width="6"
+              stroke-dasharray="251" stroke-dashoffset="251" stroke-linecap="round" />
           </svg>
         </div>
-      </div>
-
-      <div class="analysis-title" id="analysis-greeting">Calibrating your position</div>
-
-      <div class="analysis-steps">
-        <div class="analysis-step" id="as-1">
-          <div class="analysis-step-icon">📊</div>
-          <span>Scoring your financial health</span>
+        <div class="analysis-steps">
+          <div class="analysis-step" id="as-1"><div class="analysis-step-icon"></div><span></span></div>
+          <div class="analysis-step" id="as-2"><div class="analysis-step-icon"></div><span></span></div>
+          <div class="analysis-step" id="as-3"><div class="analysis-step-icon"></div><span></span></div>
+          <div class="analysis-step" id="as-4"><div class="analysis-step-icon"></div><span></span></div>
         </div>
-        <div class="analysis-step" id="as-2">
-          <div class="analysis-step-icon">🏠</div>
-          <span>Calculating housing position</span>
-        </div>
-        <div class="analysis-step" id="as-3">
-          <div class="analysis-step-icon">💼</div>
-          <span>Benchmarking your market rate</span>
-        </div>
-        <div class="analysis-step" id="as-4">
-          <div class="analysis-step-icon">🎯</div>
-          <span>Building your action plan</span>
+        <div class="analysis-bar-wrap">
+          <div class="analysis-bar-fill" id="analysis-progress-bar"></div>
         </div>
       </div>
 
-      <div class="analysis-bar-wrap" style="position:relative;overflow:hidden;">
-        <div class="analysis-bar-fill" id="analysis-progress-bar"></div>
-        <div class="analysis-scan-line"></div>
-      </div>
-      <div class="analysis-status" id="analysis-status-text">Building your picture…</div>
     </div>
   </div>
 
@@ -684,8 +675,7 @@
             </div>
             <div class="v21-nbm-title" id="v21-nbm-title">Build a 1-month cash buffer</div>
             <div class="v21-nbm-why" id="v21-nbm-why">This creates the fastest improvement in resilience.</div>
-            <div class="v21-nbm-action-label">What to do</div>
-            <div class="v21-nbm-desc" id="v21-nbm-desc">Set a target and automate a transfer.</div>
+            <div class="v21-nbm-desc" id="v21-nbm-desc" style="display:none;"></div>
             <div class="v21-nbm-meta">
               <div class="v21-nbm-meta-cell">
                 <div class="v21-nbm-meta-val" id="v21-nbm-impact">+5</div>
@@ -944,7 +934,12 @@
 
         <!-- Empty state -->
         <div id="ai-empty" class="empty-state">
-          <div class="empty-icon">💡</div>
+          <div class="empty-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <path d="M12 2a7 7 0 0 0-4 12.72V17a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1v-2.28A7 7 0 0 0 12 2z" stroke="var(--sky)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M9 21h6M10 18v3M14 18v3" stroke="var(--sky)" stroke-width="1.5" stroke-linecap="round"/>
+            </svg>
+          </div>
           <div class="empty-title">Your advice is waiting</div>
           <div class="empty-sub">Complete your profile on the Score tab and your personalised goal-led recommendations
             appear instantly.</div>
@@ -1094,24 +1089,20 @@
       </div><!-- end advice-content -->
     </div><!-- end tab-recommend -->
 
-    <!-- ══ RATE SIMULATOR TAB ══ -->
-    <div id="tab-simulator" class="tab-panel">
+    <!-- ══ HOUSE TAB ══ -->
+    <div id="tab-house" class="tab-panel">
+
+      <!-- House summary header — rendered by js/render/house.js -->
+      <div id="house-header"></div>
+
+      <!-- ── OWNER VIEW: Rate slider + refi analysis ── -->
       <div id="sim-owner-view">
         <div class="card">
-          <div class="card-body">
-            <div class="card-eyebrow navy">Rate Simulator</div>
-            <div class="card-title" style="font-size:20px;margin-bottom:6px;">Test any mortgage rate</div>
-            <div class="card-sub">See instantly how a rate change affects your monthly payment and total interest.</div>
-            <div
-              style="font-size:10px;color:var(--gray-3);margin-top:6px;padding:6px 0;border-top:1px solid var(--gray-1);">
-              Projections are estimates based on your inputs · Not financial advice · Rates and costs may vary</div>
+          <div style="padding:16px 16px 4px;">
+            <div style="font-size:28px;font-family:var(--font-display);color:var(--navy);" id="sim-rate-display">7.10%</div>
+            <div id="rate-preset-today" style="font-size:11px;color:var(--gray-3);margin-top:2px;"></div>
           </div>
-          <div style="padding:0 var(--s3) var(--s3);" id="sim-rate-area">
-            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
-              <div style="font-size:28px;font-family:var(--font-display);color:var(--navy);" id="sim-rate-display">7.10%
-              </div>
-              <div id="rate-preset-today" style="font-size:11px;color:var(--gray-3);"></div>
-            </div>
+          <div style="padding:10px var(--s3) var(--s3);" id="sim-rate-area">
             <input type="range" id="rate-slider" min="3" max="12" step="0.05" value="7.1"
               oninput="updateSimulator(this.value)"
               style="width:100%;accent-color:var(--teal);height:6px;cursor:pointer;">
@@ -1137,13 +1128,16 @@
             id="sim-rec-text"></div>
         </div>
 
-        <!-- Rate watch / alert -->
+        <!-- Refi analysis card (rendered by _0x7bdbfe0) -->
         <div id="rate-watch-content"></div>
-        <div style="display:none!important"></div>
       </div>
+
+      <!-- ── BUYER VIEW: Affordability + rate sensitivity ── -->
       <div id="sim-buyer-view" style="display:none;">
+        <!-- Rendered by _0x340b247 + updateRateWatch -->
         <div id="rate-watch-content-buyer"></div>
       </div>
+
     </div>
 
     <!-- ══ DEBT RANKER TAB ══ -->
@@ -1615,15 +1609,15 @@
       <span class="bse-nav-label">Settings</span>
     </button>
 
-    <!-- Compat: rates — hidden unless BSE enables -->
-    <button class="bse-nav-item" id="nav-rates" style="display:none;"
-      onclick="haptic('light');switchTab('simulator');setNav(this)" aria-label="Rates">
+    <!-- House — shown for home buyers and owners -->
+    <button class="bse-nav-item" id="nav-house" style="display:none;"
+      onclick="haptic('light');switchTab('house');setNav(this)" aria-label="House">
       <svg class="bse-nav-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-        stroke-width="1.8" stroke-linecap="round">
-        <path d="M3 3v18h18" />
-        <path d="M7 16l4-4 4 4 5-5" />
+        stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+        <polyline points="9 22 9 12 15 12 15 22" />
       </svg>
-      <span class="bse-nav-label" id="nav-rates-label">Rates</span>
+      <span class="bse-nav-label" id="nav-house-label">House</span>
     </button>
 
   </nav>
@@ -2464,6 +2458,9 @@
 
   <!-- Render: Advice (personalization + copilot) -->
   <script src="js/render/advice.js"></script>
+
+  <!-- Render: House Tab (buying/owning summary header) -->
+  <script src="js/render/house.js"></script>
 
   <!-- Features: Adaptive Dashboard + Debt Experience (staged layer — reads state after engine + BSE) -->
   <script src="js/features/adaptiveDashboard.js"></script>

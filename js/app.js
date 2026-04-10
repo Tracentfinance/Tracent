@@ -14,7 +14,7 @@
     var sign = v < 0 ? '-$' : '$';
     if (compact && abs >= 1000000) return sign + (abs/1000000).toFixed(1) + 'M';
     if (compact && abs >= 1000)    return sign + (abs/1000).toFixed(1)    + 'k';
-    return sign + abs.toLocaleString();
+    return sign + abs.toLocaleString('en-US');
   }
   function g(){ return window.G || null; }
 
@@ -209,7 +209,9 @@
     var recommendation = (function(){
       if (!score) return { type:'neutral', title:'Run your analysis first', body:'Complete a full analysis to generate a monthly recommendation.' };
       var fcf      = gv ? (gv.fcf||0) : 0;
-      var efMonths = gv ? parseInt(gv.emergency||'0') : 0;
+      var _efRaw = gv ? gv.emergency : undefined;
+      var _efProvided = _efRaw !== undefined && _efRaw !== null && _efRaw !== '';
+      var efMonths = _efProvided ? parseInt(_efRaw, 10) : null;
       var totalDebt= gv ? ((gv.ccDebt||0)+(gv.carDebt||0)+(gv.studentDebt||0)+(gv.otherDebt||0)) : 0;
 
       if (delta !== null && delta < -3) return {
@@ -217,7 +219,7 @@
         body: 'Your score dropped ' + Math.abs(delta) + ' points. ' +
           (fcf < 0 ? 'Spending is exceeding income — that\'s the first thing to fix.' :
            totalDebt > 0 && (gv.ccDebt||0) > 0 ? 'The credit card balance is the highest-leverage thing to reduce.' :
-           efMonths < 2 ? 'Your emergency fund is low — that\'s the resilience gap.' :
+           (_efProvided && efMonths < 2) ? 'Your emergency fund is low — that\'s the resilience gap.' :
            'Review your inputs and re-run analysis to identify the shift.')
       };
       if (score >= 65 && (delta === null || delta >= 0)) return {
@@ -651,6 +653,73 @@
     var premCta = document.querySelector('#v21-premium-teaser .btn-cta');
     if (premCta && !hasRealStripe()) premCta.textContent = 'Request access \u2192';
     else if (premCta) premCta.textContent = 'Unlock Edge \u2192';
+
+    // ── Sort state dropdown alphabetically by full name ──────
+    (function() {
+      var STATE_NAMES = {
+        AL:'Alabama', AK:'Alaska', AZ:'Arizona', AR:'Arkansas',
+        CA:'California', CO:'Colorado', CT:'Connecticut',
+        DC:'District of Columbia', DE:'Delaware', FL:'Florida',
+        GA:'Georgia', HI:'Hawaii', ID:'Idaho', IL:'Illinois',
+        IN:'Indiana', IA:'Iowa', KS:'Kansas', KY:'Kentucky',
+        LA:'Louisiana', ME:'Maine', MD:'Maryland', MA:'Massachusetts',
+        MI:'Michigan', MN:'Minnesota', MS:'Mississippi', MO:'Missouri',
+        MT:'Montana', NE:'Nebraska', NV:'Nevada', NH:'New Hampshire',
+        NJ:'New Jersey', NM:'New Mexico', NY:'New York', NC:'North Carolina',
+        ND:'North Dakota', OH:'Ohio', OK:'Oklahoma', OR:'Oregon',
+        PA:'Pennsylvania', RI:'Rhode Island', SC:'South Carolina',
+        SD:'South Dakota', TN:'Tennessee', TX:'Texas', UT:'Utah',
+        VT:'Vermont', VA:'Virginia', WA:'Washington', WV:'West Virginia',
+        WI:'Wisconsin', WY:'Wyoming'
+      };
+
+      var sel = document.getElementById('state');
+      if (!sel) return;
+
+      var current = sel.value;
+
+      // Add Mississippi if missing
+      var hasMiss = Array.from(sel.options).some(function(o) { return o.value === 'MS'; });
+      if (!hasMiss) {
+        var msOpt = document.createElement('option');
+        msOpt.value = 'MS';
+        msOpt.textContent = 'Mississippi';
+        sel.appendChild(msOpt);
+      }
+
+      // Sort by full state name
+      var opts = Array.from(sel.options);
+      opts.sort(function(a, b) {
+        var na = STATE_NAMES[a.value] || a.textContent;
+        var nb = STATE_NAMES[b.value] || b.textContent;
+        return na.localeCompare(nb);
+      });
+      sel.innerHTML = '';
+      opts.forEach(function(o) { sel.appendChild(o); });
+
+      // Restore previous selection (preserve user's selected state)
+      sel.value = current;
+    })();
+
+    // ── Observation: SESSION_RETURN ─────────────────────────
+    try {
+      var _seenCount = Number(localStorage.getItem('tracent_seen') || '0');
+      if (_seenCount >= 1) {
+        try { tracentTrack('session_return', { session_n: _seenCount + 1, ts: Date.now() }); } catch(e) {}
+      }
+      localStorage.setItem('tracent_seen', String(_seenCount + 1));
+    } catch(e) {}
+
+    // ── Observation: INPUT_EDITED ────────────────────────────
+    document.addEventListener('change', function(evt) {
+      try {
+        var el = evt.target;
+        if (!el || !el.id) return;
+        var tag = el.tagName;
+        if (tag !== 'INPUT' && tag !== 'SELECT' && tag !== 'TEXTAREA') return;
+        tracentTrack('input_edited', { field_name: el.id });
+      } catch(e) {}
+    }, true);
   });
 
   /* ════════════════════════════════════════════════════════
@@ -747,5 +816,209 @@
     .tret-step-detail { font-size: 12px; color: var(--gray-4); line-height: 1.6; }
   `;
   document.head.appendChild(style);
+
+})();
+
+/* ═══════════════════════════════════════════════════════════
+   INTERNAL TELEMETRY REVIEW PANEL
+   Access: append ?_tbv=1 to any URL, or call window._tbvOpen()
+   Founder-only. Read-only. No external deps. No product impact.
+═══════════════════════════════════════════════════════════ */
+(function() {
+  'use strict';
+
+  // ── Access gate ─────────────────────────────────────────
+  function _shouldAutoOpen() {
+    try { return new URLSearchParams(window.location.search).get('_tbv') === '1'; } catch(e) { return false; }
+  }
+
+  // ── Data layer — read-only, fails silently ───────────────
+  function _events() {
+    try { return (window.TRACENT_TELEMETRY && window.TRACENT_TELEMETRY.events) || []; } catch(e) { return []; }
+  }
+
+  function _compute(evts) {
+    var shown   = evts.filter(function(e) { return e.event === 'nbm_shown'; });
+    var clicked = evts.filter(function(e) { return e.event === 'nbm_clicked'; });
+    var tabs    = evts.filter(function(e) { return e.event === 'tab_switched'; });
+    var inputs  = evts.filter(function(e) { return e.event === 'input_edited'; });
+    var returns = evts.filter(function(e) { return e.event === 'session_return'; });
+
+    var ctr = shown.length > 0 ? (clicked.length / shown.length * 100).toFixed(1) + '%' : '\u2014';
+
+    function topN(arr, key, n) {
+      var counts = {};
+      arr.forEach(function(e) { var v = (e.data && e.data[key]) || '(unknown)'; counts[v] = (counts[v]||0) + 1; });
+      return Object.keys(counts).sort(function(a,b){ return counts[b]-counts[a]; }).slice(0,n).map(function(k){ return k + ' (' + counts[k] + ')'; });
+    }
+
+    return {
+      total:         evts.length,
+      shownCount:    shown.length,
+      clickedCount:  clicked.length,
+      ctr:           ctr,
+      topShown:      topN(shown,   'move_id', 5),
+      topClicked:    topN(clicked, 'move_id', 5),
+      movePerf: (function() {
+        var shownCounts = {}, clickCounts = {};
+        shown.forEach(function(e)   { var id = (e.data&&e.data.move_id)||'(unknown)'; shownCounts[id] = (shownCounts[id]||0)+1; });
+        clicked.forEach(function(e) { var id = (e.data&&e.data.move_id)||'(unknown)'; clickCounts[id] = (clickCounts[id]||0)+1; });
+        return Object.keys(shownCounts).sort(function(a,b){ return shownCounts[b]-shownCounts[a]; }).map(function(id) {
+          var s = shownCounts[id]||0, c = clickCounts[id]||0;
+          return { id: id, shown: s, clicked: c, ctr: s > 0 ? Math.round(c/s*100)+'%' : '0%' };
+        });
+      })(),
+      recentTabs:    tabs.slice(-10).reverse(),
+      recentInputs:  inputs.slice(-10).reverse(),
+      recentReturns: returns.slice(-5).reverse(),
+      latest50:      evts.slice(-50).reverse()
+    };
+  }
+
+  // ── Renderer helpers ─────────────────────────────────────
+  function _row(label, value) {
+    return '<tr><td style="color:#888;padding:4px 10px 4px 0;white-space:nowrap;">' + label + '</td>' +
+           '<td style="color:#e8e8e8;padding:4px 0;">' + value + '</td></tr>';
+  }
+
+  function _section(title, html) {
+    return '<div style="margin-bottom:20px;">' +
+      '<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:#00a8e8;margin-bottom:8px;">' + title + '</div>' +
+      html + '</div>';
+  }
+
+  function _pill(text) {
+    return '<span style="display:inline-block;background:#1e2a3a;border:1px solid #2a3f55;border-radius:4px;padding:2px 7px;font-size:11px;color:#c8d8e8;margin:2px 3px 2px 0;">' + text + '</span>';
+  }
+
+  function _eventRow(e) {
+    var t = e.ts ? new Date(e.ts).toLocaleTimeString() : '';
+    var d = '';
+    try { d = JSON.stringify(e.data || {}); } catch(x) {}
+    return '<div style="font-size:11px;padding:3px 0;border-bottom:1px solid #1a2535;display:flex;gap:8px;">' +
+      '<span style="color:#555;flex-shrink:0;width:68px;">' + t + '</span>' +
+      '<span style="color:#00a8e8;flex-shrink:0;width:130px;">' + (e.event||'') + '</span>' +
+      '<span style="color:#8899aa;word-break:break-all;">' + d + '</span>' +
+      '</div>';
+  }
+
+  function _render() {
+    var evts = _events();
+    var s    = _compute(evts);
+
+    var statsHtml =
+      '<table style="border-collapse:collapse;width:100%;">' +
+        _row('Total events',   String(s.total)) +
+        _row('NBM shown',      String(s.shownCount)) +
+        _row('NBM clicked',    String(s.clickedCount)) +
+        _row('Click-through',  s.ctr) +
+      '</table>';
+
+    var topShownHtml   = s.topShown.length   ? s.topShown.map(_pill).join('')   : '<span style="color:#555;">none yet</span>';
+    var topClickedHtml = s.topClicked.length ? s.topClicked.map(_pill).join('') : '<span style="color:#555;">none yet</span>';
+
+    var tabsHtml = s.recentTabs.length
+      ? s.recentTabs.map(function(e){ return _pill((e.data&&e.data.from||'?')+' \u2192 '+(e.data&&e.data.to||'?')); }).join('')
+      : '<span style="color:#555;">none yet</span>';
+
+    var inputsHtml = s.recentInputs.length
+      ? s.recentInputs.map(function(e){ return _pill(e.data&&e.data.field_name||'?'); }).join('')
+      : '<span style="color:#555;">none yet</span>';
+
+    var returnsHtml = s.recentReturns.length
+      ? s.recentReturns.map(function(e){
+          var n = e.data&&e.data.session_n ? '#'+e.data.session_n : '';
+          var t = e.ts ? new Date(e.ts).toLocaleString() : '';
+          return _pill(n + (t ? ' \u00b7 ' + t : ''));
+        }).join('')
+      : '<span style="color:#555;">none yet</span>';
+
+    var rawHtml = s.latest50.length
+      ? s.latest50.map(_eventRow).join('')
+      : '<span style="color:#555;font-size:12px;">No events recorded yet.</span>';
+
+    var movePerfHtml = s.movePerf.length
+      ? '<table style="border-collapse:collapse;width:100%;">' +
+        '<tr style="color:#555;font-size:10px;"><td style="padding:2px 10px 6px 0;">MOVE</td><td style="padding:2px 10px 6px 0;">SHOWN</td><td style="padding:2px 10px 6px 0;">CLICKED</td><td style="padding:2px 0 6px 0;">CTR</td></tr>' +
+        s.movePerf.map(function(m) {
+          var ctrColor = parseInt(m.ctr) >= 50 ? '#4caf7d' : parseInt(m.ctr) >= 20 ? '#e8c84a' : '#e87a4a';
+          return '<tr>' +
+            '<td style="color:#c8d8e8;padding:3px 10px 3px 0;">' + m.id + '</td>' +
+            '<td style="color:#888;padding:3px 10px 3px 0;">' + m.shown + '</td>' +
+            '<td style="color:#888;padding:3px 10px 3px 0;">' + m.clicked + '</td>' +
+            '<td style="color:'+ctrColor+';font-weight:700;padding:3px 0;">' + m.ctr + '</td>' +
+          '</tr>';
+        }).join('') +
+        '</table>'
+      : '<span style="color:#555;">none yet</span>';
+
+    return _section('Overview', statsHtml) +
+           _section('NBM performance by move', movePerfHtml) +
+           _section('Top move_ids shown', topShownHtml) +
+           _section('Top move_ids clicked', topClickedHtml) +
+           _section('Recent tab switches', tabsHtml) +
+           _section('Recent inputs edited', inputsHtml) +
+           _section('Session returns', returnsHtml) +
+           _section('Raw \u2014 latest 50 events', rawHtml);
+  }
+
+  // ── Panel DOM ────────────────────────────────────────────
+  var _panel = null;
+
+  function _open() {
+    if (_panel) { _panel.style.display = 'flex'; _refresh(); return; }
+
+    _panel = document.createElement('div');
+    _panel.id = '_tbv-panel';
+    _panel.style.cssText = [
+      'position:fixed;inset:0;z-index:999999',
+      'display:flex;flex-direction:column',
+      'background:#0d1520;color:#c8d8e8',
+      'font-family:ui-monospace,SFMono-Regular,Menlo,monospace',
+      'font-size:12px;line-height:1.5'
+    ].join(';');
+
+    var header = document.createElement('div');
+    header.style.cssText = 'display:flex;align-items:center;justify-content:space-between;padding:12px 16px;background:#0a101a;border-bottom:1px solid #1e2e40;flex-shrink:0;';
+    header.innerHTML =
+      '<span style="font-weight:700;color:#00a8e8;letter-spacing:0.5px;">TRACENT \u00b7 Telemetry Review</span>' +
+      '<div style="display:flex;gap:10px;">' +
+        '<button id="_tbv-refresh" style="background:#1e2a3a;border:1px solid #2a3f55;color:#c8d8e8;padding:4px 12px;border-radius:4px;cursor:pointer;font-size:11px;">Refresh</button>' +
+        '<button id="_tbv-close" style="background:none;border:none;color:#666;font-size:18px;cursor:pointer;line-height:1;padding:0 4px;">&times;</button>' +
+      '</div>';
+
+    var body = document.createElement('div');
+    body.id = '_tbv-body';
+    body.style.cssText = 'flex:1;overflow-y:auto;padding:16px;';
+
+    _panel.appendChild(header);
+    _panel.appendChild(body);
+    document.body.appendChild(_panel);
+
+    document.getElementById('_tbv-refresh').onclick = _refresh;
+    document.getElementById('_tbv-close').onclick   = _close;
+
+    _refresh();
+  }
+
+  function _refresh() {
+    var body = document.getElementById('_tbv-body');
+    if (body) body.innerHTML = _render();
+  }
+
+  function _close() {
+    if (_panel) _panel.style.display = 'none';
+  }
+
+  // ── Public API ───────────────────────────────────────────
+  window._tbvOpen  = _open;
+  window._tbvClose = _close;
+
+  // ── Auto-open on ?_tbv=1 ────────────────────────────────
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', function() { if (_shouldAutoOpen()) _open(); });
+  } else {
+    if (_shouldAutoOpen()) _open();
+  }
 
 })();

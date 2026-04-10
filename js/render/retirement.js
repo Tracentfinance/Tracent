@@ -16,7 +16,7 @@
   window.__TRACENT_MODE_ROUTING__ = true;
 
   /* ── helpers ─────────────────────────────────────────── */
-  function fmt(n){ return '$'+Math.round(Math.abs(n||0)).toLocaleString(); }
+  function fmt(n){ return '$'+Math.round(Math.abs(n||0)).toLocaleString('en-US'); }
   function pct(n){ return n==null?'—':Math.round(n)+'%'; }
   function gv()  { return window.G || {}; }
 
@@ -89,13 +89,13 @@
       return;
     }
 
-    /* ── Life stage detection ── */
+    /* ── Life stage detection — explicit user state overrides BSE inference ── */
     var bse = window.BSE || {};
-    var isInRetirement  = bse.archetype === 'in_retirement';
-    var isPreRetirement = bse.archetype === 'pre_retirement';
+    var isInRetirement  = (g.retirementStage === 'retired')       || (!g.retirementStage && bse.archetype === 'in_retirement');
+    var isPreRetirement = (g.retirementStage === 'near_retirement') || (!g.retirementStage && !isInRetirement && bse.archetype === 'pre_retirement');
 
     var income       = g.income || 0;
-    var takeHome     = g.takeHome || Math.round(income/12*0.72);
+    var takeHome     = g.takeHome || (function(){if(!income)return 0;var s=(window.STATE_TAX&&document.getElementById('state'))?((window.STATE_TAX)[document.getElementById('state').value]||0):0,f=income<=11600?income*0.10:income<=47150?1160+(income-11600)*0.12:income<=100525?5426+(income-47150)*0.22:income<=191950?17169+(income-100525)*0.24:39111+(income-191950)*0.32;f=Math.max(0,f-14600*0.12);var c=Math.min(income,168600)*0.062+income*0.0145;return Math.round(Math.max(income*0.5,income-f-c-income*s)/12)})();
     var efMonths     = parseInt(g.emergency||'0');
     var totalDebt    = (g.ccDebt||0)+(g.carDebt||0)+(g.studentDebt||0)+(g.otherDebt||0);
     var annInt       = Math.round((g.ccDebt||0)*(g.ccRate||21)/100 +
@@ -105,18 +105,29 @@
     var retMatch     = g.retMatch || 'unknown';
     var matchCapture = retMatch === 'full' || retMatch === 'maxed';
 
-    // FV formula: monthly pmt compounded at 7% over horizon years
+    // ── Shared projection validity gate ─────────────────────────────────────
+    // Income alone does NOT qualify. Requires explicit retirement-specific inputs.
+    var hasProjectionData = (g.retireSavings > 0) || (g.retirementSavings > 0)
+      || (g.savingsAmt > 0) || (g.depositSaved > 0)
+      || (g.pensionIncome > 0);
+
+    // FV helper — defined always (cheap); actual math only runs when gate passes
     var _retAge = g.retirementAge || 65;
     var _curAge = g.age || 35;
     var _yrs    = Math.max(10, _retAge - _curAge);
-    function fv(mo){ var r=0.07/12,n=_yrs*12; return Math.round(mo*((Math.pow(1+r,n)-1)/r)); }
+    var _fv     = function(mo){ var r=0.07/12,n=_yrs*12; return Math.round(mo*((Math.pow(1+r,n)-1)/r)); };
 
-    var curRate      = 0.06; // assumed 6% default
-    var curMoContrib = income>0 ? Math.round(income*curRate/12) : 0;
-    var idealMoContrib = income>0 ? Math.round(income*0.15/12) : 0;
-    var fvCurrent    = fv(curMoContrib);
-    var fvIdeal      = fv(idealMoContrib);
-    var fvDebtDrag   = annInt>0 ? fv(Math.round(annInt/12)) : 0;
+    // Debt drag from real debt inputs (not a fabricated projection — no gate needed)
+    var fvDebtDrag = annInt > 0 ? _fv(Math.round(annInt/12)) : 0;
+
+    // Accumulation projections — only computed when projection gate passes
+    var fvCurrent = 0, fvIdeal = 0;
+    if (hasProjectionData && !isInRetirement) {
+      var curMoContrib   = income > 0 ? Math.round(income * 0.06 / 12) : 0;
+      var idealMoContrib = income > 0 ? Math.round(income * 0.15 / 12) : 0;
+      fvCurrent = _fv(curMoContrib);
+      fvIdeal   = _fv(idealMoContrib);
+    }
 
     var trajLabel, trajColor;
     if (isInRetirement) {
@@ -141,8 +152,13 @@
       if (projSub) projSub.textContent = 'Your focus now: income clarity, drawdown awareness, and confidence.';
     } else {
       if (heroLabel) heroLabel.textContent = 'Retirement trajectory';
-      if (projEl)  { projEl.textContent = fmt(fvCurrent); projEl.style.color = trajColor; projEl.style.fontSize = ''; }
-      if (projSub) projSub.textContent = 'At current pace ('+curRate*100+'% of income) \u00b7 7% avg \u00b7 '+_yrs+' years';
+      if (hasProjectionData) {
+        if (projEl)  { projEl.textContent = fmt(fvCurrent); projEl.style.color = trajColor; projEl.style.fontSize = ''; }
+        if (projSub) projSub.textContent = 'Illustrative estimate \u00b7 7% avg \u00b7 '+_yrs+' years';
+      } else {
+        if (projEl)  { projEl.textContent = '\u2014'; projEl.style.color = ''; projEl.style.fontSize = ''; }
+        if (projSub) projSub.textContent = 'Add your retirement details to see a real projection';
+      }
     }
 
     // Contribution grid — life-stage aware
@@ -150,14 +166,14 @@
     if (grid) {
       if (isInRetirement) {
         /* In-retirement: show stability metrics, not accumulation */
-        var monthlyIncome = takeHome || Math.round(income/12*0.72);
+        var monthlyIncome = takeHome || (function(){if(!income)return 0;var s=(window.STATE_TAX&&document.getElementById('state'))?((window.STATE_TAX)[document.getElementById('state').value]||0):0,f=income<=11600?income*0.10:income<=47150?1160+(income-11600)*0.12:income<=100525?5426+(income-47150)*0.22:income<=191950?17169+(income-100525)*0.24:39111+(income-191950)*0.32;f=Math.max(0,f-14600*0.12);var c=Math.min(income,168600)*0.062+income*0.0145;return Math.round(Math.max(income*0.5,income-f-c-income*s)/12)})();
         var monthlyDebtPmt = totalDebt > 0 ? Math.round(totalDebt * 0.02) : 0;
         var netDisposable = monthlyIncome - monthlyDebtPmt;
         grid.innerHTML = [
           '<div class="metric-cell">',
             '<div class="metric-cell-lbl">Monthly income</div>',
             '<div class="metric-cell-val" style="color:var(--green)">'+fmt(monthlyIncome)+'</div>',
-            '<div class="metric-cell-sub">After tax estimate</div>',
+            '<div class="metric-cell-sub">After-tax (estimated)</div>',
           '</div>',
           '<div class="metric-cell">',
             '<div class="metric-cell-lbl">Status</div>',
@@ -190,13 +206,13 @@
           '</div>',
           '<div class="metric-cell">',
             '<div class="metric-cell-lbl">At current rate</div>',
-            '<div class="metric-cell-val">'+fmt(fvCurrent)+'</div>',
-            '<div class="metric-cell-sub">'+(isPreRetirement?'Projected at retirement':_yrs+'-yr projection')+'</div>',
+            '<div class="metric-cell-val">'+(hasProjectionData ? fmt(fvCurrent) : '\u2014')+'</div>',
+            '<div class="metric-cell-sub">'+(hasProjectionData ? 'Illustrative \u00b7 '+(isPreRetirement?'at retirement':_yrs+'-yr') : 'Add retirement details')+'</div>',
           '</div>',
           '<div class="metric-cell">',
             '<div class="metric-cell-lbl">At 15% rate</div>',
-            '<div class="metric-cell-val">'+fmt(fvIdeal)+'</div>',
-            '<div class="metric-cell-sub">'+(isPreRetirement?'If you increase now':'30-yr projection')+'</div>',
+            '<div class="metric-cell-val">'+(hasProjectionData ? fmt(fvIdeal) : '\u2014')+'</div>',
+            '<div class="metric-cell-sub">'+(hasProjectionData ? 'Illustrative \u00b7 '+(isPreRetirement?'if you increase now':'30-yr') : 'Add retirement details')+'</div>',
           '</div>',
         ].join('');
       }
@@ -209,8 +225,10 @@
     if (dragText && annInt>500) {
       if (isInRetirement) {
         dragText.textContent = 'Your debt costs '+fmt(annInt)+'/yr in interest. In retirement, this directly reduces your available income. Clearing it improves your monthly cash position by '+fmt(Math.round(annInt/12))+'.';
-      } else {
+      } else if (hasProjectionData) {
         dragText.textContent = 'Your debt costs '+fmt(annInt)+'/yr in interest. That same capital invested monthly would compound to approximately '+fmt(fvDebtDrag)+' over 30 years. Every year of debt held is retirement wealth foregone.';
+      } else {
+        dragText.textContent = 'Your debt costs '+fmt(annInt)+'/yr in interest. Clearing it before retirement frees cash flow and reduces financial pressure.';
       }
     }
 
@@ -382,7 +400,7 @@
   var gv = function(){ return window.G || {}; };
   var fmt = function(n){
     var v = Math.round(Math.abs(n || 0));
-    return '$' + v.toLocaleString();
+    return '$' + v.toLocaleString('en-US');
   };
   var fmtK = function(n){
     if (!n) return '--';
@@ -400,7 +418,7 @@
 
     /* income inputs */
     var grossIncome = g.income || 0;
-    var takeHome    = g.takeHome || Math.round(grossIncome / 12 * 0.72);
+    var takeHome    = g.takeHome || (function(){var i=grossIncome;if(!i)return 0;var s=(window.STATE_TAX&&document.getElementById('state'))?((window.STATE_TAX)[document.getElementById('state').value]||0):0,f=i<=11600?i*0.10:i<=47150?1160+(i-11600)*0.12:i<=100525?5426+(i-47150)*0.22:i<=191950?17169+(i-100525)*0.24:39111+(i-191950)*0.32;f=Math.max(0,f-14600*0.12);var c=Math.min(i,168600)*0.062+i*0.0145;return Math.round(Math.max(i*0.5,i-f-c-i*s)/12)})();
     var fcf         = g.fcf || 0;
 
     /* savings / portfolio */
@@ -439,13 +457,16 @@
       ? Math.round(portfolio * Math.pow(1.07, yearsTo) + fv(curContrib, yearsTo))
       : fv(curContrib, yearsTo);
 
-    /* income sources */
-    var ssEst        = Math.round(grossIncome > 0 ? Math.min(3822, grossIncome * 0.40 / 12) : 1800);
+    /* income sources — prefer user-entered SS; formula is illustrative fallback only */
+    var ssUserEntered = g.socialSecurityMonthly > 0;
+    var ssEst        = ssUserEntered
+      ? g.socialSecurityMonthly
+      : grossIncome > 0 ? Math.round(Math.min(3822, grossIncome * 0.40 / 12)) : 0;
     var withdrawalMo = Math.round(projPortfolio * 0.04 / 12);   /* 4% rule */
     var totalIncome  = ssEst + pensionMo + withdrawalMo;
 
     /* spending estimate */
-    var monthlySpend = takeHome > 0 ? takeHome : Math.round(grossIncome / 12 * 0.72);
+    var monthlySpend = takeHome > 0 ? takeHome : (function(){var i=grossIncome;if(!i)return 0;var s=(window.STATE_TAX&&document.getElementById('state'))?((window.STATE_TAX)[document.getElementById('state').value]||0):0,f=i<=11600?i*0.10:i<=47150?1160+(i-11600)*0.12:i<=100525?5426+(i-47150)*0.22:i<=191950?17169+(i-100525)*0.24:39111+(i-191950)*0.32;f=Math.max(0,f-14600*0.12);var c=Math.min(i,168600)*0.062+i*0.0145;return Math.round(Math.max(i*0.5,i-f-c-i*s)/12)})();
     var essential    = Math.round(monthlySpend * 0.65);   /* housing, food, utilities, insurance */
     var discretionary= monthlySpend - essential;
     var surplus      = totalIncome - monthlySpend;
@@ -510,7 +531,7 @@
 
     return {
       grossIncome, takeHome, fcf, portfolio, projPortfolio,
-      ssEst, pensionMo, withdrawalMo, totalIncome,
+      ssEst, ssUserEntered, pensionMo, withdrawalMo, totalIncome,
       monthlySpend, essential, discretionary, surplus,
       runwayBase, runwaySpendUp, runwayMktWeak, runwayHC,
       withdrawPace, safeWithdrawMo, stretchRate,
@@ -603,7 +624,7 @@
     /* Income sources */
     html += '<div class="ret-divider-label">Income sources</div>';
     html += '<div class="ret-income-rows">';
-    html += retIncomeRow('Social Security (est.)',  d.ssEst,        'Estimated benefit at full retirement age');
+    html += retIncomeRow('Social Security',  d.ssEst,        d.ssUserEntered ? 'Your entered benefit amount' : 'Illustrative estimate \u00b7 based on income history formula');
     if (d.pensionMo > 0)
       html += retIncomeRow('Pension',               d.pensionMo,    'Monthly pension income');
     html += retIncomeRow('Portfolio withdrawal',    d.withdrawalMo, '4% sustainable withdrawal rate');
@@ -971,6 +992,22 @@
     _activeSection = null;
     var body = $('ret-body');
     if (!body) return;
+    var g = gv();
+    // Truth gate: income alone does NOT qualify — requires explicit retirement-specific inputs
+    var _hasMinInputs = (g.retireSavings > 0) || (g.retirementSavings > 0)
+      || (g.savingsAmt > 0) || (g.depositSaved > 0)
+      || (g.pensionIncome > 0)
+      || (g.retMatch && g.retMatch !== 'none' && g.retMatch !== 'unknown');
+    if (!_hasMinInputs) {
+      body.innerHTML = '<div style="padding:32px 24px;text-align:center;">'
+        + '<div style="font-size:32px;color:rgba(255,255,255,0.25);margin-bottom:16px;">\u2014</div>'
+        + '<div style="font-size:17px;font-weight:600;color:rgba(255,255,255,0.75);margin-bottom:8px;">Add your retirement details</div>'
+        + '<div style="font-size:14px;color:rgba(255,255,255,0.45);line-height:1.5;">Income, savings, or portfolio info is needed to show a real projection.</div>'
+      + '</div>';
+      body.scrollTop = 0;
+      SECTIONS.forEach(function(s){ var btn = $('ret-nav-' + s.id); if (btn) btn.classList.remove('ret-nav-active'); });
+      return;
+    }
     var d = calc();
     try { body.innerHTML = renderLanding(d); } catch(e){ body.innerHTML = '<div style="padding:24px;color:rgba(255,255,255,0.6);">Complete your financial profile to see your retirement picture.</div>'; }
     body.scrollTop = 0;
@@ -990,6 +1027,13 @@
     if (!body) return;
     var sec = SECTIONS.find(function(s){ return s.id === secId; });
     if (!sec) return;
+    // Same projection gate as landing — no calc() without real retirement inputs
+    var _g = gv();
+    var _secHasData = (_g.retireSavings > 0) || (_g.retirementSavings > 0)
+      || (_g.savingsAmt > 0) || (_g.depositSaved > 0)
+      || (_g.pensionIncome > 0)
+      || (_g.retMatch && _g.retMatch !== 'none' && _g.retMatch !== 'unknown');
+    if (!_secHasData) { _repaintLanding(); return; }
     var d = calc();
     try { body.innerHTML = sec.render(d); } catch(e){ body.innerHTML = '<div style="padding:24px;color:rgba(255,255,255,0.6);">Complete your financial profile to see this section.</div>'; }
     body.scrollTop = 0;
@@ -1363,7 +1407,7 @@ window.buildRetireStrategyHTML = function() {
     var v = Number(n||0), a = Math.abs(Math.round(v)), s = v < 0 ? '-$' : '$';
     if (compact && a >= 1e6) return s + (a/1e6).toFixed(1) + 'M';
     if (compact && a >= 1e3) return s + (a/1e3).toFixed(1) + 'k';
-    return s + a.toLocaleString();
+    return s + a.toLocaleString('en-US');
   };
 
   var income       = g.income || 0;
@@ -1373,40 +1417,102 @@ window.buildRetireStrategyHTML = function() {
   var matchCapture = matchStatus === 'full' || matchStatus === 'maxed';
   var totalDebt    = (g.ccDebt||0) + (g.carDebt||0) + (g.studentDebt||0) + (g.otherDebt||0);
   var annualInt    = totalDebt > 0 ? Math.round((g.ccDebt||0)*(g.ccRate||21)/100 + (g.carDebt||0)*0.075 + (g.studentDebt||0)*0.055 + (g.otherDebt||0)*0.09) : 0;
-  var currentContrib  = income > 0 ? Math.round(income * 0.06) : 0;
-  var idealContrib    = Math.round(income * 0.15);
-  var contribGap      = Math.max(0, idealContrib - currentContrib);
-  var monthlyContrib  = Math.round(currentContrib / 12);
-  var monthlyIdeal    = Math.round(idealContrib / 12);
+  var isRetired    = g.retirementStage === 'retired';
+
+  // Retire-specific truth gate — uses ONLY retire-entered fields to avoid cross-mode bleed
+  var hasRealRetireData = (g.retirementSavings > 0) || (g.socialSecurityMonthly > 0) || (g.pensionIncome > 0);
+
+  // Pre-retirement projection gate — income alone does not qualify
+  var hasProjectionData = (g.retireSavings > 0) || (g.retirementSavings > 0)
+    || (g.savingsAmt > 0) || (g.depositSaved > 0)
+    || (g.pensionIncome > 0) || (g.socialSecurityMonthly > 0);
+  var canProject = !isRetired && income > 0 && hasProjectionData;
+
+  // ── Already-retired branch ────────────────────────────────
+  if (isRetired) {
+    // No real retire-specific inputs entered — show placeholder only
+    if (!hasRealRetireData) {
+      return '<div class="tracent-mode-header">' +
+        '<div class="tracent-mode-badge" style="background:rgba(139,92,246,0.10);color:#8B5CF6;">\ud83c\udf05 Retire Mode \u2014 Retirement Stability</div>' +
+        '<div class="tracent-mode-insight" style="margin-top:12px;">' +
+          '<div class="tracent-mode-insight-label">Stability outlook</div>' +
+          '<div class="tracent-mode-insight-text">Reserve picture not yet defined. Add your savings, Social Security, or pension amount to see your stability picture.</div>' +
+        '</div>' +
+      '</div>';
+    }
+    var _efRawR      = g.emergency;
+    var _efProvidedR = _efRawR !== undefined && _efRawR !== null && _efRawR !== '';
+    var efMonths     = _efProvidedR ? parseInt(_efRawR, 10) : null;
+    var incSrc       = g.retirementIncomeSource || null;
+    var incSrcLabel  = { social_security:'Social Security', pension:'Pension income', withdrawals:'Savings / investments', combination:'Multiple sources' }[incSrc] || '\u2014';
+    var stabilityLabel = totalDebt === 0 ? 'Stable' : 'Debt present \u2014 review';
+    var stabilityColor = totalDebt === 0 ? 'var(--green)' : 'var(--amber)';
+    var insight = totalDebt > 0
+      ? 'Your debt costs ' + fmt(annualInt,true) + '/yr in interest. In retirement, this directly reduces available income. Clearing it improves monthly cash flow by ' + fmt(Math.round(annualInt/12)) + '.'
+      : (_efProvidedR && efMonths < 6)
+      ? 'Maintain at least 6 months of liquid savings as a buffer. This protects your portfolio from forced drawdowns during unexpected costs.'
+      : 'Your position is stable. Consistent withdrawal discipline and an annual review are the most important things now.';
+
+    return '<div class="tracent-mode-header">' +
+      '<div class="tracent-mode-badge" style="background:rgba(139,92,246,0.10);color:#8B5CF6;">\ud83c\udf05 Retire Mode \u2014 Retirement Stability</div>' +
+      '<div class="tracent-mode-grid-3">' +
+        '<div class="tracent-mode-cell"><div class="tracent-mode-cell-label">Income source</div><div class="tracent-mode-cell-value">' + incSrcLabel + '</div><div class="tracent-mode-cell-note">Primary retirement income</div></div>' +
+        '<div class="tracent-mode-cell"><div class="tracent-mode-cell-label">Position</div><div class="tracent-mode-cell-value" style="color:' + stabilityColor + '">' + stabilityLabel + '</div><div class="tracent-mode-cell-note">Overall stability signal</div></div>' +
+        '<div class="tracent-mode-cell"><div class="tracent-mode-cell-label">Emergency buffer</div><div class="tracent-mode-cell-value" style="color:' + (!_efProvidedR ? 'var(--gray-3)' : efMonths>=6?'var(--green)':efMonths>=3?'var(--amber)':'var(--red)') + '">' + (!_efProvidedR ? '\u2014' : efMonths + ' mo') + '</div><div class="tracent-mode-cell-note">' + (!_efProvidedR ? 'Not provided' : efMonths>=6?'Strong buffer':'Build to 6+ months') + '</div></div>' +
+        '<div class="tracent-mode-cell"><div class="tracent-mode-cell-label">Debt drag (annual)</div><div class="tracent-mode-cell-value" style="color:' + (annualInt>0?'var(--red)':'var(--green)') + '">' + fmt(annualInt,true) + '</div><div class="tracent-mode-cell-note">' + (annualInt>0?'Reduces monthly income':'No debt drag') + '</div></div>' +
+      '</div>' +
+      '<div class="tracent-mode-insight"><div class="tracent-mode-insight-label">\ud83d\udca1 What matters most now</div><div class="tracent-mode-insight-text">' + insight + '</div></div>' +
+    '</div>';
+  }
+
+  // ── Pre-retirement branch ─────────────────────────────────
+  var currentContrib = income > 0 ? Math.round(income * 0.06) : 0;
+  var idealContrib   = income > 0 ? Math.round(income * 0.15) : 0;
+  var contribGap     = Math.max(0, idealContrib - currentContrib);
+  var monthlyContrib = Math.round(currentContrib / 12);
+  var monthlyIdeal   = Math.round(idealContrib / 12);
 
   function fv(monthlyPmt, years) { var r = 0.07/12, n = years*12; return Math.round(monthlyPmt * ((Math.pow(1+r,n)-1)/r)); }
-  var fvCurrent  = fv(monthlyContrib, 30);
-  var fvIdeal    = fv(monthlyIdeal, 30);
-  var debtDragFV = annualInt > 0 ? fv(Math.round(annualInt/12), 30) : 0;
+  var fvCurrent  = canProject ? fv(monthlyContrib, 30) : 0;
+  var fvIdeal    = canProject ? fv(monthlyIdeal, 30) : 0;
+  var debtDragFV = annualInt > 0 && canProject ? fv(Math.round(annualInt/12), 30) : 0;
 
   var futureImpact = (function() {
-    if (!matchCapture && matchStatus !== 'none') return 'Your employer match is not fully captured. Over 30 years at 7%, that extra ' + fmt(Math.round(monthlyContrib*0.5)) + '/mo could compound to an additional ' + fmt(fv(Math.round(monthlyContrib*0.5),30),true) + '.';
-    if (totalDebt > 0 && annualInt > 500) return 'Your debt costs ' + fmt(annualInt,true) + '/yr in interest. That same amount invested monthly would compound to ' + fmt(debtDragFV,true) + ' over 30 years.';
-    if (contribGap > 0) return 'At your current rate, you\'re projected to reach ~' + fmt(fvCurrent,true) + ' in 30 years. At the 15% ideal rate, that grows to ~' + fmt(fvIdeal,true) + '.';
+    if (!matchCapture && matchStatus !== 'none') {
+      var matchExtra = canProject ? ' Over 30 years at 7%, capturing it fully could add significantly to your projected balance.' : '';
+      return 'Your employer match is not fully captured. That\'s an immediate 50\u2013100% guaranteed return.' + matchExtra;
+    }
+    if (totalDebt > 0 && annualInt > 500) return 'Your debt costs ' + fmt(annualInt,true) + '/yr in interest.' + (debtDragFV > 0 ? ' That same capital invested monthly would compound to ' + fmt(debtDragFV,true) + ' over 30 years.' : ' Clearing it frees capital for compounding.');
+    if (canProject && contribGap > 0) return 'At your current rate, you\'re projected to reach ~' + fmt(fvCurrent,true) + ' in 30 years. At the 15% ideal rate, that grows to ~' + fmt(fvIdeal,true) + '.';
+    if (!canProject && income > 0) return 'Add your retirement savings or portfolio balance to see a projection of where your plan is heading.';
+    if (income === 0) return 'Add your income and retirement savings to see how your plan is tracking.';
     return 'Your retirement trajectory looks solid. The next lever is consistency over time.';
   })();
 
   var trajectoryLabel = matchCapture && !totalDebt ? 'On track' : matchCapture ? 'Debt drag present' : 'Below ideal pace';
   var trajectoryColor = matchCapture && !totalDebt ? 'var(--green)' : matchCapture ? 'var(--amber)' : 'var(--red)';
 
+  var projCell = canProject
+    ? '<div class="tracent-mode-cell"><div class="tracent-mode-cell-label">Est. 30-yr projection</div><div class="tracent-mode-cell-value">' + fmt(fvCurrent,true) + '</div><div class="tracent-mode-cell-note">At current pace \u00b7 7% avg \u00b7 illustrative</div></div>'
+    : '<div class="tracent-mode-cell"><div class="tracent-mode-cell-label">Est. 30-yr projection</div><div class="tracent-mode-cell-value">\u2014</div><div class="tracent-mode-cell-note">Add retirement savings to project</div></div>';
+
+  var contribBars = income > 0
+    ? '<div class="tracent-retire-compare">' +
+        '<div class="tracent-mode-section-label">Contribution comparison</div>' +
+        '<div class="tracent-retire-bar-row"><span>Current rate</span><div class="tracent-retire-bar-track"><div class="tracent-retire-bar-fill" style="width:' + Math.min(100, Math.round((currentContrib/Math.max(idealContrib,1))*100)) + '%;background:var(--teal)"></div></div><span>' + fmt(currentContrib,true) + '/yr</span></div>' +
+        '<div class="tracent-retire-bar-row"><span>Ideal (15%)</span><div class="tracent-retire-bar-track"><div class="tracent-retire-bar-fill" style="width:100%;background:var(--green)"></div></div><span>' + fmt(idealContrib,true) + '/yr</span></div>' +
+      '</div>'
+    : '';
+
   return '<div class="tracent-mode-header">' +
     '<div class="tracent-mode-badge" style="background:rgba(139,92,246,0.10);color:#8B5CF6;">\ud83c\udf05 Retire Mode \u2014 Long-Horizon Security</div>' +
     '<div class="tracent-mode-grid-3">' +
       '<div class="tracent-mode-cell"><div class="tracent-mode-cell-label">Trajectory signal</div><div class="tracent-mode-cell-value" style="color:' + trajectoryColor + '">' + trajectoryLabel + '</div><div class="tracent-mode-cell-note">Based on match + debt position</div></div>' +
-      '<div class="tracent-mode-cell"><div class="tracent-mode-cell-label">Est. 30-yr projection</div><div class="tracent-mode-cell-value">' + fmt(fvCurrent,true) + '</div><div class="tracent-mode-cell-note">At current pace \u00b7 7% avg</div></div>' +
+      projCell +
       '<div class="tracent-mode-cell"><div class="tracent-mode-cell-label">Employer match</div><div class="tracent-mode-cell-value" style="color:' + (matchCapture ? 'var(--green)' : 'var(--amber)') + '">' + matchStatus + '</div><div class="tracent-mode-cell-note">' + (matchCapture ? 'Fully captured' : 'Not fully captured') + '</div></div>' +
       '<div class="tracent-mode-cell"><div class="tracent-mode-cell-label">Debt drag (annual)</div><div class="tracent-mode-cell-value" style="color:' + (annualInt > 0 ? 'var(--red)' : 'var(--green)') + '">' + fmt(annualInt,true) + '</div><div class="tracent-mode-cell-note">' + (annualInt > 0 ? 'Competing with contributions' : 'No debt drag') + '</div></div>' +
     '</div>' +
-    '<div class="tracent-retire-compare">' +
-      '<div class="tracent-mode-section-label">Contribution comparison</div>' +
-      '<div class="tracent-retire-bar-row"><span>Current rate</span><div class="tracent-retire-bar-track"><div class="tracent-retire-bar-fill" style="width:' + Math.min(100, Math.round((currentContrib/Math.max(idealContrib,1))*100)) + '%;background:var(--teal)"></div></div><span>' + fmt(currentContrib,true) + '/yr</span></div>' +
-      '<div class="tracent-retire-bar-row"><span>Ideal (15%)</span><div class="tracent-retire-bar-track"><div class="tracent-retire-bar-fill" style="width:100%;background:var(--green)"></div></div><span>' + fmt(idealContrib,true) + '/yr</span></div>' +
-    '</div>' +
+    contribBars +
     '<div class="tracent-mode-insight"><div class="tracent-mode-insight-label">\ud83d\udca1 Future impact</div><div class="tracent-mode-insight-text">' + futureImpact + '</div></div>' +
   '</div>';
 };

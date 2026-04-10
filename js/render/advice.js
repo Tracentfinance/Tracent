@@ -119,7 +119,9 @@
     var g     = window.G || {};
     var score = g.score  || 0;
     var fcf   = g.fcf    || 0;
-    var ef    = parseInt(g.emergency||'0');
+    var _efRaw    = g.emergency;
+    var _efProvided = _efRaw !== undefined && _efRaw !== null && _efRaw !== '';
+    var ef    = _efProvided ? parseInt(_efRaw, 10) : null;
     var cc    = g.ccDebt || 0;
     var hist  = ps.scoreHistory;
 
@@ -130,11 +132,11 @@
     }
 
     var label;
-    if (fcf < 0 || (cc > 5000 && ef === 0)) {
+    if (fcf < 0 || (cc > 5000 && _efProvided && ef === 0)) {
       label = 'under_pressure';
     } else if (trend > 3 || (score >= 55 && ps.checkinCount >= 1)) {
       label = trend > 3 ? 'improving' : 'stabilizing';
-    } else if (score >= 70 && ef >= 3 && cc === 0) {
+    } else if (score >= 70 && (!_efProvided || ef >= 3) && cc === 0) {
       label = 'optimizing';
     } else if (score >= 55) {
       label = 'stabilizing';
@@ -765,11 +767,11 @@
       'The user has a Tracent planning score of '+(ctx.scoreFinal?ctx.score+'/100 ('+ctx.band+')':'not yet calculated')+'.\n'+
       'Active mode: '+ctx.activeMode+'.\n'+
       factorLines+'.\n'+
-      'Free cash flow: $'+Math.round(ctx.fcf)+'/mo. '+
-      'Take-home: $'+Math.round(ctx.takeHome)+'/mo. '+
+      'Free cash flow: $'+Math.round(ctx.fcf).toLocaleString()+'/mo. '+
+      'Take-home: $'+Math.round(ctx.takeHome).toLocaleString()+'/mo. '+
       'Emergency fund: '+ctx.efMonths+' months. '+
-      'Credit card debt: $'+Math.round(ctx.ccDebt)+'. '+
-      'Total non-housing debt: $'+Math.round(ctx.totalDebt)+'. '+
+      'Credit card debt: $'+Math.round(ctx.ccDebt).toLocaleString()+'. '+
+      'Total non-housing debt: $'+Math.round(ctx.totalDebt).toLocaleString()+'. '+
       'DTI: '+ctx.dti+'%. '+
       'Behavioral pattern: '+ctx.archetype+'. '+
       (ctx.nbmTitle ? 'Top recommended action: '+ctx.nbmTitle+'. Why: '+ctx.nbmWhy+'. ' : '')+

@@ -51,7 +51,9 @@
     'ccDebt','ccRate','studentDebt','carDebt','carPayment','otherDebt','otherPayment',
     'emergency','retMatch','homePrice','depositSaved','currentRent','purchasePrice',
     'housingType','credit','savingsAmt','ageRange','primaryIntent',
-    'firstname','goal'
+    'firstname','goal','retirementStage','goalMode',
+    'retirementIncomeSource','retirementSavings','socialSecurityMonthly','pensionIncome',
+    'homeIncomeMode','homeHouseholdTakeHome'
   ];
 
   function _extractInputs() {

@@ -91,8 +91,12 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 16px;
+  font-size: 0; /* hide emoji, icon via background-image */
   -webkit-tap-highlight-color: transparent;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='15' height='15' viewBox='0 0 15 15'%3E%3Cpath d='M2 4.5h11M5 4.5V3m0 1.5V6M2 7.5h11M9 7.5V6m0 1.5V9M2 10.5h11M5 10.5V9m0 1.5V12' stroke='rgba(255,255,255,0.72)' stroke-width='1.25' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 15px 15px;
 }
 
 /* Score hero — collapses on non-home tabs */
@@ -318,15 +322,27 @@
 }
 
 /* ══════════════════════════════════════════════════════════
-   HOME TAB
+   TRACENT HERO BASE — shared dark gradient card pattern
+   Used by: .readiness-card, .goal-hero, .debt-countdown,
+            .nw-hero, .career-verdict, .v21-premium-teaser
 ══════════════════════════════════════════════════════════ */
-.readiness-card {
+.readiness-card,
+.goal-hero,
+.debt-countdown,
+.nw-hero,
+.career-verdict {
   background: linear-gradient(160deg, var(--navy-mid), var(--navy));
   border-radius: var(--r-lg);
   padding: var(--s3);
   margin-bottom: var(--s3);
   position: relative;
   overflow: hidden;
+}
+
+/* ══════════════════════════════════════════════════════════
+   HOME TAB
+══════════════════════════════════════════════════════════ */
+.readiness-card {
   cursor: pointer;
   transition: transform var(--fast) var(--spring);
   -webkit-tap-highlight-color: transparent;
@@ -442,11 +458,10 @@
   border-bottom: 1px solid var(--gray-1);
 }
 .nbm-title {
-  font-size: 13px;
+  font-size: 11px;
   font-weight: 700;
-  color: var(--navy);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
+  color: var(--gray-3);
+  letter-spacing: 0.3px;
 }
 .nbm-body { padding: 18px 20px; }
 .nbm-item {
@@ -489,14 +504,7 @@
 /* ══════════════════════════════════════════════════════════
    ADVICE TAB
 ══════════════════════════════════════════════════════════ */
-.goal-hero {
-  background: linear-gradient(160deg, var(--navy-mid), var(--navy));
-  border-radius: var(--r-lg);
-  padding: var(--s3);
-  margin-bottom: var(--s3);
-  position: relative;
-  overflow: hidden;
-}
+.goal-hero { /* shared styles via .tracent-hero base */ }
 .goal-hero::before {
   content: '';
   position: absolute;
@@ -584,7 +592,7 @@
 .rec-locked {
   background: var(--gray-1);
   border-radius: var(--r-md);
-  border: 1.5px dashed var(--gray-2);
+  border: 1px solid var(--gray-2);
   padding: 18px 20px;
   margin-bottom: 12px;
   text-align: center;
@@ -709,15 +717,9 @@
    DEBT TAB
 ══════════════════════════════════════════════════════════ */
 .debt-countdown {
-  background: linear-gradient(160deg, var(--navy-mid), var(--navy));
-  border-radius: var(--r-lg);
-  padding: var(--s3);
-  margin-bottom: var(--s3);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  position: relative;
-  overflow: hidden;
 }
 .debt-countdown::before {
   content: '';
@@ -848,14 +850,7 @@
 }
 
 /* Net worth */
-.nw-hero {
-  background: linear-gradient(160deg, var(--navy-mid), var(--navy));
-  border-radius: var(--r-lg);
-  padding: var(--s3);
-  margin-bottom: var(--s3);
-  position: relative;
-  overflow: hidden;
-}
+.nw-hero { /* shared styles via tracent-hero base */ }
 .nw-hero::before {
   content: '';
   position: absolute;
@@ -901,14 +896,7 @@
 .nw-bar-val { font-family: var(--font-display); font-size: 20px; color: var(--navy); margin-bottom: 10px; }
 
 /* Career */
-.career-verdict {
-  background: linear-gradient(160deg, var(--navy-mid), var(--navy));
-  border-radius: var(--r-lg);
-  padding: var(--s3);
-  margin-bottom: 12px;
-  position: relative;
-  overflow: hidden;
-}
+.career-verdict { margin-bottom: 12px; } /* overrides base margin-bottom: var(--s3) */
 .career-verdict::before {
   content: '';
   position: absolute;
@@ -1039,7 +1027,7 @@
 .v21-range-num {
   font-family: var(--font-display);
   font-size: 56px; color: var(--white); line-height: 1;
-  margin-bottom: 12px; letter-spacing: -3px;
+  margin-bottom: 12px; letter-spacing: -1.5px;
 }
 .v21-band-pill {
   display: inline-flex; align-items: center; gap: 8px;
@@ -1065,10 +1053,12 @@
 /* ── Archetype Badge ── */
 .v21-archetype-badge {
   display: inline-flex; align-items: center; gap: 6px;
-  padding: 5px 12px; border-radius: var(--r-pill);
-  background: rgba(0,168,232,0.08);
-  border: 1px solid rgba(0,168,232,0.15);
-  font-size: 11px; font-weight: 700; color: var(--teal); margin-bottom: 16px;
+  padding: 6px 14px; border-radius: var(--r-pill);
+  background: rgba(0,119,182,0.07);
+  border: 1.5px solid rgba(0,119,182,0.22);
+  font-size: 12px; font-weight: 700; color: var(--teal);
+  letter-spacing: 0.2px;
+  margin-bottom: 14px;
 }
 
 /* ── Mode Rail ── */
@@ -1126,7 +1116,7 @@
   font-family: var(--font-display); font-size: 20px;
   color: var(--navy); line-height: 1.2; margin-bottom: 8px;
 }
-.v21-nbm-desc { font-size: 13px; color: var(--gray-4); line-height: 1.7; margin-bottom: 16px; }
+.v21-nbm-desc { font-size: 13px; color: var(--gray-4); line-height: 1.55; margin-bottom: 16px; }
 .v21-nbm-meta {
   display: grid; grid-template-columns: repeat(3,1fr);
   gap: 8px; margin-bottom: 16px;
@@ -1134,7 +1124,7 @@
 .v21-nbm-meta-cell { background: var(--gray-1); border-radius: var(--r-sm); padding: 12px; text-align: center; }
 .v21-nbm-meta-val { font-family: var(--font-display); font-size: 17px; color: var(--navy); line-height: 1; margin-bottom: 3px; }
 .v21-nbm-meta-lbl { font-size: 10px; font-weight: 700; color: var(--gray-3); text-transform: uppercase; letter-spacing: 0.3px; }
-.v21-nbm-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.v21-nbm-actions { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
 .v21-nbm-btn {
   padding: 10px 14px; background: var(--sky-dim);
   border: 1px solid var(--sky-border); color: var(--teal);
@@ -1142,6 +1132,12 @@
   font-size: 12px; font-weight: 700; cursor: pointer;
   -webkit-tap-highlight-color: transparent;
   transition: background var(--fast);
+}
+/* Secondary actions — text-link weight, not button weight */
+#v21-nbm-why-btn, #v21-nbm-easier-btn {
+  background: none; border: none; padding: 6px 4px;
+  font-size: 11px; font-weight: 500; color: rgba(255,255,255,0.30);
+  letter-spacing: 0; text-decoration: underline; text-decoration-color: rgba(255,255,255,0.15);
 }
 
 /* ── Band Ring Glows ── */
@@ -1249,6 +1245,20 @@
 /* Refine form field-group spacing */
 #v21-refine-form .field-group { margin-bottom: 14px; }
 #v21-refine-form .field-hint { font-size: 11px; color: var(--gray-4); margin-top: 4px; line-height: 1.4; }
+/* Radio option labels (housing-status + household income clarifier) */
+.v21-radio-opt {
+  display: flex; align-items: center;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1.5px solid var(--gray-2);
+  font-size: 13px; font-weight: 500; color: var(--navy);
+  background: white;
+  transition: border-color 0.15s, background 0.15s;
+}
+.v21-radio-opt:has(input:checked) {
+  border-color: var(--teal);
+  background: var(--teal-dim);
+}
 
 /* V21 home header pulse for "alive" feel */
 @keyframes v21pulse {
@@ -1307,6 +1317,9 @@
   justify-content: center;
   min-height: 72vh;
   position: relative;
+  background: var(--navy);
+  border-radius: 20px;
+  overflow: hidden;
 }
 
 /* Radial glow — purely decorative, deep navy warmth, very low opacity */
@@ -1358,13 +1371,13 @@
   transform: translateY(0);
 }
 
-/* Icon mark — navy inset, no bright glow */
+/* Icon mark — subtle inset ring on dark navy */
 .v21-align-mark {
   width: 52px;
   height: 52px;
   border-radius: 50%;
-  background: rgba(0, 80, 140, 0.22);
-  border: 1.5px solid rgba(255,255,255,0.10);
+  background: rgba(0, 100, 190, 0.32);
+  border: 1.5px solid rgba(255,255,255,0.18);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1413,7 +1426,7 @@
 .v21-align-final {
   font-size: 13px;
   font-weight: 400;
-  color: rgba(255,255,255,0.45);
+  color: rgba(255,255,255,0.58);
   line-height: 1.60;
   max-width: 264px;
   margin-bottom: 0;
@@ -1460,6 +1473,214 @@
   border-radius: var(--r-sm);
   margin-bottom: 14px;
   display: none;
+}
+
+
+/* ═══════════════════════════════════════════════════════════
+   BSE FOCUS ACTION CARD — structural CSS
+   Classes emitted by js/render/home.js renderFocusAction()
+   Previously had zero structural styling — fully unstyled.
+═══════════════════════════════════════════════════════════ */
+
+.bse-focus-wrap {
+  padding: 4px 0 8px;
+}
+
+.bse-focus-eyebrow {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--sky);
+  margin-bottom: 10px;
+  opacity: 0.85;
+}
+
+.bse-action-card {
+  background: linear-gradient(160deg, #0d1b2a 0%, #1a2f45 100%);
+  border-radius: var(--r-md);
+  padding: 18px 16px 16px;
+  margin-bottom: 12px;
+  position: relative;
+  overflow: hidden;
+}
+.bse-action-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse 80% 60% at 95% 5%, rgba(0,168,232,0.10) 0%, transparent 65%);
+  pointer-events: none;
+}
+
+.bse-action-label {
+  font-family: var(--font-display);
+  font-size: 19px;
+  color: #fff;
+  line-height: 1.3;
+  margin-bottom: 10px;
+  position: relative;
+}
+
+.bse-tone-pre {
+  font-family: var(--font-body);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  color: rgba(0,168,232,0.75);
+  display: block;
+  margin-bottom: 4px;
+}
+
+.bse-action-why {
+  font-size: 13px;
+  color: rgba(255,255,255,0.55);
+  line-height: 1.6;
+  margin-bottom: 14px;
+  position: relative;
+}
+
+.bse-action-cta {
+  display: inline-block;
+  background: linear-gradient(135deg, var(--teal) 0%, var(--sky) 100%);
+  color: #fff;
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 700;
+  padding: 10px 20px;
+  border-radius: var(--r-pill);
+  border: none;
+  cursor: pointer;
+  position: relative;
+  transition: opacity var(--tr-fast), transform var(--tr-fast) var(--tr-ease-emphasis),
+              box-shadow var(--tr-fast);
+  box-shadow: 0 2px 12px rgba(0,119,182,0.30);
+}
+.bse-action-cta:active {
+  opacity: 0.88;
+  transform: scale(0.97);
+  box-shadow: 0 1px 6px rgba(0,119,182,0.18);
+}
+
+.bse-proof {
+  font-size: 12px;
+  color: var(--gray-4);
+  line-height: 1.5;
+  margin-bottom: 8px;
+  padding-left: 2px;
+}
+
+.bse-sig {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--green);
+  letter-spacing: 0.2px;
+  padding-left: 2px;
+}
+
+.bse-score-tap {
+  font-size: 12px;
+  color: var(--gray-4);
+  margin-top: 10px;
+  cursor: pointer;
+  line-height: 1.5;
+}
+.bse-score-note {
+  font-weight: 400;
+  color: var(--gray-3);
+}
+
+.bse-expand-link {
+  display: block;
+  width: 100%;
+  margin-top: 12px;
+  background: none;
+  border: none;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--teal);
+  text-align: center;
+  cursor: pointer;
+  padding: 6px 0;
+  opacity: 0.8;
+  transition: opacity var(--tr-fast);
+}
+.bse-expand-link:active { opacity: 1; }
+
+
+/* ═══════════════════════════════════════════════════════════
+   TAB ENTRY ANIMATION
+   Smooth fade-up on each tab activation via switchTab()
+═══════════════════════════════════════════════════════════ */
+
+.tab-panel.active {
+  animation: fadeUp 0.22s var(--tr-ease-out-soft) both;
+}
+
+
+/* ═══════════════════════════════════════════════════════════
+   HOUSE TAB — dark theme continuity
+   The hero card (#house-header) is dark navy.
+   The rate/refi section below it must not jar with a white card.
+═══════════════════════════════════════════════════════════ */
+
+#tab-house {
+  background: var(--navy-deep);
+}
+
+/* Section label rendered by house.js _sectionLabel() — no class, uses inline styles.
+   Cards beneath the house header get a dark treatment. */
+#tab-house .card,
+#tab-house .card-body {
+  background: #0f1e2e;
+  border: 1px solid rgba(255,255,255,0.07);
+  color: rgba(255,255,255,0.88);
+}
+
+#tab-house .card h3,
+#tab-house .card .section-title {
+  color: rgba(255,255,255,0.55);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+/* Slider track and thumb — light on dark */
+#tab-house input[type="range"] {
+  accent-color: var(--sky);
+}
+
+/* Metric values inside the house tab */
+#tab-house .metric-val,
+#tab-house .sim-rate-display {
+  color: #fff;
+}
+#tab-house .metric-label {
+  color: rgba(255,255,255,0.45);
+}
+
+/* Refi signal band and rate highlights */
+#tab-house .refi-highlight,
+#tab-house .rate-delta-positive { color: var(--green); }
+#tab-house .rate-delta-negative { color: var(--red); }
+
+/* Override inline-styled elements inside the dark house tab */
+#tab-house #sim-rate-display { color: #fff !important; }
+#tab-house #rate-preset-today { color: rgba(255,255,255,0.45) !important; }
+#tab-house #sim-rec-text { color: rgba(255,255,255,0.60) !important; }
+#tab-house #sim-owner-view .card span { color: rgba(255,255,255,0.40) !important; }
+#tab-house #sim-result-savings { color: var(--green) !important; }
+
+
+/* ═══════════════════════════════════════════════════════════
+   V21 RADIO OPTION — JS fallback for :has() checked state
+   Applied via JS class toggle for WebView <iOS 15.4 compat
+═══════════════════════════════════════════════════════════ */
+
+.v21-radio-opt.is-checked {
+  border-color: var(--teal);
+  background: var(--teal-dim);
 }
 
 

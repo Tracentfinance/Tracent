@@ -362,7 +362,7 @@ function calcOwnerMortgage() {
 
   // PMI
   const hasPMI = dpPct < 20 && ltv > 80;
-  const pmiMonthly = hasPMI ? Math.round(estimatedBalance * 0.0085 / 12) : 0;
+  const pmiMonthly = hasPMI ? Math.round(estimatedBalance * 0.0055 / 12) : 0;
 
   // Apply split factor if user shares costs with partner
   var splitFactor = window._splitCosts ? 0.5 : 1.0;
@@ -378,7 +378,7 @@ function calcOwnerMortgage() {
   // Update preview boxes
   const set = (id, val) => { const e = document.getElementById(id); if (e) e.textContent = val; };
   set('calc-pi', '$' + displayPI.toLocaleString() + (window._splitCosts ? ' (your half)' : ''));
-  set('calc-balance', '$' + Math.round(estimatedBalance / 1000) + 'K');
+  set('calc-balance', '$' + Math.round(estimatedBalance / 1000).toLocaleString() + 'K');
 
   const ltvEl = document.getElementById('calc-ltv');
   if (ltvEl) {
@@ -390,11 +390,11 @@ function calcOwnerMortgage() {
   const pmiEl = document.getElementById('calc-pmi');
   const pmiNote = document.getElementById('calc-pmi-note');
   if (hasPMI) {
-    if (pmiEl) { pmiEl.textContent = '$' + pmiMonthly + '/mo'; pmiEl.style.color = 'var(--red)'; }
+    if (pmiEl) { pmiEl.textContent = '$' + pmiMonthly.toLocaleString() + '/mo'; pmiEl.style.color = 'var(--red)'; }
     if (pmiBox) pmiBox.style.background = 'rgba(230,57,70,0.06)';
     if (pmiNote) {
       pmiNote.style.display = 'block';
-      pmiNote.textContent = `⚠️ PMI is costing you $${pmiMonthly}/mo because your down payment was under 20%. You need ${equityPct < 20 ? (20 - equityPct) + '% more equity to remove it' : 'an appraisal — you may qualify to cancel now'}. Ask your lender once you hit 20% equity.`;
+      pmiNote.textContent = `PMI is costing you $${pmiMonthly.toLocaleString()}/mo because your down payment was under 20%. You need ${equityPct < 20 ? (20 - equityPct) + '% more equity to remove it' : 'an appraisal — you may qualify to cancel now'}. Ask your lender once you hit 20% equity.`;
     }
   } else {
     if (pmiEl) { pmiEl.textContent = 'None ✅'; pmiEl.style.color = 'var(--green)'; }
@@ -459,7 +459,7 @@ function updateBuyingEstimates() {
   // PMI
   let pmi = 0;
   if (dpPct < 20 && loanType === 'conventional') pmi = Math.round(loan * 0.01 / 12);
-  if (loanType === 'fha') pmi = Math.round(loan * 0.0085 / 12); // FHA MIP
+  if (loanType === 'fha') pmi = Math.round(loan * 0.0055 / 12); // FHA MIP (current rate)
 
   // Property tax estimate from state
   const propTaxRate = STATE_PROP_TAX[state] || 0.012;
@@ -549,7 +549,16 @@ function _0x5d74b48() {
   if (!card || !G.score) return;
 
   const monthlyIncome = G.income ? G.income / 12 : (G.takeHome || 0);
-  const takeHome      = G.takeHome || monthlyIncome * 0.72;
+  const takeHome      = G.takeHome || (function() {
+    // Estimate take-home using STATE_TAX table instead of flat 0.72
+    var inc = G.income || 0;
+    if (inc === 0) return 0;
+    var st = STATE_TAX[document.getElementById('state')?.value || 'NY'] || 0;
+    var fed = inc<=11600?inc*0.10:inc<=47150?1160+(inc-11600)*0.12:inc<=100525?5426+(inc-47150)*0.22:inc<=191950?17169+(inc-100525)*0.24:39111+(inc-191950)*0.32;
+    fed = Math.max(0, fed - 14600*0.12);
+    var fica = Math.min(inc,168600)*0.062 + inc*0.0145;
+    return Math.round(Math.max(inc*0.5, inc - fed - fica - inc*st) / 12);
+  })();
   const dti           = G.dti || 0;
   const creditTier    = G.creditScore || 'unknown';
   const ef            = parseInt(G.emergencyMonths) || 0;
@@ -751,12 +760,15 @@ function _0xb70f5a4(dti, fcf, credit, emergency, ccDebt, ccRate, housingType, to
   const titleEl = document.getElementById('score-title');
   if (titleEl) titleEl.textContent = title;
   const subEl = document.getElementById('score-sub');
-  if (subEl) subEl.textContent = sub;
+  if (subEl) {
+    var completeness = G.profileCompleteness || 0;
+    subEl.textContent = completeness < 80 ? 'Estimated · ' + sub : sub;
+  }
   const disclaimEl = document.getElementById('score-disclaimer');
   if (disclaimEl) disclaimEl.style.display = 'block';
   const badgeEl = document.getElementById('score-badge');
   if (badgeEl) {
-    badgeEl.textContent = badge;
+    badgeEl.textContent = (G.profileCompleteness || 0) < 80 ? 'EST.' : badge;
     badgeEl.style.background = badgeColor;
     badgeEl.style.borderColor = arcColor;
     badgeEl.style.color = arcColor;
@@ -864,7 +876,7 @@ function _0x82f61a0() {
 
   // Take-home: use manual if entered, else estimate
   let monthlyIncome;
-  if (takeHomeInput > 100 && takeHomeInput < income) {
+  if (takeHomeInput > 100 && (income === 0 || takeHomeInput < income)) {
     monthlyIncome = takeHomeInput;
   } else {
     // Auto-estimate using state tax
@@ -965,6 +977,12 @@ function _0x82f61a0() {
   const totalDTIPayments = allHousingPayments + totalNonHousingPayments;
   const dtiForScore = monthlyIncome > 0 ? Math.round((totalDTIPayments / monthlyIncome) * 100) : 0;
   G.dti = dtiForScore;
+
+  // Subtract essential monthly spend from FCF if user has provided it
+  if (G.essentialMonthlySpend > 0 && G.fcf != null) {
+    G.fcf = G.fcf - G.essentialMonthlySpend;
+  }
+
   _0xb70f5a4(dtiForScore, (G.fcf != null ? G.fcf : 0), credit, emergency, ccDebt, ccRate, housingType, totalNonHousingDebt, monthlyIncome);
 
   // ── [V21] Score history — deterministic delta for monthly review ──
@@ -1165,7 +1183,7 @@ function _0x8c997eb(name, monthlyIncome, expenses, nonHousingPayments, ccDebt, c
   // PMI
   let pmi = 0;
   if (depositPct < 20 && loanType === 'conventional') pmi = Math.round(loanAmount * 0.01 / 12);
-  if (loanType === 'fha') pmi = Math.round(loanAmount * 0.0085 / 12);
+  if (loanType === 'fha') pmi = Math.round(loanAmount * 0.0055 / 12); // FHA MIP (current rate)
   if (loanType === 'va' || loanType === 'usda') pmi = 0;
 
   // Property tax & insurance
@@ -1193,7 +1211,7 @@ function _0x8c997eb(name, monthlyIncome, expenses, nonHousingPayments, ccDebt, c
 
   const _sb = (id, val) => { const e = document.getElementById(id); if (e) e.textContent = val; };
   _sb('p-balance', _0x4f66a67(homePrice) + ' (target)');
-  _sb('p-rate', marketRate.toFixed(2) + '% (credit-adjusted)');
+  _sb('p-rate', marketRate.toFixed(2) + '% (credit-adjusted, Mar 2026)');
   _sb('p-payment', _0x4f66a67(totalPITI) + '/mo PITI');
   _sb('p-dti', dtiAfterBuying + '% (after buying)');
   _sb('p-fcf', _0x4f66a67(fcfNow) + ' (now) / ' + _0x4f66a67(fcfAfterBuying) + ' (after)');
@@ -1288,7 +1306,7 @@ function _0xe1060a7(name, monthlyIncome, expenses, nonHousingPayments, ccDebt, c
 
   const _sc = (id, val) => { const e = document.getElementById(id); if (e) e.textContent = val; };
   _sc('p-balance', _0x4f66a67(newLoanAmount) + ' (new balance)');
-  _sc('p-rate', newRate.toFixed(2) + '%');
+  _sc('p-rate', newRate.toFixed(2) + '% (Mar 2026)');
   _sc('p-payment', _0x4f66a67(newPITI) + '/mo PITI');
   _sc('p-dti', newDTI + '%');
   _sc('p-fcf', _0x4f66a67(Math.max(0, fcf)));
@@ -1357,7 +1375,7 @@ function _0xc58715d(name, monthlyIncome, expenses, nonHousingPayments, ccDebt, c
 
   const _sr = (id, val) => { const e = document.getElementById(id); if (e) e.textContent = val; };
   _sr('p-balance', 'Renting — ' + _0x4f66a67(targetPrice) + ' target');
-  _sr('p-rate', marketRate.toFixed(2) + '% (credit-adjusted)');
+  _sr('p-rate', marketRate.toFixed(2) + '% (credit-adjusted, Mar 2026)');
   _sr('p-payment', _0x4f66a67(rent) + '/mo rent');
   _sr('p-dti', Math.round(((rent + nonHousingPayments) / monthlyIncome) * 100) + '% (renting)');
   _sr('p-fcf', _0x4f66a67(Math.max(0, fcf)));
@@ -1715,11 +1733,11 @@ function _0x257a008(name) {
 
 // Show/hide Rate Sim tab (top bar + bottom nav) based on housing type
 function _0x8e1bc2f() {
-  const botBtn = document.getElementById('nav-rates');
+  const botBtn = document.getElementById('nav-house');
   if (G.housingType === 'renting') {
     if (botBtn) botBtn.style.display = 'none';
   } else {
-    if (botBtn) { botBtn.style.display = ''; document.getElementById('nav-rates-label').textContent = 'Rates'; }
+    if (botBtn) botBtn.style.display = '';
   }
 }
 
@@ -1862,7 +1880,11 @@ function _0x80e4d42() {
   if (el('hm-cashflow-val')) {
     el('hm-cashflow-val').textContent = fcf != null ? fmt(fcf) : '—';
     el('hm-cashflow-val').style.color = fcf > 0 ? 'var(--teal)' : fcf < 0 ? 'var(--red)' : 'var(--navy)';
-    if (el('hm-cashflow-sub')) el('hm-cashflow-sub').textContent = fcf > 0 ? 'Surplus each month' : fcf < 0 ? 'Monthly shortfall' : 'Free each month';
+    if (el('hm-cashflow-sub')) {
+      var fcfBase = fcf > 0 ? 'Surplus each month' : fcf < 0 ? 'Monthly shortfall' : 'Free each month';
+      if (!G.essentialMonthlySpend) fcfBase += ' · before essential expenses';
+      el('hm-cashflow-sub').textContent = fcfBase;
+    }
   }
 
   // DTI
@@ -1880,9 +1902,13 @@ function _0x80e4d42() {
 
   // Total non-housing consumer debt
   const totalDebt = (G.ccDebt || 0) + (G.carDebt || 0) + (G.studentDebt || 0) + (G.otherDebt || 0);
+  const hasMonthlyObligations = (G.carPayment || 0) > 0 || (G.otherPayment || 0) > 0;
   if (el('hm-debt-val')) {
-    el('hm-debt-val').textContent = fmt(totalDebt);
-    if (el('hm-debt-sub')) el('hm-debt-sub').textContent = totalDebt === 0 ? '🎉 Debt-free!' : 'CC + car + student + other';
+    el('hm-debt-val').textContent = totalDebt > 0 ? fmt(totalDebt) : (hasMonthlyObligations ? 'Monthly obligations' : '$0');
+    if (el('hm-debt-sub')) el('hm-debt-sub').textContent =
+      totalDebt === 0 && !hasMonthlyObligations ? '\uD83C\uDF89 Debt-free!' :
+      totalDebt === 0 ? 'Monthly debt payments recorded' :
+      'CC + car + student + other';
   }
 
   // Net worth — actuals only, no projected home price for non-owners
@@ -1940,7 +1966,7 @@ function _0x80e4d42() {
   if (dti > 43) insights.push({ icon: '⚠️', text: 'DTI above 43% — may affect loan eligibility', tab: 'debtrank', nav: 'debt' });
   if (G.ccDebt > 1000) insights.push({ icon: '💳', text: `$${Math.round(G.ccDebt).toLocaleString()} credit card balance — priority payoff`, tab: 'debtrank', nav: 'debt' });
   if (score && score >= 80) insights.push({ icon: '✅', text: 'Strong financial health score — keep it up', tab: 'recommend', nav: 'advice' });
-  if (G.housingType === 'owner' && G.currentRate > (G.marketRate || MARKET_RATE_30Y) + 0.75) insights.push({ icon: '🏠', text: 'Your rate is above market — check refinance options', tab: 'simulator', nav: 'rates' });
+  if (G.housingType === 'owner' && G.currentRate > (G.marketRate || MARKET_RATE_30Y) + 0.75) insights.push({ icon: '🏠', text: 'Your rate is above market — check refinance options', tab: 'house', nav: 'house' });
   if (!insights.length) insights.push({ icon: '👍', text: 'Everything looks balanced — keep building wealth', tab: 'recommend', nav: 'advice' });
 
   const insightsEl = el('hm-insights');
@@ -2374,7 +2400,7 @@ function _0x52c679f() {
 }
 
 function _0x340b247() {
-  const el = document.getElementById('rate-watch-content');
+  const el = document.getElementById('rate-watch-content-buyer') || document.getElementById('rate-watch-content');
   if (!el) return;
 
   const deposit     = G.depositSaved || G.savingsAmt || 0;
@@ -3129,7 +3155,7 @@ function _0xf056049(overrides) {
   }
 
   // ── What-if path: recalculate with overrides ──
-  const takeHome = G.takeHome || (G.income ? G.income / 12 * 0.72 : 0);
+  const takeHome = G.takeHome || (G.income ? (function(){var i=G.income,s=STATE_TAX[document.getElementById('state')?.value||'NY']||0,f=i<=11600?i*0.10:i<=47150?1160+(i-11600)*0.12:i<=100525?5426+(i-47150)*0.22:i<=191950?17169+(i-100525)*0.24:39111+(i-191950)*0.32;f=Math.max(0,f-14600*0.12);var c=Math.min(i,168600)*0.062+i*0.0145;return Math.round(Math.max(i*0.5,i-f-c-i*s)/12)})() : 0);
   const dti      = 'dti'     in overrides ? overrides.dti     : (G.dti || 0);
   const efMo     = 'efMo'    in overrides ? overrides.efMo    : parseInt(G.emergency || 0);
   const fcfVal   = 'fcfVal'  in overrides ? overrides.fcfVal  : (G.fcf || 0);
@@ -3231,7 +3257,7 @@ function _0xdbcabb1() {
     // Fix control
     let fixHtml = '';
     if (cat.fixType === 'range') {
-      const fmtFv = v => cat.fixUnit === '$' ? '$' + Math.round(Math.max(0,v)).toLocaleString() : Math.round(v) + cat.fixUnit;
+      const fmtFv = v => cat.fixUnit === '$' ? '$' + Math.round(Math.max(0,v)).toLocaleString('en-US') : Math.round(v) + cat.fixUnit;
       fixHtml = `
         <div style="padding:14px 16px;border-top:1px solid var(--gray-2);background:rgba(0,119,182,0.02);">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
@@ -3422,7 +3448,7 @@ function _0xf426109() {
 
   // Salary display
   const el = id => document.getElementById(id);
-  const fmt = n => '$' + (Math.abs(n) >= 1000 ? (Math.abs(n)/1000).toFixed(0) + 'K' : Math.abs(n));
+  const fmt = n => '$' + (Math.abs(n) >= 1000 ? Math.round(Math.abs(n)/1000).toLocaleString() + 'K' : Math.round(Math.abs(n)).toLocaleString());
   if (el('sc-your-salary')) el('sc-your-salary').textContent = fmt(salary);
   if (el('sc-median-salary')) el('sc-median-salary').textContent = fmt(band.median);
 
@@ -4197,7 +4223,7 @@ function updatePromoSim() {
   var _si = document.getElementById('promo-system-impact');
   if (_si && fcfGain > 0) {
     var _totalDebt = (G.ccDebt||0)+(G.carDebt||0)+(G.studentDebt||0)+(G.otherDebt||0);
-    var _monthlyTH = G.takeHome || Math.round(((G.income !== undefined && G.income !== null) ? G.income : 0)/12*0.72);
+    var _monthlyTH = G.takeHome || (function(){var i=(G.income!==undefined&&G.income!==null)?G.income:0;if(!i)return 0;var s=STATE_TAX[document.getElementById('state')?.value||'NY']||0,f=i<=11600?i*0.10:i<=47150?1160+(i-11600)*0.12:i<=100525?5426+(i-47150)*0.22:i<=191950?17169+(i-100525)*0.24:39111+(i-191950)*0.32;f=Math.max(0,f-14600*0.12);var c=Math.min(i,168600)*0.062+i*0.0145;return Math.round(Math.max(i*0.5,i-f-c-i*s)/12)})();
     var _curFCF    = G.fcf != null ? G.fcf : 0;
 
     // Savings rate: current → scenario
@@ -5215,7 +5241,7 @@ function logCareerEvent() {
   var raiseAmt=income-prevIncome;
   var event={year:new Date().getFullYear(),title:title||type,income:income,type:type,date:new Date().toLocaleDateString('en-US',{month:'short',year:'numeric'})};
   _careerLog.unshift(event);
-  if(type!=='bonus'){G.income=income;G.takeHome=Math.round(income*0.72/12);}
+  if(type!=='bonus'){G.income=income;var _st6=STATE_TAX[document.getElementById('state')?.value||'NY']||0;var _fed6=income<=11600?income*0.10:income<=47150?1160+(income-11600)*0.12:income<=100525?5426+(income-47150)*0.22:income<=191950?17169+(income-100525)*0.24:39111+(income-191950)*0.32;_fed6=Math.max(0,_fed6-14600*0.12);var _fica6=Math.min(income,168600)*0.062+income*0.0145;G.takeHome=Math.round(Math.max(income*0.5,income-_fed6-_fica6-income*_st6)/12);}
   var _c=function(id){var e=document.getElementById(id);if(e)e.value='';};
   _c('promo-title');_c('promo-income');
   showPromoCelebration(type,title,income,prevIncome,raise,raiseAmt);

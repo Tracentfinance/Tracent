@@ -44,19 +44,33 @@ function nextStep(n) {
 }
 
 function _0xf1a6af7() {
-  const name = (document.getElementById('firstname').value || '').trim();
-  const greet = document.getElementById('analysis-greeting');
-  if (greet) greet.textContent = name ? `Calibrating your position, ${name}...` : 'Calibrating your position...';
+  const greet  = document.getElementById('analysis-greeting');
+  const statusEl = document.getElementById('analysis-status-text');
 
-  /* Calibration status text rotation — personality during wait */
-  var statusTexts = ['Scanning your numbers…','Mapping your position…','Building your action plan…','Almost there…'];
-  var statusEl = document.getElementById('analysis-status-text');
-  var statusIdx = 0;
-  var statusInterval = statusEl ? setInterval(function(){
-    statusIdx++;
-    if(statusIdx < statusTexts.length) statusEl.textContent = statusTexts[statusIdx];
-    else clearInterval(statusInterval);
-  }, 800) : null;
+  /* Three calm messages that fade in sequence */
+  var greetMessages = [
+    'Understanding your financial position',
+    'Assessing your buying power',
+    'Building your next move'
+  ];
+  var greetIdx = 0;
+  if (greet) { greet.textContent = greetMessages[0]; }
+  if (statusEl) { statusEl.textContent = 'This will take a moment'; }
+
+  var greetInterval = setInterval(function() {
+    greetIdx++;
+    if (greetIdx < greetMessages.length) {
+      if (greet) {
+        greet.style.opacity = '0';
+        setTimeout(function() {
+          greet.textContent = greetMessages[greetIdx];
+          greet.style.opacity = '1';
+        }, 350);
+      }
+    } else {
+      clearInterval(greetInterval);
+    }
+  }, 1200);
 
   const ring = document.getElementById('analysis-ring');
   const bar  = document.getElementById('analysis-progress-bar');
@@ -142,6 +156,7 @@ function showDashboard() {
 // ── Tab switching — core router only ─────────────────────
 function switchTab(tab) {
   console.log('[DASH] switchTab', tab);
+  try { tracentTrack('tab_switched', { from: window._lastTab || '', to: tab }); } catch(e) {}
   window._lastTab = tab;
   try { tracentEnterScreen('tab:' + tab); } catch(e) {}
   document.querySelectorAll('.tab-panel').forEach(function(p) { p.classList.remove('active'); });
@@ -177,7 +192,10 @@ function switchTab(tab) {
 
 function runTabRenderers(tab) {
   if (tab === 'home')      { try { if (typeof _0x80e4d42  === 'function') _0x80e4d42();  } catch(e) { console.error('[DASH] home renderer:',     e); } }
-  if (tab === 'simulator') { try { if (typeof _0x52c679f  === 'function') _0x52c679f();  } catch(e) { console.error('[DASH] simulator renderer:', e); } }
+  if (tab === 'house' || tab === 'simulator') {
+    try { if (typeof TracentHouseRender !== 'undefined') TracentHouseRender.render(); } catch(e) { console.error('[DASH] house header renderer:', e); }
+    try { if (typeof _0x52c679f === 'function') _0x52c679f(); } catch(e) { console.error('[DASH] house detail renderer:', e); }
+  }
   if (tab === 'debtrank')  {
     // Re-evaluate BSE module visibility with debtIsActive=true so bse-debt-strategy-hidden
     // gets removed — it was added during home-tab BSE render when debt tab was not active.

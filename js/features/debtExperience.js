@@ -168,7 +168,7 @@
 
     var fcf      = g.fcf || 0;
     var stress   = bse.stress || 0;
-    var takeHome = g.takeHome || Math.round((g.income || 0) / 12 * 0.72);
+    var takeHome = g.takeHome || (function(){var i=g.income||0;if(!i)return 0;var s=(window.STATE_TAX&&document.getElementById('state'))?((window.STATE_TAX)[document.getElementById('state').value]||0):0,f=i<=11600?i*0.10:i<=47150?1160+(i-11600)*0.12:i<=100525?5426+(i-47150)*0.22:i<=191950?17169+(i-100525)*0.24:39111+(i-191950)*0.32;f=Math.max(0,f-14600*0.12);var c=Math.min(i,168600)*0.062+i*0.0145;return Math.round(Math.max(i*0.5,i-f-c-i*s)/12)})();
     var monthlyPressure = debts.reduce(function(sum, d) { return sum + d.minPmt; }, 0);
 
     var intro    = _emotionalIntro(total, fcf, stress);

@@ -310,24 +310,18 @@
 }
 
 /* ── 10. Analysis Screen — Calibration Personality ──────── */
-@keyframes tr-scan-line {
-  0%   { transform: translateX(-100%); }
-  100% { transform: translateX(100%); }
+@keyframes tr-dot-breathe {
+  0%, 100% { opacity: 0.25; transform: scale(0.80); }
+  50%      { opacity: 1;    transform: scale(1); }
 }
-@keyframes tr-calibrate-pulse {
-  0%, 100% { opacity: 0.4; }
-  50%      { opacity: 1; }
-}
-.analysis-scan-line {
-  position: absolute; bottom: 0; left: 0;
-  width: 50%; height: 2px;
-  background: linear-gradient(90deg, transparent, var(--sky), transparent);
-  animation: tr-scan-line 2s ease-in-out infinite;
+.analysis-pulse-dot {
+  animation: tr-dot-breathe 2.6s ease-in-out infinite;
 }
 .analysis-status {
-  animation: tr-calibrate-pulse 2s ease-in-out infinite;
-  font-size: 13px; color: rgba(255,255,255,0.5);
-  letter-spacing: 0.4px;
+  font-size: 13px;
+  color: rgba(255,255,255,0.38);
+  letter-spacing: 0.3px;
+  text-align: center;
 }
 
 /* ── 11. Nav item transitions — subtle active indicator ──── */

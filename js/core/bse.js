@@ -125,11 +125,13 @@
     var ps = window.pbfdeState || {};
     var fcf      = g.fcf || 0;
     var income   = g.income || 0;
-    var takeHome = g.takeHome || Math.round(income/12*0.72);
+    var takeHome = g.takeHome || (function(){if(!income)return 0;var s=(window.STATE_TAX&&document.getElementById('state'))?((window.STATE_TAX)[document.getElementById('state').value]||0):0,f=income<=11600?income*0.10:income<=47150?1160+(income-11600)*0.12:income<=100525?5426+(income-47150)*0.22:income<=191950?17169+(income-100525)*0.24:39111+(income-191950)*0.32;f=Math.max(0,f-14600*0.12);var c=Math.min(income,168600)*0.062+income*0.0145;return Math.round(Math.max(income*0.5,income-f-c-income*s)/12)})();
     var ccDebt   = g.ccDebt   || 0;
     var totDebt  = (g.ccDebt||0)+(g.carDebt||0)+(g.studentDebt||0)+(g.otherDebt||0);
     var dti      = g.dti || 0;
-    var efMo     = parseInt(g.emergency||'0');
+    var _efRaw   = g.emergency;
+    var _efProvided = _efRaw !== undefined && _efRaw !== null && _efRaw !== '';
+    var efMo     = _efProvided ? parseInt(_efRaw, 10) : null;
     var score    = g.score || 0;
     var intent   = g.primaryIntent || ps.activeModule || 'stable';
     var age      = parseInt(g.currentAge||g.age||0);
@@ -139,7 +141,7 @@
     /* stress 0-10 */
     var s=0;
     if(fcf<0) s+=4; else if(fcf<200) s+=2;
-    if(efMo===0) s+=2; else if(efMo<2) s+=1;
+    if(_efProvided && efMo===0) s+=2; else if(_efProvided && efMo<2) s+=1;
     if(ccDebt>8000) s+=2; else if(ccDebt>3000) s+=1;
     if(dti>50) s+=2; else if(dti>40) s+=1;
     BSE.stress = Math.min(10,s);
@@ -306,13 +308,13 @@
       minimal:[
         {id:'nav-home',label:'Focus',show:true},
         {id:'nav-debt',label:'Debt',show:true},
-        {id:'nav-advice',show:false},{id:'nav-rates',show:false},
+        {id:'nav-advice',show:false},{id:'nav-house',show:false},
         {id:'nav-progress',show:false},{id:'nav-settings',label:'Settings',show:true}
       ],
       retirement:[
         {id:'nav-home',label:'Summary',show:true},
         {id:'nav-advice',label:'Advice',show:true},
-        {id:'nav-debt',show:false},{id:'nav-rates',show:false},
+        {id:'nav-debt',show:false},{id:'nav-house',show:false},
         {id:'nav-progress',label:'Progress',show:true},
         {id:'nav-settings',label:'Settings',show:true}
       ],
@@ -320,7 +322,7 @@
         {id:'nav-home',label:'Focus',show:true},
         {id:'nav-debt',label:'Debt',show:true},
         {id:'nav-advice',label:'Explore',show:true},
-        {id:'nav-rates',show:false},
+        {id:'nav-house',show:false},
         {id:'nav-progress',label:'Progress',show:true},
         {id:'nav-settings',label:'Settings',show:true}
       ]
@@ -337,6 +339,35 @@
     if (_totDebt > 0) {
       var _nd = document.getElementById('nav-debt');
       if (_nd) { _nd.style.display = ''; }
+    }
+
+    /* ── House nav override: show + prioritise House tab for buyers and homeowners ── */
+    /* BSE configs default nav-house to hidden; show it whenever housing context is relevant.
+       Covers: explicit buying intent, owner/cashout housingType, or home primary intent.
+       When house is relevant AND is the user's primary intent, physically reinsert nav-house
+       into the second slot (after nav-home) so it reads as the primary product destination. */
+    var _ht = _g.housingType || '';
+    var _houseRelevant = (_ht === 'buying' || _ht === 'owner' || _ht === 'cashout')
+      || (_g.primaryIntent === 'home');
+    if (_houseRelevant) {
+      var _nh = document.getElementById('nav-house');
+      if (_nh) {
+        _nh.style.display = '';
+        /* Priority slot: reinsert after nav-home when house is the primary intent.
+           Checks DOM position first — only moves if not already in position 2. */
+        var _housePrimary = (_g.primaryIntent === 'home')
+          || (_ht === 'buying')
+          || (_ht === 'owner' || _ht === 'cashout');
+        if (_housePrimary) {
+          var _nav = _nh.parentNode;
+          var _navHome = document.getElementById('nav-home');
+          if (_nav && _navHome && _navHome.nextElementSibling !== _nh) {
+            /* insertBefore(node, ref) places node before ref —
+               so inserting before the current second item puts house second */
+            _nav.insertBefore(_nh, _navHome.nextElementSibling);
+          }
+        }
+      }
     }
 
     /* ── Retirement structural enforcement ── */
@@ -434,7 +465,13 @@
   };
 
   window.bseOpenPlan=function(){
-    try{ switchTab('debtrank'); setNavByName('debt'); }catch(e){}
+    var _intent  = (window.G && window.G.primaryIntent) || '';
+    var _housing = (window.G && window.G.housingType)   || '';
+    if (_intent === 'home' || _housing === 'owner' || _housing === 'buying') {
+      try{ switchTab('house'); setNavByName('house'); }catch(e){}
+    } else {
+      try{ switchTab('debtrank'); setNavByName('debt'); }catch(e){}
+    }
     try{tracentTrack('bse_focus_cta',{archetype:BSE.archetype});}catch(e){}
   };
 
@@ -605,6 +642,6 @@
      HELPER — NOTE: fmtMoney duplicated in multiple IIFE scopes.
      Future modularization: extract to shared tracent-utils.js
   ---------------------------------------------------------- */
-  function fmtMoney(n){ return '$'+Math.round(Math.abs(n||0)).toLocaleString(); }
+  function fmtMoney(n){ return '$'+Math.round(Math.abs(n||0)).toLocaleString('en-US'); }
 
 })();

@@ -219,7 +219,7 @@ function v21SetPhase(phase) {
   if (target) target.classList.add('active');
 
   // Progress bar & label
-  var phaseMap = { intent:1, signal:2, age:3, range:4, refine:5 };
+  var phaseMap = { intent:1, signal:2, age:3, 'retirement-stage':3, range:4, refine:5 };
   var total    = 5;
   var n = phaseMap[phase] || 1;
   var fill = document.getElementById('onb-progress');
@@ -305,7 +305,33 @@ function v21SelectSignal(signal, el) {
     registerMeaningfulAction('onboarding_resilience_answered', { signal: signal });
     tracentEnterScreen('onboarding:preview');
   } catch(e) {}
-  setTimeout(function() { v21SetPhase('age'); }, 200);
+  // Retire intent skips age-range — goes to dedicated retirement stage bridge instead
+  setTimeout(function() {
+    if (typeof G !== 'undefined' && G.primaryIntent === 'retire') {
+      v21SetPhase('retirement-stage');
+    } else {
+      v21SetPhase('age');
+    }
+  }, 200);
+}
+
+/* ── PHASE 2b-R: RETIREMENT STAGE BRIDGE ──────────────── */
+function v21SelectRetirementStage(stage, el) {
+  document.querySelectorAll('#v21-phase-retirement-stage .v21-choice').forEach(function(c) {
+    c.classList.remove('selected');
+  });
+  if (el) el.classList.add('selected');
+
+  if (typeof G !== 'undefined') {
+    G.retirementStage = stage; // 'retired' | 'near_retirement'
+    G.goalMode = 'retirement';
+    // Set ageRange so BSE archetype routing works without the age-range question
+    G.ageRange = (stage === 'retired') ? '65plus' : '55_64';
+  }
+
+  v21ComputeRange(); // reuse existing score range computation
+  try { registerMeaningfulAction('onboarding_retirement_stage_selected', { stage: stage }); } catch(e) {}
+  setTimeout(function() { v21SetPhase('range'); }, 200);
 }
 
 /* ── PHASE 2b: AGE RANGE ───────────────────────────────── */
@@ -598,6 +624,10 @@ function v21BuildRefinePhase() {
     retire:  ['Show Tracent your real baseline', 'Income, contributions, and debt load are all it needs to start.']
   };
   var titlePair = titleMap[intent] || titleMap.stable;
+  // Override title for already-retired users — income is not the primary frame
+  if (intent === 'retire' && typeof G !== 'undefined' && G.retirementStage === 'retired') {
+    titlePair = ['Your retirement picture', 'Contributions, savings, and debt are all Tracent needs.'];
+  }
   var tEl = document.getElementById('v21-refine-title');
   var sEl = document.getElementById('v21-refine-sub');
   if (tEl) tEl.textContent = titlePair[0];
@@ -659,6 +689,14 @@ function v21BuildRefinePhase() {
     + '<option value="consistent">Consistent \u2014 below employer match</option>'
     + '<option value="maxed">Capturing full employer match</option>';
 
+  // ── Housing-status toggle (stable / debt / grow intents) ─────────
+  var _housingStatusHtml = '<div class="field-group" style="grid-column:1/-1;margin-top:4px;">'
+    + '<label class="field-label">Do you currently own a home?</label>'
+    + '<div class="v21-field-grid">'
+    + '<label class="v21-radio-opt" style="cursor:pointer;"><input type="radio" name="v21r-housing-status" id="v21r-hs-no" value="renting" style="margin-right:6px;" checked> No \u2014 I rent or don\u2019t own</label>'
+    + '<label class="v21-radio-opt" style="cursor:pointer;"><input type="radio" name="v21r-housing-status" id="v21r-hs-owner" value="owner" style="margin-right:6px;"> Yes \u2014 I own a home</label>'
+    + '</div></div>';
+
   // ── Name + state row (shared) ────────────────────────────────────
   var out = _row2(
     _field('First name (optional)', '<input type="text" id="v21r-name" class="field-input" placeholder="Alex" autocorrect="off" autocapitalize="words">'),
@@ -690,6 +728,7 @@ function v21BuildRefinePhase() {
       out += '<div class="field-hint" style="margin-top:-8px;margin-bottom:4px;">You can add car loans, student loans, and other debts individually in Settings after setup.</div>';
     }
     out += _sel('v21r-emergency', 'Emergency fund', _efOpts, 'Build this before accelerating payoff');
+    out += _housingStatusHtml;
 
   } else if (intent === 'home') {
     // Annual income · take-home · target price · saved cash · monthly debts · credit band
@@ -705,6 +744,19 @@ function v21BuildRefinePhase() {
       _money('v21r-monthly-debt-payments', '0', 'Monthly debt payments', 'Affects mortgage eligibility'),
       _sel('v21r-credit-band', 'Credit band', _creditOpts, 'Affects the rate you\u2019ll qualify for')
     );
+    // Household income clarifier — home intent only
+    out += '<div class="field-group" style="grid-column:1/-1;margin-top:4px;">';
+    out += '<label class="field-label">Will this purchase rely on your income only, or household income?</label>';
+    out += '<div class="v21-field-grid">';
+    out += '<label class="v21-radio-opt" style="cursor:pointer;">'
+      + '<input type="radio" name="v21r-home-income-mode" id="v21r-him-solo" value="solo" style="margin-right:6px;"> My income only</label>';
+    out += '<label class="v21-radio-opt" style="cursor:pointer;">'
+      + '<input type="radio" name="v21r-home-income-mode" id="v21r-him-household" value="household" style="margin-right:6px;"> Household income</label>';
+    out += '</div></div>';
+    out += '<div id="v21r-household-th-row" class="v21-field-grid" style="display:none;">';
+    out += _money('v21r-household-takehome', '7,500', 'Total household monthly take-home', 'Combined after-tax');
+    out += '<div class="field-group"></div>'; // spacer to maintain grid
+    out += '</div>';
 
   } else if (intent === 'grow') {
     // Annual income · take-home · fixed spending · savings amount · emergency fund
@@ -717,19 +769,41 @@ function v21BuildRefinePhase() {
       _money('v21r-savings-amount', '0',   'Current savings / investments', 'All liquid and invested assets')
     );
     out += _sel('v21r-emergency', 'Emergency fund', _efOpts, 'Needs to be solid before growth is safe');
+    out += _housingStatusHtml;
 
   } else if (intent === 'retire') {
-    // Annual income · take-home · contribution status · emergency fund · debt payments
-    out += _row2(
-      _money('v21r-income',  '72,000', 'Annual income', 'Before tax'),
-      _money('v21r-takehome','4,800',  'Monthly take-home', 'After tax \u2014 or leave blank to estimate')
-    );
-    out += _sel('v21r-retire', 'Retirement contributions', _retireOpts,
-      'Where you stand on capturing compounding today');
+    var _retStage = (typeof G !== 'undefined') ? G.retirementStage : null;
+    if (_retStage === 'retired') {
+      // Already retired: income source question replaces contribution/employer-match language
+      var _retIncomeOpts = '<option value="" selected disabled>Select your primary source</option>'
+        + '<option value="social_security">Social Security</option>'
+        + '<option value="pension">Pension income</option>'
+        + '<option value="withdrawals">Withdrawals from savings / investments</option>'
+        + '<option value="combination">Combination of sources</option>';
+      out += _sel('v21r-ret-income-source', 'Primary retirement income source', _retIncomeOpts,
+        'Helps Tracent understand your income picture');
+      // Savings / income inputs — needed to ground reserve and stability outputs
+      out += _money('v21r-retirement-savings', '0', 'Savings / investments available',
+        'Total accessible savings and investment balances');
+      out += _row2(
+        _money('v21r-ss-monthly', '', 'Monthly Social Security (if applicable)',
+          'Your actual benefit amount'),
+        _money('v21r-pension-monthly', '', 'Monthly pension (if applicable)',
+          'Your actual benefit amount')
+      );
+    } else {
+      // Still working / near-retirement: show earned-income inputs and contribution status
+      out += _row2(
+        _money('v21r-income',  '72,000', 'Annual income', 'Before tax'),
+        _money('v21r-takehome','4,800',  'Monthly take-home', 'After tax \u2014 or leave blank to estimate')
+      );
+      out += _sel('v21r-retire', 'Retirement contributions', _retireOpts,
+        'Where you stand on capturing compounding today');
+    }
     out += _row2(
       _sel('v21r-emergency', 'Emergency fund', _efOpts),
       _money('v21r-monthly-debt-payments', '0', 'Monthly non-housing debt',
-        'Payments competing with retirement contributions')
+        _retStage === 'retired' ? 'Any remaining debt obligations' : 'Payments competing with retirement contributions')
     );
 
   } else {
@@ -744,9 +818,38 @@ function v21BuildRefinePhase() {
     );
     out += _sel('v21r-emergency', 'Emergency fund', _efOpts,
       'How many months of spending you could cover');
+    out += _housingStatusHtml;
   }
 
   formEl.innerHTML = out;
+  // Wire household income clarifier toggle (home intent only)
+  var _soloCb = document.getElementById('v21r-him-solo');
+  var _hhCb   = document.getElementById('v21r-him-household');
+  var _hhRow  = document.getElementById('v21r-household-th-row');
+  if (_soloCb && _hhCb && _hhRow) {
+    function _toggleHHRow() {
+      _hhRow.style.display = _hhCb.checked ? '' : 'none';
+    }
+    _soloCb.addEventListener('change', _toggleHHRow);
+    _hhCb.addEventListener('change', _toggleHHRow);
+    // Default: solo selected
+    _soloCb.checked = true;
+  }
+  // Radio option checked-state class toggle — JS fallback for :has() (WebView <iOS 15.4)
+  formEl.querySelectorAll('.v21-radio-opt input[type="radio"]').forEach(function(radio) {
+    radio.addEventListener('change', function() {
+      var grp = formEl.querySelectorAll('input[name="' + radio.name + '"]');
+      grp.forEach(function(r) {
+        var lbl = r.closest('.v21-radio-opt');
+        if (lbl) lbl.classList.toggle('is-checked', r.checked);
+      });
+    });
+  });
+  // Set initial is-checked state for pre-checked radios
+  formEl.querySelectorAll('.v21-radio-opt input[type="radio"]:checked').forEach(function(r) {
+    var lbl = r.closest('.v21-radio-opt');
+    if (lbl) lbl.classList.add('is-checked');
+  });
   v21SetPhase('refine');
 }
 
@@ -761,13 +864,33 @@ function _v21_prefillRefineForm() {
     if (!el || val === undefined || val === null) return;
     el.value = val;
   }
-  if (g.income)        _setField('v21r-income',       Math.round(g.income));
-  if (g.takeHome)      _setField('v21r-takehome',      Math.round(g.takeHome));
-  if (g.ccDebt)        _setField('v21r-cc-debt',       Math.round(g.ccDebt));
-  if (g.carDebt)       _setField('v21r-car-debt',      Math.round(g.carDebt));
-  if (g.studentDebt)   _setField('v21r-student-debt',  Math.round(g.studentDebt));
-  if (g.otherDebt)     _setField('v21r-other-debt',    Math.round(g.otherDebt));
-  if (g.emergency)     _setField('v21r-emergency',     g.emergency);
+  if (g.income)              _setField('v21r-income',             Math.round(g.income));
+  if (g.takeHome)            _setField('v21r-takehome',            Math.round(g.takeHome));
+  if (g.ccDebt)              _setField('v21r-cc-debt',             Math.round(g.ccDebt));
+  if (g.carDebt)             _setField('v21r-car-debt',            Math.round(g.carDebt));
+  if (g.studentDebt)         _setField('v21r-student-debt',        Math.round(g.studentDebt));
+  if (g.otherDebt)           _setField('v21r-other-debt',          Math.round(g.otherDebt));
+  if (g.emergency)           _setField('v21r-emergency',           g.emergency);
+  // Retired-specific fields
+  if (g.retirementIncomeSource) _setField('v21r-ret-income-source', g.retirementIncomeSource);
+  if (g.retirementSavings)   _setField('v21r-retirement-savings',  Math.round(g.retirementSavings));
+  if (g.socialSecurityMonthly) _setField('v21r-ss-monthly',        Math.round(g.socialSecurityMonthly));
+  if (g.pensionIncome)       _setField('v21r-pension-monthly',     Math.round(g.pensionIncome));
+  // Home household income clarifier
+  if (g.homeIncomeMode) {
+    var _soloPre = document.getElementById('v21r-him-solo');
+    var _hhPre   = document.getElementById('v21r-him-household');
+    var _hhRowPre = document.getElementById('v21r-household-th-row');
+    if (_soloPre && _hhPre) {
+      if (g.homeIncomeMode === 'household') {
+        _hhPre.checked = true;
+        if (_hhRowPre) _hhRowPre.style.display = '';
+      } else {
+        _soloPre.checked = true;
+      }
+    }
+  }
+  if (g.homeHouseholdTakeHome) _setField('v21r-household-takehome', Math.round(g.homeHouseholdTakeHome));
 }
 window._v21_prefillRefineForm = _v21_prefillRefineForm;
 
@@ -854,6 +977,16 @@ function v21BridgeToEngine() {
     // no-op — real inputs don't need tracking, absence of inferred == real
   }
 
+  // ── Data provenance: tag critical G fields as 'user' | 'derived' | 'assumed' ──
+  // Only applied to fields checked by getDecisionMode; no other use.
+  var _META_FIELDS = ['income','homePrice','depositSaved','savingsAmt',
+                      'ccDebt','retirementSavings','socialSecurityMonthly','pensionIncome'];
+  function _setMeta(field, tag) {
+    if (typeof G !== 'undefined' && _META_FIELDS.indexOf(field) !== -1) {
+      G[field + '_meta'] = tag;
+    }
+  }
+
   // ── 1. Name ──────────────────────────────────────────────────────
   var nameVal = getStr('v21r-name').trim();
   setVal('firstname', nameVal);
@@ -871,10 +1004,12 @@ function v21BridgeToEngine() {
     setVal('income', incomeVal);
     if (typeof G !== 'undefined') G.income = incomeVal;
     markReal('income');
+    _setMeta('income', 'user');
   } else {
     setVal('income', '');
     if (typeof G !== 'undefined') G.income = 0;
     markInferred('income (not provided)');
+    _setMeta('income', 'assumed');
   }
 
   // ── 4. Take-home monthly ─────────────────────────────────────────
@@ -903,8 +1038,8 @@ function v21BridgeToEngine() {
     // CC debt — real number, not inferred from band
     var ccVal = getNum('v21r-cc-debt');
     setVal('cc-debt', ccVal); setVal('cc-rate', '21');
-    if (ccVal > 0) markReal('cc-debt');
-    else markInferred('cc-debt (entered as zero)');
+    if (ccVal > 0) { markReal('cc-debt'); _setMeta('ccDebt', 'user'); }
+    else { markInferred('cc-debt (entered as zero)'); _setMeta('ccDebt', 'user'); } // zero is still user-entered
 
     // Emergency
     var efVal = getStr('v21r-emergency') || '0';
@@ -913,11 +1048,14 @@ function v21BridgeToEngine() {
     if (efVal !== '0') markReal('emergency-fund');
     else markInferred('emergency-fund (none reported)');
 
-    // Housing default for stable intent
+    // Housing status from user selection
+    var _hsRadio0 = document.querySelector('input[name="v21r-housing-status"]:checked');
+    var _hsVal0   = _hsRadio0 ? _hsRadio0.value : 'renting';
     setVal('rent-amount', '1500');
-    if (typeof selectHousing === 'function') selectHousing('renting');
-    else if (typeof housingType !== 'undefined') housingType = 'renting';
-    markInferred('housing (default renting)');
+    if (typeof selectHousing === 'function') selectHousing(_hsVal0);
+    else if (typeof housingType !== 'undefined') housingType = _hsVal0;
+    if (_hsVal0 === 'owner') markReal('housing-status');
+    else markInferred('housing (renting/default)');
 
     // Defaults for unused fields
     setVal('car-debt', '0'); setVal('car-payment', '0');
@@ -928,8 +1066,8 @@ function v21BridgeToEngine() {
     // CC debt — always a real field in both onboarding and settings
     var ccVal2 = getNum('v21r-cc-debt');
     setVal('cc-debt', ccVal2); setVal('cc-rate', '21');
-    if (ccVal2 > 0) markReal('cc-debt');
-    else markInferred('cc-debt (entered as zero)');
+    if (ccVal2 > 0) { markReal('cc-debt'); _setMeta('ccDebt', 'user'); }
+    else { markInferred('cc-debt (entered as zero)'); _setMeta('ccDebt', 'user'); } // zero is still user-entered
 
     if (window._v21_settingsMode) {
       // Settings: individual real balance fields — no estimation
@@ -969,11 +1107,14 @@ function v21BridgeToEngine() {
     // Expenses default
     setVal('expenses', '900'); markInferred('expenses (default)');
 
-    // Housing default
+    // Housing status from user selection
+    var _hsRadio1 = document.querySelector('input[name="v21r-housing-status"]:checked');
+    var _hsVal1   = _hsRadio1 ? _hsRadio1.value : 'renting';
     setVal('rent-amount', '1500');
-    if (typeof selectHousing === 'function') selectHousing('renting');
-    else if (typeof housingType !== 'undefined') housingType = 'renting';
-    markInferred('housing (default renting)');
+    if (typeof selectHousing === 'function') selectHousing(_hsVal1);
+    else if (typeof housingType !== 'undefined') housingType = _hsVal1;
+    if (_hsVal1 === 'owner') markReal('housing-status');
+    else markInferred('housing (renting/default)');
 
   } else if (intent === 'home') {
     // Target home price
@@ -982,23 +1123,26 @@ function v21BridgeToEngine() {
       setVal('home-price', hpVal); setVal('renter-target-price', hpVal);
       if (typeof G !== 'undefined') G.homePrice = hpVal; G.targetHomePrice = hpVal;
       markReal('home-price');
+      _setMeta('homePrice', 'user');
     } else {
       setVal('home-price', '400000'); setVal('renter-target-price', '400000');
       markInferred('home-price (default $400k)');
+      _setMeta('homePrice', 'assumed');
     }
 
     // Deposit saved
     var dpVal = getNum('v21r-deposit-saved');
     setVal('deposit-saved', dpVal); setVal('renter-savings', dpVal);
     if (typeof G !== 'undefined') G.depositSaved = dpVal;
-    if (dpVal > 0) markReal('deposit-saved');
-    else markInferred('deposit-saved (none entered)');
+    if (dpVal > 0) { markReal('deposit-saved'); _setMeta('depositSaved', 'user'); }
+    else { markInferred('deposit-saved (none entered)'); _setMeta('depositSaved', 'assumed'); }
 
-    // Monthly debt payments
+    // Monthly debt payments — used for cash flow / DTI only; no synthetic balance
     var pmtsHome = getNum('v21r-monthly-debt-payments');
     setVal('car-payment', pmtsHome);
-    if (pmtsHome > 0) { setVal('car-debt', Math.round(pmtsHome * 24)); markReal('monthly-debt-payments'); }
-    else { setVal('car-debt', '0'); }
+    setVal('car-debt', '0'); // never fabricate a balance from payments
+    if (pmtsHome > 0) markReal('monthly-debt-payments');
+    else markInferred('debt-payments (none entered)');
 
     // Credit band — real, not inferred from signal
     var creditBand = getStr('v21r-credit-band') || 'fair';
@@ -1006,17 +1150,28 @@ function v21BridgeToEngine() {
     if (getStr('v21r-credit-band')) markReal('credit-band');
     else markInferred('credit-band (default fair)');
 
+    // Household income clarifier — home intent only
+    var _hhRadio = document.querySelector('input[name="v21r-home-income-mode"]:checked');
+    var _himMode = _hhRadio ? _hhRadio.value : 'solo';
+    if (typeof G !== 'undefined') G.homeIncomeMode = _himMode;
+    if (_himMode === 'household') {
+      var _hhTH = getNum('v21r-household-takehome');
+      if (typeof G !== 'undefined') G.homeHouseholdTakeHome = _hhTH > 0 ? _hhTH : 0;
+    } else {
+      if (typeof G !== 'undefined') G.homeHouseholdTakeHome = 0;
+    }
+
     // Housing type: renting (buying)
     setVal('current-rent', '1500');
     if (typeof selectHousing === 'function') selectHousing('buying');
     else if (typeof housingType !== 'undefined') housingType = 'buying';
 
-    // Defaults
-    setVal('emergency', '3'); setVal('expenses', '900');
+    // Defaults — home intent does NOT ask emergency; leave G.emergency unset
+    setVal('expenses', '900');
     setVal('cc-debt', '0'); setVal('cc-rate', '21');
     setVal('other-debt', '0'); setVal('other-payment', '0');
     setVal('student-debt', '0'); setVal('student-payment', '0');
-    markInferred('expenses (default)'); markInferred('emergency-fund (default 3 mo)');
+    markInferred('expenses (default)');
 
   } else if (intent === 'grow') {
     // Expenses
@@ -1028,21 +1183,24 @@ function v21BridgeToEngine() {
     var savAmt = getNum('v21r-savings-amount');
     setVal('renter-savings', savAmt);
     if (typeof G !== 'undefined') G.savingsAmt = savAmt;
-    if (savAmt > 0) markReal('savings-amount');
-    else markInferred('savings (entered as zero)');
+    if (savAmt > 0) { markReal('savings-amount'); _setMeta('savingsAmt', 'user'); }
+    else { markInferred('savings (entered as zero)'); _setMeta('savingsAmt', 'assumed'); }
 
     // Emergency
-    var efGrow = getStr('v21r-emergency') || '3';
+    var efGrow = getStr('v21r-emergency') || '0';
     setVal('emergency', efGrow);
     if (typeof G !== 'undefined') G.emergency = efGrow;
     if (efGrow !== '0') markReal('emergency-fund');
     else markInferred('emergency-fund (none reported)');
 
-    // Housing default
+    // Housing status from user selection
+    var _hsRadio2 = document.querySelector('input[name="v21r-housing-status"]:checked');
+    var _hsVal2   = _hsRadio2 ? _hsRadio2.value : 'renting';
     setVal('rent-amount', '1500');
-    if (typeof selectHousing === 'function') selectHousing('renting');
-    else if (typeof housingType !== 'undefined') housingType = 'renting';
-    markInferred('housing (default renting)');
+    if (typeof selectHousing === 'function') selectHousing(_hsVal2);
+    else if (typeof housingType !== 'undefined') housingType = _hsVal2;
+    if (_hsVal2 === 'owner') markReal('housing-status');
+    else markInferred('housing (renting/default)');
 
     setVal('cc-debt', '0'); setVal('cc-rate', '21');
     setVal('car-debt', '0'); setVal('car-payment', '0');
@@ -1050,13 +1208,38 @@ function v21BridgeToEngine() {
     setVal('student-debt', '0'); setVal('student-payment', '0');
 
   } else if (intent === 'retire') {
-    // Retirement contributions
-    var retireVal = getStr('v21r-retire') || 'none';
-    var retMap = { none:'none', irregular:'partial', consistent:'partial', maxed:'full' };
-    setVal('retirement-match', retMap[retireVal] || 'none');
-    if (typeof G !== 'undefined') G.retMatch = retMap[retireVal] || 'none';
-    if (getStr('v21r-retire')) markReal('retirement-contributions');
-    else markInferred('retirement-contributions (default none)');
+    var _bridgeRetStage = (typeof G !== 'undefined') ? G.retirementStage : null;
+    if (_bridgeRetStage === 'retired') {
+      // Already retired: read income source selection, not contribution rate
+      var retIncSrc = getStr('v21r-ret-income-source') || '';
+      if (typeof G !== 'undefined') G.retirementIncomeSource = retIncSrc || null;
+      if (retIncSrc) markReal('retirement-income-source');
+      else markInferred('retirement-income-source (not selected)');
+      // Retired users have no employer contribution — set retMatch to none explicitly
+      setVal('retirement-match', 'none');
+      if (typeof G !== 'undefined') G.retMatch = 'none';
+      // Retired-specific financial inputs — ground reserve and stability outputs
+      var retSavings = getNum('v21r-retirement-savings');
+      if (typeof G !== 'undefined') G.retirementSavings = retSavings || 0;
+      if (retSavings > 0) { markReal('retirement-savings'); _setMeta('retirementSavings', 'user'); }
+      else _setMeta('retirementSavings', 'assumed');
+      var ssMonthly = getNum('v21r-ss-monthly');
+      if (typeof G !== 'undefined') G.socialSecurityMonthly = ssMonthly || 0;
+      if (ssMonthly > 0) { markReal('social-security-monthly'); _setMeta('socialSecurityMonthly', 'user'); }
+      else _setMeta('socialSecurityMonthly', 'assumed');
+      var pensionMoInput = getNum('v21r-pension-monthly');
+      if (typeof G !== 'undefined') G.pensionIncome = pensionMoInput || 0;
+      if (pensionMoInput > 0) { markReal('pension-income-monthly'); _setMeta('pensionIncome', 'user'); }
+      else _setMeta('pensionIncome', 'assumed');
+    } else {
+      // Still working / near-retirement: read contribution status
+      var retireVal = getStr('v21r-retire') || 'none';
+      var retMap = { none:'none', irregular:'partial', consistent:'partial', maxed:'full' };
+      setVal('retirement-match', retMap[retireVal] || 'none');
+      if (typeof G !== 'undefined') G.retMatch = retMap[retireVal] || 'none';
+      if (retireVal && retireVal !== 'none') markReal('retirement-contributions');
+      else markInferred('retirement-contributions (default none)');
+    }
 
     // Emergency
     var efRetire = getStr('v21r-emergency') || '0';
@@ -1065,11 +1248,12 @@ function v21BridgeToEngine() {
     if (efRetire !== '0') markReal('emergency-fund');
     else markInferred('emergency-fund (none reported)');
 
-    // Monthly debt payments
+    // Monthly debt payments — used for cash flow / DTI only; no synthetic balance
     var pmtsRetire = getNum('v21r-monthly-debt-payments');
     setVal('car-payment', pmtsRetire);
-    if (pmtsRetire > 0) { setVal('car-debt', Math.round(pmtsRetire * 24)); markReal('monthly-debt-payments'); }
-    else { setVal('car-debt', '0'); }
+    setVal('car-debt', '0'); // never fabricate a balance from payments
+    if (pmtsRetire > 0) markReal('monthly-debt-payments');
+    else markInferred('debt-payments (none entered)');
 
     // Defaults
     setVal('expenses', '900'); setVal('rent-amount', '1500');
@@ -1223,8 +1407,10 @@ function v21RenderNBMCard() {
   var cEl   = document.getElementById('v21-nbm-cash');
   var tEl2  = document.getElementById('v21-nbm-time');
 
-  if (tEl)  tEl.textContent  = move.title;
-  if (dEl)  dEl.textContent  = move.why + ' ' + move.action;
+  // P3: action first as headline, reason as descriptor
+  var _act1cb = (move.action||'').split(/[.!?]\s/)[0] || move.action || move.title;
+  if (tEl)  tEl.textContent  = _act1cb;
+  if (dEl)  dEl.textContent  = move.why || '';
   if (iEl)  iEl.textContent  = move.scoreImpact > 0 ? '+' + move.scoreImpact : move.scoreImpact;
   if (cEl)  cEl.textContent  = move.cashImpact  || '—';
   if (tEl2) tEl2.textContent = move.timeToStart || '—';
@@ -1262,71 +1448,86 @@ function v21GetRankedMoves() {
   // Emergency fund — always first if missing
   if (ef === 0) {
     allMoves.push({
-      title:       'Build a 1-month cash buffer target',
-      why:         'No emergency savings detected — this is the fastest resilience improvement.',
-      action:      'Set a target amount and automate $50–100/mo to a separate savings account.',
-      scoreImpact: 7, cashImpact: 'Low cost', timeToStart: 'Today', priority: 10, confidence: 'high'
+      title:       'Set a $1,000 cash buffer this month',
+      why:         'Without a buffer, one unexpected cost forces you to borrow or fall behind.',
+      action:      'Direct $50–100/mo to a separate account. Name it. Automate it.',
+      scoreImpact: 7, cashImpact: 'Low cost', timeToStart: 'Today', priority: 10, confidence: 'high',
+      category: 'safety', id: 'emergency_basic'
     });
   } else if (ef < 3) {
     allMoves.push({
-      title:       'Grow emergency fund to 3 months',
-      why:         'Under 3 months of expenses leaves you exposed to shocks.',
-      action:      'Redirect extra cash to savings before debt payoff — resilience first.',
-      scoreImpact: 5, cashImpact: 'Varies', timeToStart: 'This week', priority: 8, confidence: 'high'
+      title:       'Make sure your next 3 months are covered before anything else',
+      why:         'At ' + ef + ' month' + (ef === 1 ? '' : 's') + ', a job loss or medical bill would hit hard.',
+      action:      'Move your extra cash into savings before paying extra on debt. The buffer comes first.',
+      scoreImpact: 5, cashImpact: 'Varies', timeToStart: 'This week', priority: 8, confidence: 'high',
+      category: 'safety', id: 'emergency_build'
     });
   }
 
   // CC debt
   if (cc > 2000) {
     allMoves.push({
-      title:       'Attack the highest-rate credit balance',
-      why:         '$' + Math.round(cc).toLocaleString() + ' in credit card debt is costing real money every month in interest.',
-      action:      'Pay the minimum on everything else. Put every spare dollar at this balance first.',
-      scoreImpact: 6, cashImpact: '+$' + Math.round(cc * 0.20 / 12) + '/mo saved', timeToStart: 'This month', priority: 9, confidence: 'high'
+      title:       'Reduce the $' + Math.round(cc).toLocaleString('en-US') + ' card balance — it\'s costing you monthly',
+      why:         'Credit card interest compounds against you. Every month you carry it, the balance grows.',
+      action:      'Direct every spare dollar at the $' + Math.round(cc).toLocaleString('en-US') + ' card — pay minimums only on everything else.',
+      scoreImpact: 6, cashImpact: '+$' + Math.round(cc * 0.20 / 12).toLocaleString('en-US') + '/mo saved', timeToStart: 'This month', priority: 9, confidence: 'high',
+      category: 'debt', id: 'cc_paydown'
     });
   }
 
   // DTI
   if (dti > 43) {
     allMoves.push({
-      title:       'Reduce debt load to get DTI under 43%',
-      why:         'Your DTI of ' + dti + '% is above lender thresholds — limiting borrowing power.',
-      action:      'Focus on the debt with the highest payment relative to its balance.',
-      scoreImpact: 5, cashImpact: 'Frees payments', timeToStart: '1–2 months', priority: 7, confidence: 'high'
+      title:       'Reduce monthly debt payments to protect borrowing power',
+      why:         'At ' + dti + '% DTI, lenders will either decline or add a rate premium to any new credit.',
+      action:      'Target the debt with the highest payment-to-balance ratio first.',
+      scoreImpact: 5, cashImpact: 'Frees payments', timeToStart: '1–2 months', priority: 7, confidence: 'high',
+      category: 'debt', id: 'dti_reduce'
     });
   }
 
   // Intent-specific moves
   var intentMoves = {
     home: {
-      title:       'Calculate your real deposit gap',
-      why:         'Home readiness starts with a real number — not an estimate.',
-      action:      'Open the Home tab and run your deposit and affordability numbers.',
-      scoreImpact: 3, cashImpact: 'Planning only', timeToStart: 'Today', priority: 6, confidence: 'medium'
+      title:       'Calculate exactly how much cash you need to close',
+      why:         'Deposit plus closing costs is the number that sets your timeline.',
+      action:      'Set a target home price and compare it against your deposit savings to see the gap.',
+      scoreImpact: 3, cashImpact: 'Planning only', timeToStart: 'Today', priority: 6, confidence: 'medium',
+      category: 'home', id: 'home_gap'
     },
-    retire: {
-      title:       'Confirm your retirement contribution baseline',
-      why:         'You can\'t improve what you haven\'t measured.',
-      action:      'Check your current contribution rate and employer match in your HR portal.',
-      scoreImpact: 4, cashImpact: 'Free money', timeToStart: 'This week', priority: 7, confidence: 'high'
+    retire: G && G.retirementStage === 'retired' ? {
+      title:       'Confirm your income sources cover your monthly spend',
+      why:         'In retirement, the gap between income and spending is the number that determines everything.',
+      action:      'Confirm your Social Security, pension, and withdrawal income covers your essential monthly spend.',
+      scoreImpact: 4, cashImpact: 'Income security', timeToStart: 'This week', priority: 7, confidence: 'high',
+      category: 'retire', id: 'ret_income'
+    } : {
+      title:       'Confirm your contribution rate and employer match',
+      why:         'Uncaptured employer match is a guaranteed return you\'re leaving behind every pay period.',
+      action:      'Raise your contribution to capture the full employer match — it\'s a guaranteed return.',
+      scoreImpact: 4, cashImpact: 'Free money', timeToStart: 'This week', priority: 7, confidence: 'high',
+      category: 'retire', id: 'ret_match'
     },
     debt: {
-      title:       'Rank all debts by interest rate',
-      why:         'The avalanche method saves the most money — but only if you know the order.',
-      action:      'Go to the Debt tab — your ranked payoff plan is there.',
-      scoreImpact: 4, cashImpact: 'Saves interest', timeToStart: 'Today', priority: 7, confidence: 'high'
+      title:       'Set your payoff order by interest rate — not balance size',
+      why:         'Paying the highest-rate debt first costs less in total. The order is the plan.',
+      action:      'Pay down your highest-rate debt first — that\'s the order that costs you the least.',
+      scoreImpact: 4, cashImpact: 'Saves interest', timeToStart: 'Today', priority: 7, confidence: 'high',
+      category: 'debt', id: 'debt_order'
     },
     grow: {
-      title:       'Free up $' + Math.max(50, Math.round((fcf || 200) * 0.2)) + '/mo to invest',
-      why:         'Compound growth needs a consistent input — even small amounts work if regular.',
-      action:      'Review your largest recurring expense. Redirect what you save to an index fund.',
-      scoreImpact: 3, cashImpact: 'Varies', timeToStart: '2 weeks', priority: 5, confidence: 'medium'
+      title:       'Direct $' + Math.max(50, Math.round((fcf || 200) * 0.2)) + '/mo into an index fund — starting now',
+      why:         'Regular contributions matter more than timing. Every month you delay, you lose compounding.',
+      action:      'Set a recurring transfer on payday. Low-cost index fund. No decisions required each month.',
+      scoreImpact: 3, cashImpact: 'Varies', timeToStart: 'This week', priority: 5, confidence: 'medium',
+      category: 'grow', id: 'grow_invest'
     },
     stable: {
-      title:       'Set a monthly budget target',
-      why:         'Stability without a target is just luck. A plan makes it intentional.',
-      action:      'Write down your take-home, fixed costs, and what\'s left. That\'s your starting budget.',
-      scoreImpact: 3, cashImpact: 'Planning only', timeToStart: 'Today', priority: 5, confidence: 'high'
+      title:       'Set your monthly spending limit in writing',
+      why:         'Without a number, surplus disappears. A written target changes the default.',
+      action:      'Write your monthly spending limit now: take-home minus fixed costs. That\'s your number.',
+      scoreImpact: 3, cashImpact: 'Planning only', timeToStart: 'Today', priority: 5, confidence: 'high',
+      category: 'stable', id: 'stable_limit'
     }
   };
   var im = intentMoves[intent];
@@ -1335,23 +1536,118 @@ function v21GetRankedMoves() {
   // Score-specific nudge
   if (score >= 70) {
     allMoves.push({
-      title:       'Start contributing to long-term investments',
-      why:         'Your financial foundation is solid enough to start compounding.',
-      action:      'Open or top up a low-cost index fund investment account.',
-      scoreImpact: 2, cashImpact: 'Varies', timeToStart: 'This month', priority: 3, confidence: 'medium'
+      title:       'Set a small monthly contribution and automate it',
+      why:         'Your foundation is solid. The next move is putting surplus to work consistently.',
+      action:      'Pick an amount — even $50 — and set a recurring transfer to a low-cost index fund on payday.',
+      scoreImpact: 2, cashImpact: 'Varies', timeToStart: 'This month', priority: 3, confidence: 'medium',
+      category: 'grow', id: 'grow_automate'
     });
   }
+
+  // ── Candidate filter — disqualify irrelevant or premature moves before ranking ──
+  var isRetired  = !!(G && G.retirementStage === 'retired');
+  var hasDebt    = !!(G && ((G.ccDebt||0)+(G.carDebt||0)+(G.studentDebt||0)+(G.otherDebt||0)) > 0);
+  var hasHomeTarget = !!(G && (G.homePrice || G.targetHomePrice || G.purchasePrice));
+  allMoves = allMoves.filter(function(m) {
+    // Retired users: no contribution or employer-match moves
+    if (isRetired && m.title && (
+      m.title.indexOf('contribution') !== -1 ||
+      m.title.indexOf('employer match') !== -1
+    )) return false;
+    // Debt-free users: no debt payoff moves
+    if (!hasDebt && m.title && (
+      m.title.indexOf('card balance') !== -1 ||
+      m.title.indexOf('payoff order') !== -1 ||
+      m.title.indexOf('debt payments') !== -1
+    )) return false;
+    // Home intent without a target price: skip deposit-gap move
+    if (!hasHomeTarget && m.title && m.title.indexOf('cash you need to close') !== -1) return false;
+    return true;
+  });
 
   // Sort by priority descending
   allMoves.sort(function(a, b) { return b.priority - a.priority; });
 
   return allMoves.length ? allMoves : [{
-    title: 'Keep reviewing your position monthly',
-    why:   'Your score is solid — small consistent improvements compound over time.',
-    action:'Check in weekly and update your numbers when anything changes.',
-    scoreImpact: 1, cashImpact: 'Steady', timeToStart: 'Weekly', priority: 1, confidence: 'high'
+    title: 'Protect what you\'ve built — review your numbers monthly',
+    why:   'Positions drift. A monthly check keeps you from being surprised.',
+    action:'Update your income, debt, and savings when anything changes. Fifteen minutes, once a month.',
+    scoreImpact: 1, cashImpact: 'Steady', timeToStart: 'Monthly', priority: 1, confidence: 'high',
+    category: 'stable', id: 'maintenance'
   }];
 }
+
+/* ── DECISION GATE — tell / ask / hold ─────────────────── */
+// Minimal gate: determines if NBM has enough real data to make a call.
+// decisionType is reserved for future per-intent tuning; currently unused.
+window.getDecisionMode = function(g, decisionType) {
+  if (!g) return { mode: 'hold' };
+  var intent = g.primaryIntent || 'stable';
+  var missing = [];
+  var assumed = [];
+
+  // Income is required for any meaningful recommendation
+  if (!g.income || g.income <= 0) {
+    missing.push('income');
+
+    // NEW: ensure completely empty financial state triggers HOLD
+    if (!g.takeHome && !g.fcf) {
+      missing.push('monthly take-home or spending picture');
+    }
+
+  } else if (g.income_meta === 'assumed') {
+    assumed.push('income');
+  }
+
+  // Intent-specific critical inputs + provenance checks
+  if (intent === 'home') {
+    var hasHomePrice = !!(g.homePrice || g.targetHomePrice || g.purchasePrice);
+    if (!hasHomePrice) missing.push('target price');
+    else if (g.homePrice_meta === 'assumed') assumed.push('target price');
+    // Deposit saved also critical for home — default zero is assumed
+    if (!g.depositSaved && g.depositSaved_meta === 'assumed') assumed.push('amount saved toward deposit');
+  } else if (intent === 'retire' && g.retirementStage === 'retired') {
+    var hasRetireData = !!(g.retirementSavings || g.socialSecurityMonthly || g.pensionIncome);
+    if (!hasRetireData) {
+      missing.push('retirement income or savings');
+    } else {
+      if (g.retirementSavings_meta === 'assumed' &&
+          g.socialSecurityMonthly_meta === 'assumed' &&
+          g.pensionIncome_meta === 'assumed') {
+        assumed.push('retirement income or savings');
+      }
+    }
+  } else if (intent === 'grow') {
+    // Can't tell someone where to direct money without knowing FCF
+    if (!g.income || g.income <= 0) missing.push('income'); // already caught above, but explicit
+    if (!g.takeHome && !g.fcf) assumed.push('monthly take-home');
+  }
+
+  // Conflict checks — minimal
+  // Retired with no income sources at all → can't make a stable call
+  if (g.retirementStage === 'retired' &&
+      !g.socialSecurityMonthly && !g.pensionIncome && !g.retirementSavings && !g.takeHome) {
+    missing.push('any income source');
+  }
+  // Income present but expenses and debts both absent → advice would be hollow
+  if (g.income > 0 && !g.takeHome && !g.fcf &&
+      !g.ccDebt && !g.carDebt && !g.studentDebt && !g.otherDebt &&
+      parseInt(g.emergency || '0') === 0) {
+    assumed.push('spending and debt picture');
+  }
+
+  // Deduplicate
+  missing = missing.filter(function(v, i, a) { return a.indexOf(v) === i; });
+  assumed = assumed.filter(function(v, i, a) { return a.indexOf(v) === i; });
+
+  var missingCount = missing.length;
+  var assumedCount = assumed.length;
+
+  if (missingCount === 0 && assumedCount === 0) return { mode: 'tell' };
+  if (missingCount === 0 && assumedCount > 0)   return { mode: 'ask', missing: assumed, reason: 'assumed' };
+  if (missingCount === 1)                        return { mode: 'ask', missing: missing };
+  return                                                { mode: 'hold', missing: missing };
+};
 
 /* ── DASHBOARD POST-ANALYSIS RENDER ───────────────────── */
 // Called after tracent:scoreComputed fires with final=true
@@ -1594,9 +1890,10 @@ window.continueSession = function() {
 };
 
 /* ── EXPOSE V21 GLOBALS ────────────────────────────────── */
-window.v21SelectIntent       = v21SelectIntent;
-window.v21SelectSignal       = v21SelectSignal;
-window.v21SelectAgeRange     = v21SelectAgeRange;
+window.v21SelectIntent             = v21SelectIntent;
+window.v21SelectSignal             = v21SelectSignal;
+window.v21SelectRetirementStage    = v21SelectRetirementStage;
+window.v21SelectAgeRange           = v21SelectAgeRange;
 window.v21ComputeRange        = v21ComputeRange;
 window.v21BuildPositionPreview = v21BuildPositionPreview;
 window.v21PreviewForIntent     = v21PreviewForIntent;

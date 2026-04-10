@@ -15,7 +15,8 @@
       "Read(//tmp/**)",
       "Bash(node -e \":*)",
       "Bash(grep -v \"^[0-9]*:.*//.*tdf-cta-ctx\")",
-      "Bash(grep -v \"^[0-9]*:.*//.*_validate\\\\|^[0-9]*:.*\\\\*\")"
+      "Bash(grep -v \"^[0-9]*:.*//.*_validate\\\\|^[0-9]*:.*\\\\*\")",
+      "Bash(node /tmp/extract_state_tax.js)"
     ]
   }
 }
