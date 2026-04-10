@@ -73,14 +73,15 @@ function openSettingsEdit(section) {
     var el = document.getElementById(id);
     if (el && val !== undefined && val !== null && val !== '') el.value = val;
   }
-  _prefill('se-income',       g.income       ? Math.round(g.income)       : '');
-  _prefill('se-takehome',     g.takeHome     ? Math.round(g.takeHome)     : '');
-  _prefill('se-savings',      (g.savingsAmt || g.depositSaved) ? Math.round(g.savingsAmt || g.depositSaved) : '');
-  _prefill('se-home-value',   g.homeValue    ? Math.round(g.homeValue)    : '');
-  _prefill('se-cc-debt',      g.ccDebt       ? Math.round(g.ccDebt)       : '');
-  _prefill('se-car-debt',     g.carDebt      ? Math.round(g.carDebt)      : '');
-  _prefill('se-student-debt', g.studentDebt  ? Math.round(g.studentDebt)  : '');
-  _prefill('se-other-debt',   g.otherDebt    ? Math.round(g.otherDebt)    : '');
+  function _fmtInput(n) { return n ? Math.round(n).toLocaleString('en-US') : ''; }
+  _prefill('se-income',       _fmtInput(g.income));
+  _prefill('se-takehome',     _fmtInput(g.takeHome));
+  _prefill('se-savings',      _fmtInput(g.savingsAmt || g.depositSaved));
+  _prefill('se-home-value',   _fmtInput(g.homeValue));
+  _prefill('se-cc-debt',      _fmtInput(g.ccDebt));
+  _prefill('se-car-debt',     _fmtInput(g.carDebt));
+  _prefill('se-student-debt', _fmtInput(g.studentDebt));
+  _prefill('se-other-debt',   _fmtInput(g.otherDebt));
   // Career fields
   _prefill('se-job-title', g.jobTitle || '');
   var _seStateEl = document.getElementById('se-state');
@@ -242,13 +243,13 @@ function toggleGrowStructure() {
       var el = document.getElementById(id);
       if (el && val !== undefined && val !== null && val !== '') el.value = val;
     }
-    _pf('ge-savings',      g.savingsAmt   ? Math.round(g.savingsAmt)  : '');
-    _pf('ge-home-value',   g.homeValue    ? Math.round(g.homeValue)   : '');
-    _pf('ge-mortgage',     g.balance      ? Math.round(g.balance)     : '');
-    _pf('ge-cc-debt',      g.ccDebt       ? Math.round(g.ccDebt)      : '');
-    _pf('ge-car-debt',     g.carDebt      ? Math.round(g.carDebt)     : '');
-    _pf('ge-student-debt', g.studentDebt  ? Math.round(g.studentDebt) : '');
-    _pf('ge-other-debt',   g.otherDebt    ? Math.round(g.otherDebt)   : '');
+    _pf('ge-savings',      g.savingsAmt   ? Math.round(g.savingsAmt).toLocaleString('en-US')   : '');
+    _pf('ge-home-value',   g.homeValue    ? Math.round(g.homeValue).toLocaleString('en-US')    : '');
+    _pf('ge-mortgage',     g.balance      ? Math.round(g.balance).toLocaleString('en-US')      : '');
+    _pf('ge-cc-debt',      g.ccDebt       ? Math.round(g.ccDebt).toLocaleString('en-US')       : '');
+    _pf('ge-car-debt',     g.carDebt      ? Math.round(g.carDebt).toLocaleString('en-US')      : '');
+    _pf('ge-student-debt', g.studentDebt  ? Math.round(g.studentDebt).toLocaleString('en-US')  : '');
+    _pf('ge-other-debt',   g.otherDebt    ? Math.round(g.otherDebt).toLocaleString('en-US')    : '');
     var rmEl = document.getElementById('ge-ret-match');
     if (rmEl && g.retMatch) rmEl.value = g.retMatch;
     body.style.display = 'block';

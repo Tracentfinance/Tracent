@@ -2,7 +2,6 @@
    Board pass, modes, dashboard verdict, score alignment,
    next-best-move engine, score band display.
 ═══════════════════════════════════════════════ */
-console.log('TRACENT LOCAL BUILD — HOME.JS UPDATED — APRIL 7');
 
 /* ═══ MODULE: Board Pass — onboarding completion + dashboard init ═══ */
 (function(){
@@ -3134,7 +3133,7 @@ window.bseApplyModuleVis = function() {
   // ── Suppress secondary cards ──────────────────────────────
   // Whitelist-based: hide every direct child of #tab-home except the DFR container.
   // More durable than a blacklist — new injected blocks are suppressed automatically.
-  var FOCUS_WHITELIST = { 'bse-focus-mode': true, 'xp-retirement-hero': true, 'v21-nbm-card': true };
+  var FOCUS_WHITELIST = { 'bse-focus-mode': true, 'xp-retirement-hero': true };
   function _suppressSecondaryCards() {
     var tabHome = document.getElementById('tab-home');
     if (tabHome) {
@@ -3161,7 +3160,7 @@ window.bseApplyModuleVis = function() {
     var at     = (BSE && BSE.archetype) || '';
     // G.isRetirementMode is the authoritative flag — check before any secondary signal
     if (g.isRetirementMode)                                                                return 'retire';
-    if (intent==='buy_home' || goal==='buy_home' || cat==='home')                          return 'home';
+    if (intent==='home' || intent==='buy_home' || goal==='buy_home' || cat==='home')        return 'home';
     if (at==='pre_retirement' || at==='in_retirement' ||
         g.ageRange==='55_64'  || g.ageRange==='65plus' || intent==='retire')               return 'retire';
     if (cat==='debt' || (g.ccDebt||0) > 3000)                                             return 'debt';
@@ -4047,7 +4046,9 @@ window.bseApplyModuleVis = function() {
       return _buildRefineCard(g, assessment.decisionType);
     }
 
-    var ctaFn   = move.category === 'debt' ? "switchTab('debtrank')" : 'bseOpenPlan()';
+    var ctaFn   = move.category === 'debt'   ? "switchTab('debtrank')" :
+                  move.category === 'retire' ? "bseOpenRetirementReview()" :
+                                               'bseOpenPlan()';
     var outcome = _buildOutcome(move, conf);
 
     // Copy formatter — tone + CTA + optional support line
@@ -4246,7 +4247,7 @@ window.bseApplyModuleVis = function() {
     var fcf        = g.fcf || 0;
 
     var state = (fcf < 0 || dtiAfter > 50)    ? 'NOT_READY'
-              : (cashToClose === 0 && dtiAfter <= 43 && takeHome > 0) ? 'READY'
+              : (cashToClose <= 0 && dtiAfter <= 43 && takeHome > 0) ? 'READY'
               : 'NEAR_READY';
     var stateText = {
       READY:     'Proceed with lenders \u2014 numbers support this purchase.',
@@ -4255,7 +4256,7 @@ window.bseApplyModuleVis = function() {
     }[state];
 
     var dtiCls  = dtiAfter <= 36 ? 'hh-val--ok' : dtiAfter <= 43 ? 'hh-val--caution' : 'hh-val--high';
-    var cashCls = cashToClose === 0 ? 'hh-val--ok' : 'hh-val--caution';
+    var cashCls = cashToClose <= 0 ? 'hh-val--ok' : 'hh-val--caution';
     var sharedLine = (g.homeIncomeMode === 'household' && g.homeHouseholdTakeHome > 0)
       ? '<div class="hh-shared">Based on the income supporting this purchase</div>' : '';
 

@@ -637,18 +637,19 @@ function v21BuildRefinePhase() {
   if (!formEl) { v21SetPhase('refine'); return; }
 
   // ── State selector options ───────────────────────────────────────
-  var stateData = [['NY','New York'],['CA','California'],['TX','Texas'],['FL','Florida'],
-    ['WA','Washington'],['MA','Massachusetts'],['IL','Illinois'],['CO','Colorado'],
-    ['NJ','New Jersey'],['CT','Connecticut'],['GA','Georgia'],['NC','North Carolina'],
-    ['VA','Virginia'],['AZ','Arizona'],['PA','Pennsylvania'],['OH','Ohio'],
-    ['MN','Minnesota'],['OR','Oregon'],['MI','Michigan'],['TN','Tennessee'],
-    ['MO','Missouri'],['WI','Wisconsin'],['IN','Indiana'],['NV','Nevada'],
-    ['LA','Louisiana'],['UT','Utah'],['KY','Kentucky'],['OK','Oklahoma'],
-    ['SC','South Carolina'],['AL','Alabama'],['AR','Arkansas'],['DE','Delaware'],
-    ['HI','Hawaii'],['ID','Idaho'],['IA','Iowa'],['KS','Kansas'],['ME','Maine'],
-    ['MT','Montana'],['NE','Nebraska'],['NH','New Hampshire'],['NM','New Mexico'],
-    ['ND','North Dakota'],['RI','Rhode Island'],['SD','South Dakota'],['VT','Vermont'],
-    ['WV','West Virginia'],['WY','Wyoming'],['DC','Washington DC'],['AK','Alaska']];
+  var stateData = [['AL','Alabama'],['AK','Alaska'],['AZ','Arizona'],['AR','Arkansas'],
+    ['CA','California'],['CO','Colorado'],['CT','Connecticut'],['DE','Delaware'],
+    ['DC','Washington DC'],['FL','Florida'],['GA','Georgia'],['HI','Hawaii'],
+    ['ID','Idaho'],['IL','Illinois'],['IN','Indiana'],['IA','Iowa'],
+    ['KS','Kansas'],['KY','Kentucky'],['LA','Louisiana'],['ME','Maine'],
+    ['MD','Maryland'],['MA','Massachusetts'],['MI','Michigan'],['MN','Minnesota'],
+    ['MS','Mississippi'],['MO','Missouri'],['MT','Montana'],['NE','Nebraska'],
+    ['NV','Nevada'],['NH','New Hampshire'],['NJ','New Jersey'],['NM','New Mexico'],
+    ['NY','New York'],['NC','North Carolina'],['ND','North Dakota'],['OH','Ohio'],
+    ['OK','Oklahoma'],['OR','Oregon'],['PA','Pennsylvania'],['RI','Rhode Island'],
+    ['SC','South Carolina'],['SD','South Dakota'],['TN','Tennessee'],['TX','Texas'],
+    ['UT','Utah'],['VT','Vermont'],['VA','Virginia'],['WA','Washington'],
+    ['WV','West Virginia'],['WI','Wisconsin'],['WY','Wyoming']];
   var stateHtml = stateData.map(function(p){
     return '<option value="' + p[0] + '"' + (p[0]==='NY'?' selected':'') + '>' + p[1] + '</option>';
   }).join('');
@@ -864,18 +865,19 @@ function _v21_prefillRefineForm() {
     if (!el || val === undefined || val === null) return;
     el.value = val;
   }
-  if (g.income)              _setField('v21r-income',             Math.round(g.income));
-  if (g.takeHome)            _setField('v21r-takehome',            Math.round(g.takeHome));
-  if (g.ccDebt)              _setField('v21r-cc-debt',             Math.round(g.ccDebt));
-  if (g.carDebt)             _setField('v21r-car-debt',            Math.round(g.carDebt));
-  if (g.studentDebt)         _setField('v21r-student-debt',        Math.round(g.studentDebt));
-  if (g.otherDebt)           _setField('v21r-other-debt',          Math.round(g.otherDebt));
+  function _fmtInput(n) { return n ? Math.round(n).toLocaleString('en-US') : ''; }
+  if (g.income)              _setField('v21r-income',             _fmtInput(g.income));
+  if (g.takeHome)            _setField('v21r-takehome',            _fmtInput(g.takeHome));
+  if (g.ccDebt)              _setField('v21r-cc-debt',             _fmtInput(g.ccDebt));
+  if (g.carDebt)             _setField('v21r-car-debt',            _fmtInput(g.carDebt));
+  if (g.studentDebt)         _setField('v21r-student-debt',        _fmtInput(g.studentDebt));
+  if (g.otherDebt)           _setField('v21r-other-debt',          _fmtInput(g.otherDebt));
   if (g.emergency)           _setField('v21r-emergency',           g.emergency);
   // Retired-specific fields
   if (g.retirementIncomeSource) _setField('v21r-ret-income-source', g.retirementIncomeSource);
-  if (g.retirementSavings)   _setField('v21r-retirement-savings',  Math.round(g.retirementSavings));
-  if (g.socialSecurityMonthly) _setField('v21r-ss-monthly',        Math.round(g.socialSecurityMonthly));
-  if (g.pensionIncome)       _setField('v21r-pension-monthly',     Math.round(g.pensionIncome));
+  if (g.retirementSavings)   _setField('v21r-retirement-savings',  _fmtInput(g.retirementSavings));
+  if (g.socialSecurityMonthly) _setField('v21r-ss-monthly',        _fmtInput(g.socialSecurityMonthly));
+  if (g.pensionIncome)       _setField('v21r-pension-monthly',     _fmtInput(g.pensionIncome));
   // Home household income clarifier
   if (g.homeIncomeMode) {
     var _soloPre = document.getElementById('v21r-him-solo');
@@ -890,7 +892,7 @@ function _v21_prefillRefineForm() {
       }
     }
   }
-  if (g.homeHouseholdTakeHome) _setField('v21r-household-takehome', Math.round(g.homeHouseholdTakeHome));
+  if (g.homeHouseholdTakeHome) _setField('v21r-household-takehome', _fmtInput(g.homeHouseholdTakeHome));
 }
 window._v21_prefillRefineForm = _v21_prefillRefineForm;
 
@@ -1121,7 +1123,7 @@ function v21BridgeToEngine() {
     var hpVal = getNum('v21r-home-price');
     if (hpVal > 0) {
       setVal('home-price', hpVal); setVal('renter-target-price', hpVal);
-      if (typeof G !== 'undefined') G.homePrice = hpVal; G.targetHomePrice = hpVal;
+      if (typeof G !== 'undefined') { G.homePrice = hpVal; G.targetHomePrice = hpVal; }
       markReal('home-price');
       _setMeta('homePrice', 'user');
     } else {
@@ -1421,7 +1423,7 @@ function v21RenderNBMCard() {
 
   card.style.display = 'block';
   // Telemetry: NBM shown
-  try { tracentTrack('nbm_shown', { moveTitle: (typeof tEl !== 'undefined' && tEl ? tEl.textContent : '') }); pbfdeState.nbmViewCount++; } catch(e) {}
+  try { pbfdeState.nbmViewCount++; } catch(e) {}
   // Premium: glow pulse on each NBM update
   try { tracentPulseNBM(); } catch(e) {}
 }

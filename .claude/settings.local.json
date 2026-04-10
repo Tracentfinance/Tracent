@@ -16,7 +16,26 @@
       "Bash(node -e \":*)",
       "Bash(grep -v \"^[0-9]*:.*//.*tdf-cta-ctx\")",
       "Bash(grep -v \"^[0-9]*:.*//.*_validate\\\\|^[0-9]*:.*\\\\*\")",
-      "Bash(node /tmp/extract_state_tax.js)"
+      "Bash(node /tmp/extract_state_tax.js)",
+      "Bash(grep -n \"'\\\\$'+\\\\|'\\\\$' +\\\\|\\\\\"\\\\\\\\$\\\\\"+\\\\|\\\\\"\\\\$\\\\\" +\\\\|textContent.*\\\\$\\\\|innerHTML.*\\\\$\" \"c:/Users/damia/OneDrive/My Businesses/2. Tracent Finance/Tracent/js/engine/legacy-calculations.js\")",
+      "Bash(grep -n \"'\\\\$'+\\\\|'\\\\$' +\" \"c:/Users/damia/OneDrive/My Businesses/2. Tracent Finance/Tracent/js/engine/legacy-calculations.js\")",
+      "Bash(grep -n '\"\\\\$\"' \"c:/Users/damia/OneDrive/My Businesses/2. Tracent Finance/Tracent/js/engine/legacy-calculations.js\")",
+      "Bash(grep -n '\\\\$.*[0-9][0-9][0-9][0-9]' \"c:/Users/damia/OneDrive/My Businesses/2. Tracent Finance/Tracent/js/engine/legacy-calculations.js\")",
+      "Bash(grep -n '\\\\$.*[0-9][0-9][0-9][0-9]' \"c:/Users/damia/OneDrive/My Businesses/2. Tracent Finance/Tracent/js/render/home.js\")",
+      "Bash(grep -n \"income.*text\\\\|income.*innerHTML\\\\|'\\\\$'.*income\\\\|income.*'\\\\$'\\\\|'\\\\$'+.*income\\\\|Math\\\\.round.*income\" \"c:/Users/damia/OneDrive/My Businesses/2. Tracent Finance/Tracent/js/engine/compat-bridge.js\")",
+      "Bash(grep -n \"'\\\\$'[^']*[0-9]\\\\|[0-9][^']*'\\\\$'\\\\|\\\\`\\\\$\\\\{[^}]*[0-9]\\\\|innerHTML.*[0-9][0-9][0-9][0-9]\" \"c:/Users/damia/OneDrive/My Businesses/2. Tracent Finance/Tracent/js/engine/compat-bridge.js\")",
+      "Bash(grep -n \"'\\\\$'\\\\s*+\\\\s*Math\\\\|'\\\\$'\\\\s*+\\\\s*[a-zA-Z]\\\\|'\\\\$'\\\\s*+\\\\s*[0-9]\\\\|\\\\\"\\\\$\\\\\"\\\\s*+\\\\s*Math\\\\|\\\\\"\\\\$\\\\\"\\\\s*+\\\\s*[a-zA-Z]\" \"c:/Users/damia/OneDrive/My Businesses/2. Tracent Finance/Tracent/js/render/home.js\")",
+      "Bash(grep -n \"'\\\\$'\\\\s*+\\\\|'\\\\$'+\\\\|\\\\\"\\\\$\\\\\"\\\\s*+\" \"c:/Users/damia/OneDrive/My Businesses/2. Tracent Finance/Tracent/js/features/renderAdaptiveDashboard.js\")",
+      "Bash(grep -v \"toLocaleString\\\\|K'\\\\|'K\\\\|k'\\\\|'k\\\\|M'\\\\|'M\\\\|function fmt\\\\|var fmt\\\\|const fmt\\\\|//\")",
+      "Bash(grep -rn \"'\\\\$'\\\\s*+\\\\|'\\\\$'+\\\\|\\\\\"\\\\$\\\\\"\\\\s*+\" \"c:/Users/damia/OneDrive/My Businesses/2. Tracent Finance/Tracent/js/features/\")",
+      "Bash(grep -rn \"'\\\\$'\\\\s*+\\\\|'\\\\$'+\\\\|\\\\\"\\\\$\\\\\"\\\\s*+\" \"c:/Users/damia/OneDrive/My Businesses/2. Tracent Finance/Tracent/js/render/debt.js\")",
+      "Bash(grep -rn \"'\\\\$'\\\\s*+\\\\|'\\\\$'+\\\\|\\\\\"\\\\$\\\\\"\\\\s*+\" \"c:/Users/damia/OneDrive/My Businesses/2. Tracent Finance/Tracent/js/render/progress.js\")",
+      "Bash(grep -rn \"'\\\\$'\\\\s*+\\\\|'\\\\$'+\\\\|\\\\\"\\\\$\\\\\"\\\\s*+\" \"c:/Users/damia/OneDrive/My Businesses/2. Tracent Finance/Tracent/js/engine/legacy-calculations.js\")",
+      "Bash(grep -rn \"\\\\\\\\\\\\$\\\\`\\\\${\" \"c:/Users/damia/OneDrive/My Businesses/2. Tracent Finance/Tracent/js/engine/legacy-calculations.js\")",
+      "Bash(grep -v \"toLocaleString\\\\|K\\\\`\\\\|'K\\\\|/[0-9]\\\\|000\\\\b\")",
+      "Bash(grep -rn '\\\\$\\\\${' \"c:/Users/damia/OneDrive/My Businesses/2. Tracent Finance/Tracent/js/engine/legacy-calculations.js\")",
+      "Bash(grep -v \"toLocaleString\\\\|\\\\.toFixed\\\\|000}\\\\`\\\\|K}\\\\|k}\\\\|M}\\\\|//\")",
+      "Bash(grep \"\\\\$\\\\|balance\\\\|debt\\\\|amount\")"
     ]
   }
 }
