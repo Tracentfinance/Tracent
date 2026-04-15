@@ -46,6 +46,7 @@ function onbSubmit()   { if (typeof v21FinishOnboarding === 'function') v21Finis
 // ── Housing selection (null-safe) ─────────────────────────
 window.selectHousing = function(type) {
   housingType = type;
+  window.G = window.G || {}; window.G.housingType = type;
   document.querySelectorAll('.housing-card').forEach(function(c) {
     c.style.borderColor = 'var(--gray-2)'; c.style.background = 'white';
   });
@@ -367,11 +368,11 @@ function v21SelectAgeRange(range, el) {
 
 /* ── PHASE 3: SCORE RANGE COMPUTATION ─────────────────── */
 var _v21BandMeta = {
-  fragile:     { label: '🔴  Fragile',     color: '#EF4444', min: 0,  max: 39  },
-  exposed:     { label: '🟡  Exposed',     color: '#F59E0B', min: 40, max: 54  },
-  stabilizing: { label: '🔵  Stabilizing', color: '#00A8E8', min: 55, max: 69  },
-  advancing:   { label: '🟢  Advancing',   color: '#10B981', min: 70, max: 84  },
-  compounding: { label: '⬡  Compounding', color: '#8B5CF6', min: 85, max: 100 }
+  fragile:     { label: 'Fragile',     color: '#EF4444', min: 0,  max: 39  },
+  exposed:     { label: 'Exposed',     color: '#F59E0B', min: 40, max: 54  },
+  stabilizing: { label: 'Stabilizing', color: '#00A8E8', min: 55, max: 69  },
+  advancing:   { label: 'Advancing',   color: '#10B981', min: 70, max: 84  },
+  compounding: { label: 'Compounding', color: '#8B5CF6', min: 85, max: 100 }
 };
 
 function v21BandForScore(score) {
@@ -414,7 +415,7 @@ function v21ComputeRange() {
     G.scoreFinal     = false;
     // Explicitly do NOT assign G.score here — that is set only by _0xb70f5a4 (real engine)
     // delete G.score is too aggressive if user is returning to onboarding; null it instead
-    if (G.scoreFinal !== true) delete G.score;
+    G.score = null;
   }
 
   // Update hidden compat stubs (so any engine that still reads these IDs is safe)
@@ -921,7 +922,7 @@ function v21FinishOnboarding() {
   // Stage 2: Mark score state
   if (typeof G !== 'undefined') {
     G.scoreEstimated      = false;
-    G.scoreFinal          = true;
+    // scoreFinal is set only by wrapCompute after engine produces a real score
     // profileCompleteness is now computed from real inputs in v21BridgeToEngine
     // Only set a floor if bridge didn't produce a value
     if (!G.profileCompleteness || G.profileCompleteness < 25) G.profileCompleteness = 40;
@@ -982,7 +983,8 @@ function v21BridgeToEngine() {
   // ── Data provenance: tag critical G fields as 'user' | 'derived' | 'assumed' ──
   // Only applied to fields checked by getDecisionMode; no other use.
   var _META_FIELDS = ['income','homePrice','depositSaved','savingsAmt',
-                      'ccDebt','retirementSavings','socialSecurityMonthly','pensionIncome'];
+                      'ccDebt','retirementSavings','socialSecurityMonthly','pensionIncome',
+                      'rentAmount','expenses','currentRent','ccRate'];
   function _setMeta(field, tag) {
     if (typeof G !== 'undefined' && _META_FIELDS.indexOf(field) !== -1) {
       G[field + '_meta'] = tag;
@@ -1009,8 +1011,8 @@ function v21BridgeToEngine() {
     _setMeta('income', 'user');
   } else {
     setVal('income', '');
-    if (typeof G !== 'undefined') G.income = 0;
-    markInferred('income (not provided)');
+    if (typeof G !== 'undefined') G.income = (G.socialSecurityMonthly || 0) + (G.pensionIncome || 0);
+    markInferred('income (not provided — derived from SS + pension if available)');
     _setMeta('income', 'assumed');
   }
 
@@ -1035,11 +1037,11 @@ function v21BridgeToEngine() {
     // Expenses
     var expVal = getNum('v21r-expenses');
     if (expVal > 0) { setVal('expenses', expVal); markReal('expenses'); }
-    else { setVal('expenses', '900'); markInferred('expenses (default $900)'); }
+    else { setVal('expenses', ''); _setMeta('expenses', 'missing'); markInferred('expenses (not provided)'); }
 
     // CC debt — real number, not inferred from band
     var ccVal = getNum('v21r-cc-debt');
-    setVal('cc-debt', ccVal); setVal('cc-rate', '21');
+    setVal('cc-debt', ccVal); setVal('cc-rate', ''); _setMeta('ccRate', 'missing');
     if (ccVal > 0) { markReal('cc-debt'); _setMeta('ccDebt', 'user'); }
     else { markInferred('cc-debt (entered as zero)'); _setMeta('ccDebt', 'user'); } // zero is still user-entered
 
@@ -1053,7 +1055,7 @@ function v21BridgeToEngine() {
     // Housing status from user selection
     var _hsRadio0 = document.querySelector('input[name="v21r-housing-status"]:checked');
     var _hsVal0   = _hsRadio0 ? _hsRadio0.value : 'renting';
-    setVal('rent-amount', '1500');
+    setVal('rent-amount', ''); _setMeta('rentAmount', 'missing');
     if (typeof selectHousing === 'function') selectHousing(_hsVal0);
     else if (typeof housingType !== 'undefined') housingType = _hsVal0;
     if (_hsVal0 === 'owner') markReal('housing-status');
@@ -1067,7 +1069,7 @@ function v21BridgeToEngine() {
   } else if (intent === 'debt') {
     // CC debt — always a real field in both onboarding and settings
     var ccVal2 = getNum('v21r-cc-debt');
-    setVal('cc-debt', ccVal2); setVal('cc-rate', '21');
+    setVal('cc-debt', ccVal2); setVal('cc-rate', ''); _setMeta('ccRate', 'missing');
     if (ccVal2 > 0) { markReal('cc-debt'); _setMeta('ccDebt', 'user'); }
     else { markInferred('cc-debt (entered as zero)'); _setMeta('ccDebt', 'user'); } // zero is still user-entered
 
@@ -1107,12 +1109,12 @@ function v21BridgeToEngine() {
     else markInferred('emergency-fund (none reported)');
 
     // Expenses default
-    setVal('expenses', '900'); markInferred('expenses (default)');
+    setVal('expenses', ''); _setMeta('expenses', 'missing'); markInferred('expenses (not provided)');
 
     // Housing status from user selection
     var _hsRadio1 = document.querySelector('input[name="v21r-housing-status"]:checked');
     var _hsVal1   = _hsRadio1 ? _hsRadio1.value : 'renting';
-    setVal('rent-amount', '1500');
+    setVal('rent-amount', ''); _setMeta('rentAmount', 'missing');
     if (typeof selectHousing === 'function') selectHousing(_hsVal1);
     else if (typeof housingType !== 'undefined') housingType = _hsVal1;
     if (_hsVal1 === 'owner') markReal('housing-status');
@@ -1127,9 +1129,9 @@ function v21BridgeToEngine() {
       markReal('home-price');
       _setMeta('homePrice', 'user');
     } else {
-      setVal('home-price', '400000'); setVal('renter-target-price', '400000');
-      markInferred('home-price (default $400k)');
-      _setMeta('homePrice', 'assumed');
+      setVal('home-price', ''); setVal('renter-target-price', '');
+      markInferred('home-price (not provided)');
+      _setMeta('homePrice', 'missing');
     }
 
     // Deposit saved
@@ -1145,12 +1147,22 @@ function v21BridgeToEngine() {
     setVal('car-debt', '0'); // never fabricate a balance from payments
     if (pmtsHome > 0) markReal('monthly-debt-payments');
     else markInferred('debt-payments (none entered)');
+    // Sync G directly — _calcHomeMetrics reads G, not just DOM hidden inputs
+    if (typeof G !== 'undefined') {
+      G.carPayment     = pmtsHome || 0;
+      G.otherPayment   = 0;
+      G.studentPayment = 0;
+      G.otherDebt      = 0;
+      G.studentDebt    = 0;
+      G.carDebt        = 0;
+    }
 
     // Credit band — real, not inferred from signal
     var creditBand = getStr('v21r-credit-band') || 'fair';
+    window.G = window.G || {}; G.credit = creditBand;
     if (typeof selectedCredit !== 'undefined') selectedCredit = creditBand;
-    if (getStr('v21r-credit-band')) markReal('credit-band');
-    else markInferred('credit-band (default fair)');
+    if (getStr('v21r-credit-band')) { markReal('credit-band'); _setMeta('credit', 'user'); }
+    else { markInferred('credit-band (default fair)'); _setMeta('credit', 'assumed'); }
 
     // Household income clarifier — home intent only
     var _hhRadio = document.querySelector('input[name="v21r-home-income-mode"]:checked');
@@ -1164,22 +1176,25 @@ function v21BridgeToEngine() {
     }
 
     // Housing type: renting (buying)
-    setVal('current-rent', '1500');
+    setVal('current-rent', ''); _setMeta('currentRent', 'missing');
     if (typeof selectHousing === 'function') selectHousing('buying');
     else if (typeof housingType !== 'undefined') housingType = 'buying';
 
-    // Defaults — home intent does NOT ask emergency; leave G.emergency unset
-    setVal('expenses', '900');
-    setVal('cc-debt', '0'); setVal('cc-rate', '21');
+    // Defaults — home intent does NOT ask emergency; always clear to avoid leaking prior session EF
+    setVal('expenses', ''); _setMeta('expenses', 'missing');
+    setVal('emergency', '');
+    if (typeof G !== 'undefined') { G.emergency = null; _setMeta('emergency', 'missing'); }
+    setVal('cc-debt', '0'); setVal('cc-rate', ''); _setMeta('ccRate', 'missing');
+    if (typeof G !== 'undefined') { G.ccDebt = 0; G.ccRate = null; }
     setVal('other-debt', '0'); setVal('other-payment', '0');
     setVal('student-debt', '0'); setVal('student-payment', '0');
-    markInferred('expenses (default)');
+    markInferred('expenses (not provided)');
 
   } else if (intent === 'grow') {
     // Expenses
     var expGrow = getNum('v21r-expenses');
     if (expGrow > 0) { setVal('expenses', expGrow); markReal('expenses'); }
-    else { setVal('expenses', '900'); markInferred('expenses (default)'); }
+    else { setVal('expenses', ''); _setMeta('expenses', 'missing'); markInferred('expenses (not provided)'); }
 
     // Savings amount — maps to renter-savings for net worth calc
     var savAmt = getNum('v21r-savings-amount');
@@ -1198,13 +1213,13 @@ function v21BridgeToEngine() {
     // Housing status from user selection
     var _hsRadio2 = document.querySelector('input[name="v21r-housing-status"]:checked');
     var _hsVal2   = _hsRadio2 ? _hsRadio2.value : 'renting';
-    setVal('rent-amount', '1500');
+    setVal('rent-amount', ''); _setMeta('rentAmount', 'missing');
     if (typeof selectHousing === 'function') selectHousing(_hsVal2);
     else if (typeof housingType !== 'undefined') housingType = _hsVal2;
     if (_hsVal2 === 'owner') markReal('housing-status');
     else markInferred('housing (renting/default)');
 
-    setVal('cc-debt', '0'); setVal('cc-rate', '21');
+    setVal('cc-debt', '0'); setVal('cc-rate', ''); _setMeta('ccRate', 'missing');
     setVal('car-debt', '0'); setVal('car-payment', '0');
     setVal('other-debt', '0'); setVal('other-payment', '0');
     setVal('student-debt', '0'); setVal('student-payment', '0');
@@ -1258,23 +1273,28 @@ function v21BridgeToEngine() {
     else markInferred('debt-payments (none entered)');
 
     // Defaults
-    setVal('expenses', '900'); setVal('rent-amount', '1500');
-    setVal('cc-debt', '0'); setVal('cc-rate', '21');
+    setVal('expenses', ''); _setMeta('expenses', 'missing');
+    setVal('rent-amount', ''); _setMeta('rentAmount', 'missing');
+    setVal('cc-debt', '0'); setVal('cc-rate', ''); _setMeta('ccRate', 'missing');
     setVal('other-debt', '0'); setVal('other-payment', '0');
     setVal('student-debt', '0'); setVal('student-payment', '0');
-    if (typeof selectHousing === 'function') selectHousing('renting');
-    else if (typeof housingType !== 'undefined') housingType = 'renting';
-    markInferred('expenses (default)'); markInferred('housing (default renting)');
+    if (!G.housingType || G.housingType === 'buying') {
+      if (typeof selectHousing === 'function') selectHousing('renting');
+      else if (typeof housingType !== 'undefined') housingType = 'renting';
+      markInferred('housing (default renting — buying overridden for retire intent)');
+    }
+    markInferred('expenses (not provided)');
 
   } else {
     // Fallback: stable path
     var expFb = getNum('v21r-expenses');
-    setVal('expenses', expFb > 0 ? expFb : '900');
+    if (expFb > 0) { setVal('expenses', expFb); } else { setVal('expenses', ''); _setMeta('expenses', 'missing'); }
     var ccFb = getNum('v21r-cc-debt');
-    setVal('cc-debt', ccFb); setVal('cc-rate', '21');
+    setVal('cc-debt', ccFb); setVal('cc-rate', ''); _setMeta('ccRate', 'missing');
     var efFb = getStr('v21r-emergency') || '0';
     setVal('emergency', efFb);
-    setVal('rent-amount', '1500');
+    if (typeof G !== 'undefined') G.emergency = efFb;
+    setVal('rent-amount', ''); _setMeta('rentAmount', 'missing');
     if (typeof selectHousing === 'function') selectHousing('renting');
     else if (typeof housingType !== 'undefined') housingType = 'renting';
     setVal('car-debt', '0'); setVal('car-payment', '0');
@@ -1282,6 +1302,9 @@ function v21BridgeToEngine() {
     setVal('student-debt', '0'); setVal('student-payment', '0');
     markInferred('housing (default renting)');
   }
+
+  // Ensure savingsAmt is always defined (non-home intents may not write it)
+  if (typeof G !== 'undefined' && G.savingsAmt == null) { G.savingsAmt = 0; }
 
   // ── 6. Credit — only infer from signal if no credit answer given ──
   // Home intent already set credit from real input above.
@@ -1291,8 +1314,11 @@ function v21BridgeToEngine() {
       very_little: 'below', not_at_all: 'poor'
     };
     var inferredCredit = sigToCredit[signal] || 'fair';
-    if (typeof selectedCredit !== 'undefined') selectedCredit = inferredCredit;
-    markInferred('credit (inferred from resilience signal: ' + signal + ')');
+    if (!G.credit) {
+      G.credit = inferredCredit;
+      if (typeof selectedCredit !== 'undefined') selectedCredit = inferredCredit;
+      markInferred('credit (inferred from resilience signal: ' + signal + ')');
+    }
   }
 
   // ── 7. Profile completeness — real fields only ────────────────────
@@ -1329,11 +1355,23 @@ function v21ComputeDrivers() {
   } else {
     drivers.push({ text: '± resilience being built', type: 'neutral' });
   }
-  if (intent === 'debt')    drivers.push({ text: '-2 debt pressure flagged', type: 'negative' });
-  if (intent === 'home')    drivers.push({ text: '+2 home readiness tracked', type: 'positive' });
-  if (intent === 'retire')  drivers.push({ text: '+2 retirement clarity', type: 'positive' });
-  if (intent === 'grow')    drivers.push({ text: '+1 growth orientation', type: 'positive' });
-  drivers.push({ text: '+1 first profile complete', type: 'positive' });
+  if (intent === 'debt')   drivers.push({ text: '-2 debt pressure flagged', type: 'negative' });
+  if (intent === 'home') {
+    // Only claim home readiness is tracked when a real target price exists
+    var _hasHP = typeof G !== 'undefined' && G.homePrice > 0;
+    drivers.push(_hasHP
+      ? { text: '+2 home readiness tracked', type: 'positive' }
+      : { text: '± home target not set yet', type: 'neutral' });
+  }
+  if (intent === 'retire') drivers.push({ text: '+2 retirement clarity', type: 'positive' });
+  if (intent === 'grow')   drivers.push({ text: '+1 growth orientation', type: 'positive' });
+  // Only claim profile is complete when it is meaningfully so
+  var _completeness = typeof G !== 'undefined' ? Number(G.profileCompleteness || 0) : 0;
+  if (_completeness >= 60) {
+    drivers.push({ text: '+1 first profile complete', type: 'positive' });
+  } else {
+    drivers.push({ text: '± profile still building', type: 'neutral' });
+  }
   return drivers;
 }
 
@@ -1394,12 +1432,22 @@ function v21RenderDriverStrip() {
 /* ── NEXT BEST MOVE CARD (V21 ENHANCED) ───────────────── */
 var _v21MoveIndex = 0;
 
+// Module-level cycle key — prevents duplicate NBM tracking from the same analysis cycle + move index
+var _v21NbmLastCycleKey = null;
+
 function v21RenderNBMCard() {
   var card = document.getElementById('v21-nbm-card');
   // Require a final score (set by the real engine) before showing NBM
   if (!card || typeof G === 'undefined' || !G.score || !G.scoreFinal) return;
 
-  var moves = v21GetRankedMoves();
+  // Per-cycle guard: one NBM render per (analysis cycle × move index) — prevents double-tracking
+  var _cycleKey = (typeof G !== 'undefined') ? ((G.lastComputedAt || G.score || null) + ':' + _v21MoveIndex) : null;
+  if (_cycleKey && _v21NbmLastCycleKey === _cycleKey) return;
+  if (_cycleKey) _v21NbmLastCycleKey = _cycleKey;
+
+  var moves = (typeof window.v21GetRankedMoves === 'function')
+    ? window.v21GetRankedMoves()
+    : _v21GetRankedMovesLegacy();
   var idx   = Math.min(_v21MoveIndex, moves.length - 1);
   var move  = moves[idx] || moves[0];
 
@@ -1422,20 +1470,28 @@ function v21RenderNBMCard() {
   if (easierBtn) easierBtn.style.display = moves.length > 1 ? 'inline-flex' : 'none';
 
   card.style.display = 'block';
-  // Telemetry: NBM shown
-  try { pbfdeState.nbmViewCount++; } catch(e) {}
+  // Telemetry: NBM shown — use pbfdeTrack as sole increment path to avoid double-counting
+  try { pbfdeTrack('nbm_shown', { moveId: move ? move.id : null }); } catch(e) {}
   // Premium: glow pulse on each NBM update
   try { tracentPulseNBM(); } catch(e) {}
 }
 
 function v21ShowNextMove(direction) {
   try { tracentTrack('nbm_clicked', { action: 'shift', direction: direction || 1 }); registerMeaningfulAction('nbm_clicked'); } catch(e) {}
-  var moves = v21GetRankedMoves();
+  var moves = (typeof window.v21GetRankedMoves === 'function')
+    ? window.v21GetRankedMoves()
+    : _v21GetRankedMovesLegacy();
   _v21MoveIndex = Math.min(Math.max(0, _v21MoveIndex + (direction || 1)), moves.length - 1);
   v21RenderNBMCard();
 }
 
-function v21GetRankedMoves() {
+// Legacy fallback move engine. home.js owns the authoritative v21GetRankedMoves.
+// This file's copy delegates to it when loaded; otherwise falls back to bridge logic.
+function _v21GetRankedMovesLegacy() {
+  if (typeof window.v21GetRankedMoves === 'function' &&
+      window.v21GetRankedMoves !== _v21GetRankedMovesLegacy) {
+    return window.v21GetRankedMoves();
+  }
   if (typeof G === 'undefined') return [];
   var intent = G.primaryIntent || 'stable';
   var signal = G.financialResilienceSignal || 'somewhat';
@@ -1517,13 +1573,16 @@ function v21GetRankedMoves() {
       scoreImpact: 4, cashImpact: 'Saves interest', timeToStart: 'Today', priority: 7, confidence: 'high',
       category: 'debt', id: 'debt_order'
     },
-    grow: {
-      title:       'Direct $' + Math.max(50, Math.round((fcf || 200) * 0.2)) + '/mo into an index fund — starting now',
-      why:         'Regular contributions matter more than timing. Every month you delay, you lose compounding.',
-      action:      'Set a recurring transfer on payday. Low-cost index fund. No decisions required each month.',
-      scoreImpact: 3, cashImpact: 'Varies', timeToStart: 'This week', priority: 5, confidence: 'medium',
-      category: 'grow', id: 'grow_invest'
-    },
+    grow: (function() {
+      var _investAmt = fcf > 50 ? '$' + Math.max(50, Math.round(fcf * 0.2)) + '/mo' : 'a set amount';
+      return {
+        title:       'Direct ' + _investAmt + ' into an index fund — starting now',
+        why:         'Regular contributions matter more than timing. Every month you delay, you lose compounding.',
+        action:      'Set a recurring transfer on payday. Low-cost index fund. No decisions required each month.',
+        scoreImpact: 3, cashImpact: 'Varies', timeToStart: 'This week', priority: 5, confidence: 'medium',
+        category: 'grow', id: 'grow_invest'
+      };
+    })(),
     stable: {
       title:       'Set your monthly spending limit in writing',
       why:         'Without a number, surplus disappears. A written target changes the default.',
@@ -1551,19 +1610,12 @@ function v21GetRankedMoves() {
   var hasDebt    = !!(G && ((G.ccDebt||0)+(G.carDebt||0)+(G.studentDebt||0)+(G.otherDebt||0)) > 0);
   var hasHomeTarget = !!(G && (G.homePrice || G.targetHomePrice || G.purchasePrice));
   allMoves = allMoves.filter(function(m) {
-    // Retired users: no contribution or employer-match moves
-    if (isRetired && m.title && (
-      m.title.indexOf('contribution') !== -1 ||
-      m.title.indexOf('employer match') !== -1
-    )) return false;
+    // Retired users: no contribution or employer-match moves (id-based — title-text filtering is brittle)
+    if (isRetired && (m.id === 'ret_match' || m.id === 'grow_invest')) return false;
     // Debt-free users: no debt payoff moves
-    if (!hasDebt && m.title && (
-      m.title.indexOf('card balance') !== -1 ||
-      m.title.indexOf('payoff order') !== -1 ||
-      m.title.indexOf('debt payments') !== -1
-    )) return false;
+    if (!hasDebt && (m.id === 'cc_paydown' || m.id === 'debt_order' || m.id === 'dti_reduce')) return false;
     // Home intent without a target price: skip deposit-gap move
-    if (!hasHomeTarget && m.title && m.title.indexOf('cash you need to close') !== -1) return false;
+    if (!hasHomeTarget && m.id === 'home_gap') return false;
     return true;
   });
 
@@ -1578,6 +1630,8 @@ function v21GetRankedMoves() {
     category: 'stable', id: 'maintenance'
   }];
 }
+// Export so app.js and other modules can call window._v21GetRankedMovesLegacy directly.
+window._v21GetRankedMovesLegacy = _v21GetRankedMovesLegacy;
 
 /* ── DECISION GATE — tell / ask / hold ─────────────────── */
 // Minimal gate: determines if NBM has enough real data to make a call.
@@ -1597,7 +1651,7 @@ window.getDecisionMode = function(g, decisionType) {
       missing.push('monthly take-home or spending picture');
     }
 
-  } else if (g.income_meta === 'assumed') {
+  } else if (g.income_meta === 'assumed' || g.income_meta === 'missing') {
     assumed.push('income');
   }
 
@@ -1710,13 +1764,15 @@ function v21RenderPostAnalysis() {
   // Populate monthly review card with live data
   v21BuildMonthlyReviewData();
 
-  // Highlight active mode based on intent
-  var intent = G.primaryIntent || 'stable';
-  var intentToMode = { home:'home', debt:'debt', grow:'grow', retire:'retire' };
-  var activeMode   = intentToMode[intent] || 'today';
-  document.querySelectorAll('.v21-mode-btn').forEach(function(b) { b.classList.remove('active'); });
-  var activeBtn = document.getElementById('mode-btn-' + activeMode);
-  if (activeBtn) activeBtn.classList.add('active');
+  // Highlight active mode based on intent — only when user has not manually picked a mode
+  if (!window._v21ModeManuallySelected) {
+    var intent = G.primaryIntent || 'stable';
+    var intentToMode = { home:'home', debt:'debt', grow:'grow', retire:'retire' };
+    var activeMode   = intentToMode[intent] || 'today';
+    document.querySelectorAll('.v21-mode-btn').forEach(function(b) { b.classList.remove('active'); });
+    var activeBtn = document.getElementById('mode-btn-' + activeMode);
+    if (activeBtn) activeBtn.classList.add('active');
+  }
 }
 
 function v21BuildMonthlyReviewData() {
@@ -1761,7 +1817,9 @@ function v21BuildMonthlyReviewData() {
   if (revWin)  revWin.textContent  = wins.length  ? wins[0].text  : 'Completed your profile';
   if (revDrag) revDrag.textContent = drags.length ? drags[0].text : 'Maintain current habits';
 
-  var moves = v21GetRankedMoves();
+  var moves = (typeof window.v21GetRankedMoves === 'function')
+    ? window.v21GetRankedMoves()
+    : _v21GetRankedMovesLegacy();
   if (revRec)  revRec.textContent  = moves.length ? moves[0].title : 'Keep reviewing monthly';
   if (revComm) {
     var name = (G.firstname ? G.firstname + ', your' : 'Your');
@@ -1804,7 +1862,7 @@ function v21SaveCheckin() {
       if (needsUpdate && typeof _0x36940e3 === 'function') _0x36940e3();
     }
     // Show confirmation toast
-    v21ShowToast('Check-in saved ✓ — numbers updated');
+    v21ShowToast('Check-in saved — numbers updated');
   }
   _v21CheckinData = {};
   closeModal('v21-checkin-overlay');
@@ -1817,8 +1875,8 @@ function v21TriggerLifeEvent(eventType, btn) {
   });
   if (btn) { btn.style.borderColor = 'var(--sky)'; btn.style.background = 'var(--sky-dim)'; }
 
-  // Update G.lifeEvent and sync to engine
-  if (typeof G !== 'undefined') G.v21LifeEvent = eventType;
+  // Update G.lifeEvent and sync to engine — write both keys so render-layer readers stay aligned
+  if (typeof G !== 'undefined') { G.v21LifeEvent = eventType; G.lifeEvent = eventType; }
   var legacyEl = document.getElementById('life-event');
   if (legacyEl) legacyEl.value = eventType;
 
@@ -1850,10 +1908,41 @@ window.startOnboarding = function() {
   _v21PhaseStack = ['intent'];
   _v21MoveIndex  = 0;
   if (typeof G !== 'undefined') {
-    G.primaryIntent            = null;
+    G.primaryIntent             = null;
     G.financialResilienceSignal = null;
-    G.scoreEstimated           = false;
-    G.scoreFinal               = false;
+    G.scoreEstimated            = false;
+    G.scoreFinal                = false;
+    // Clear all stale computed / bridged state so a fresh run starts clean
+    G.score              = null;
+    G.fcf                = null;
+    G.dti                = null;
+    G.income             = null;
+    G.takeHome           = null;
+    G.expenses           = null;
+    G.credit             = null;
+    G.ccDebt             = null;
+    G.ccRate             = null;
+    G.emergency          = null;
+    G.homePrice          = null;
+    G.targetHomePrice    = null;
+    G.depositSaved       = null;
+    G.carPayment         = null;
+    G.studentPayment     = null;
+    G.otherPayment       = null;
+    G.carDebt            = null;
+    G.studentDebt        = null;
+    G.otherDebt          = null;
+    G.housingType        = null;
+    G.lifeEvent          = null;
+    G.v21LifeEvent       = null;
+    G._inferredFields    = [];
+    G.lastComputedAt     = null;
+    G.rentAmount_meta    = null;
+    G.currentRent_meta   = null;
+    G.rent_meta          = null;
+    G.expenses_meta      = null;
+    G.ccRate_meta        = null;
+    G.emergency_meta     = null;
   }
 
   // Show the onboarding screen
@@ -1878,8 +1967,9 @@ window._tracent_startOnboarding = window.startOnboarding;
 var _origShowDashboard = window.showDashboard;
 window.showDashboard = function() {
   if (typeof _origShowDashboard === 'function') _origShowDashboard();
-  // Fire V21 post-analysis render after a tick (engine data must be settled)
-  setTimeout(v21RenderPostAnalysis, 120);
+  // Post-analysis render is handled exclusively by the tracent:scoreComputed listener.
+  // Removed: setTimeout(v21RenderPostAnalysis, 120) — was a duplicate trigger that
+  // caused double-render on every analysis cycle alongside the scoreComputed path.
 };
 
 /* ── HOOK INTO EXISTING continueSession ─────────────────
@@ -1888,7 +1978,12 @@ window.showDashboard = function() {
 var _origContinueSession = window.continueSession;
 window.continueSession = function() {
   if (typeof _origContinueSession === 'function') _origContinueSession();
-  setTimeout(v21RenderPostAnalysis, 350);
+  setTimeout(function() {
+    // Only render into a session that is actually ready — not half-restored state
+    if (typeof G !== 'undefined' && G.scoreFinal && G.score) {
+      v21RenderPostAnalysis();
+    }
+  }, 350);
 };
 
 /* ── EXPOSE V21 GLOBALS ────────────────────────────────── */
@@ -2138,6 +2233,9 @@ window.PBFDE = PBFDE;
 // ── 1f. Wire to tracent:scoreComputed ─────────────────────────────
 document.addEventListener('tracent:scoreComputed', function(e) {
   try {
+    // Guard: preview / estimated dispatches must not mutate PBFDE session state
+    var detail = (e && e.detail) || {};
+    if (detail.estimated === true || detail.final !== true) return;
     setTimeout(function() {
       var elapsed = (Date.now() - pbfdeState.sessionStart) / 1000;
       PBFDE.init({ decisionTime: elapsed > 30 ? 10 : elapsed });
@@ -2193,6 +2291,9 @@ function tracentTrack(event, data) {
       screen:    window.TRACENT_TELEMETRY.currentScreen
     };
     window.TRACENT_TELEMETRY.events.push(payload);
+    if (window.TRACENT_TELEMETRY.events.length > 200) {
+      window.TRACENT_TELEMETRY.events = window.TRACENT_TELEMETRY.events.slice(-200);
+    }
     try { pbfdeTrack(event, data); } catch(e) {}
     if (window.TRACENT_DEBUG_TELEMETRY) {
       console.log('[Tracent Telemetry]', payload);
@@ -2233,7 +2334,7 @@ function startHesitationWatch(screenId) {
   try {
     clearHesitationWatch(screenId);
     _hesitationTimers[screenId] = setTimeout(function() {
-      pbfdeState.hesitationCount = (pbfdeState.hesitationCount || 0) + 1;
+      // pbfdeTrack (called inside tracentTrack) owns the hesitationCount increment — do not double-count here
       tracentTrack('hesitation_detected', { screenId: screenId, idleMs: HESITATION_MS });
     }, HESITATION_MS);
   } catch(e) {}

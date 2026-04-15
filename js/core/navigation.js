@@ -85,7 +85,7 @@ function _0xf1a6af7() {
       el.style.opacity = '1';
       el.style.color = 'var(--navy)';
       const icon = el.querySelector('span');
-      if (icon) { icon.textContent = '✅'; }
+      if (icon) { icon.textContent = ''; }
       const badge = el.querySelector('div');
       if (badge) { badge.style.background = 'rgba(0,119,182,0.12)'; }
       // Advance ring & bar
@@ -156,19 +156,19 @@ function showDashboard() {
 // ── Tab switching — core router only ─────────────────────
 function switchTab(tab) {
   console.log('[DASH] switchTab', tab);
+  var panel = document.getElementById('tab-' + tab);
+  if (!panel) {
+    console.warn('[DASH] switchTab: no panel for tab-' + tab);
+    return;
+  }
   try { tracentTrack('tab_switched', { from: window._lastTab || '', to: tab }); } catch(e) {}
   window._lastTab = tab;
   try { tracentEnterScreen('tab:' + tab); } catch(e) {}
   document.querySelectorAll('.tab-panel').forEach(function(p) { p.classList.remove('active'); });
-  var panel = document.getElementById('tab-' + tab);
-  if (panel) {
-    panel.classList.add('active');
-    panel.style.animation = 'none';
-    panel.offsetHeight;
-    panel.style.animation = '';
-  } else {
-    console.warn('[DASH] switchTab: no panel for tab-' + tab);
-  }
+  panel.classList.add('active');
+  panel.style.animation = 'none';
+  panel.offsetHeight;
+  panel.style.animation = '';
   var header = document.getElementById('dash-header');
   if (header) {
     if (tab === 'home') {
@@ -250,6 +250,7 @@ function runTabRenderers(tab) {
 function setNav(el) {
   if (!el) { console.warn('[DASH] setNav: null'); return; }
   document.querySelectorAll('.nav-item, .bse-nav-item').forEach(function(n) { n.classList.remove('active'); });
+  if (!el || el.style.display === 'none') return;
   el.classList.add('active');
   try {
     var icon = el.querySelector('.nav-icon');
@@ -267,6 +268,7 @@ function setNavByName(name) {
 
 // ── V21 Mode rail ─────────────────────────────────────────
 function v21SetMode(mode, btn) {
+  window._v21ModeManuallySelected = true;
   console.log('[DASH] v21SetMode', mode);
   if (typeof G !== 'undefined') G.v21Mode = mode;
   try { tracentTrack('mode_switch', { mode: mode }); registerMeaningfulAction('mode_switch', { mode: mode }); } catch(e) {}
@@ -274,10 +276,19 @@ function v21SetMode(mode, btn) {
   if (btn) btn.classList.add('active');
   var modeToTab = { today:'home', home:'home', debt:'debtrank', grow:'recommend', retire:'progress' };
   var modeToNav = { today:'home', home:'home', debt:'debt',     grow:'advice',    retire:'progress' };
-  try { switchTab(modeToTab[mode] || 'home'); } catch(e) { console.error('[DASH] v21SetMode switchTab:', e); }
+  var targetTab = modeToTab[mode] || 'home';
+  if (window._lastTab !== targetTab) {
+    try { switchTab(targetTab); } catch(e) { console.error('[DASH] v21SetMode switchTab:', e); }
+  }
   try { setNavByName(modeToNav[mode] || 'home'); } catch(e) { console.error('[DASH] v21SetMode setNavByName:', e); }
   // Retire routes to the retirement subview — NOT career
-  if (mode === 'retire') { try { showProgressSub('retirement'); } catch(e) { console.error('[DASH] retire sub:', e); } }
+  if (mode === 'retire') {
+    try {
+      if (typeof showProgressSub === 'function') showProgressSub('retirement');
+    } catch(e) {
+      console.error('[DASH] retire sub:', e);
+    }
+  }
   // Grow/today/home: stay on home tab; strategy block handles differentiation
   if (mode === 'today') { try { v21SetDashboardContext('today'); } catch(e) {} }
   if (mode === 'home')  { try { v21SetDashboardContext('home');  } catch(e) {} }
@@ -286,12 +297,15 @@ function v21SetMode(mode, btn) {
 
 // ── Continue session ──────────────────────────────────────
 function continueSession() {
-  var hasSession = typeof G !== 'undefined' && G && G.income && G.housingType;
+  var hasSession = typeof G !== 'undefined' && G && (
+    G.scoreFinal ||
+    G.score ||
+    (G.income && G.housingType)
+  );
   if (!hasSession) { showScreen('screen-onboarding'); if (typeof _0x5e8006c==='function') _0x5e8006c(); return; }
   showScreen('screen-dashboard');
   var nav = document.getElementById('bottom-nav'); if (nav) nav.style.display='flex';
   if (typeof _0x36d6d96==='function') _0x36d6d96();
-  setTimeout(function() { if (typeof v21RenderPostAnalysis==='function') v21RenderPostAnalysis(); }, 350);
 }
 
 
@@ -324,4 +338,13 @@ window.bseApplyNavConfig = function(items) {
       if (lbl) lbl.textContent = item.label;
     }
   });
+  // If BSE hid the currently-active nav item, clear its active class and fall back to home
+  var _activeNav = document.querySelector('.nav-item.active, .bse-nav-item.active');
+  if (_activeNav && _activeNav.style.display === 'none') {
+    _activeNav.classList.remove('active');
+    var _homeNav = document.getElementById('nav-home');
+    if (_homeNav && _homeNav.style.display !== 'none') {
+      _homeNav.classList.add('active');
+    }
+  }
 };

@@ -9,8 +9,18 @@
    - window._tracentAIRequest is available
 ═══════════════════════════════════════════════ */
 
+// ── Canonical storage key — single source of truth ───────
+// Declared here (state.js loads FIRST) so all modules can rely on it.
+var STORAGE_KEY = 'tracent_v3';
+
 // ── Startup guards — ensure critical globals exist ────────
-if (typeof window.G === 'undefined') window.G = {};
+if (typeof window.G === 'undefined') {
+  window.G = { __initialized: false };
+} else if (typeof window.G.__initialized === 'undefined') {
+  // G exists (e.g. injected by a prior script) but has no initialization flag —
+  // mark as initialized so existing partial state is not treated as empty.
+  window.G.__initialized = true;
+}
 if (typeof window.pbfdeState === 'undefined') window.pbfdeState = {};
 
 /* ================================================================
@@ -56,6 +66,23 @@ async function _tracentAIRequest(opts) {
   });
 }
 window._tracentAIRequest = _tracentAIRequest;
+
+// ── Safe data presence check ─────────────────────────────
+// Returns true only when G contains real user-entered financial data.
+// Used to gate computation and rendering on non-empty state.
+window.tracentHasRealData = function() {
+  var g = window.G || {};
+  return !!(
+    g.__initialized &&
+    (
+      g.income ||
+      g.housingType ||
+      g.ccDebt ||
+      g.carDebt ||
+      g.studentDebt
+    )
+  );
+};
 
 // ── [STABILIZE] Canonical storage key — single source of truth ──
 // All localStorage reads/writes MUST use this constant.

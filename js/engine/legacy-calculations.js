@@ -255,7 +255,7 @@ function estimateTakeHome() {
   if (stateNote) {
     const noTax = STATE_TAX[liveState] === 0;
     stateNote.textContent = noTax
-      ? `✅ ${liveState} has no state income tax.`
+      ? `${liveState} has no state income tax.`
       : `${liveState} income tax: ~${(liveRate * 100).toFixed(1)}%`;
     stateNote.style.color = noTax ? 'var(--green)' : 'var(--gray-4)';
   }
@@ -264,11 +264,11 @@ function estimateTakeHome() {
   const jobtypeNote = document.getElementById('jobtype-note');
   if (jobtypeNote) {
     const notes = {
-      teacher: '🎓 Teachers may qualify for PSLF student loan forgiveness and state-specific mortgage assistance.',
-      public: '🏛️ Public employees may qualify for PSLF and first-time buyer assistance.',
-      military: '⭐ Veterans qualify for VA loans — 0% down, no PMI, competitive rates.',
-      selfemployed: '💼 Self-employed applicants need 2 years of tax returns for mortgage qualification. Lenders use net income.',
-      parttime: '⚠️ Part-time income may require longer employment history for mortgage qualification.',
+      teacher: 'Teachers may qualify for PSLF student loan forgiveness and state-specific mortgage assistance.',
+      public: 'Public employees may qualify for PSLF and first-time buyer assistance.',
+      military: 'Veterans qualify for VA loans — 0% down, no PMI, competitive rates.',
+      selfemployed: 'Self-employed applicants need 2 years of tax returns for mortgage qualification. Lenders use net income.',
+      parttime: 'Part-time income may require longer employment history for mortgage qualification.',
       private: ''
     };
     const note = notes[document.getElementById('jobtype').value] || '';
@@ -299,7 +299,7 @@ function toggleSplitCosts() {
       btn.style.color         = 'var(--gray-4)';
     }
   }
-  if (label) label.textContent = window._splitCosts ? 'Splitting costs ✓' : 'Split with partner?';
+  if (label) label.textContent = window._splitCosts ? 'Splitting costs' : 'Split with partner?';
   if (note)  note.style.display = window._splitCosts ? 'block' : 'none';
   // Recalculate with new split factor
   calcOwnerMortgage();
@@ -397,7 +397,7 @@ function calcOwnerMortgage() {
       pmiNote.textContent = `PMI is costing you $${pmiMonthly.toLocaleString()}/mo because your down payment was under 20%. You need ${equityPct < 20 ? (20 - equityPct) + '% more equity to remove it' : 'an appraisal — you may qualify to cancel now'}. Ask your lender once you hit 20% equity.`;
     }
   } else {
-    if (pmiEl) { pmiEl.textContent = 'None ✅'; pmiEl.style.color = 'var(--green)'; }
+    if (pmiEl) { pmiEl.textContent = 'None'; pmiEl.style.color = 'var(--green)'; }
     if (pmiBox) pmiBox.style.background = 'rgba(16,185,129,0.06)';
     if (pmiNote) pmiNote.style.display = 'none';
   }
@@ -407,7 +407,7 @@ function _0xe57aa32() {
   const el = document.getElementById('takehome');
   if (el) el.setAttribute('data-manual', 'true');
   const hint = document.getElementById('takehome-hint');
-  if (hint) hint.textContent = '✏️ Manual override active';
+  if (hint) hint.textContent = 'Manual override active';
 }
 
 function _0x4fee8f4() {
@@ -422,13 +422,13 @@ function validateField(input, min, max, label) {
   const warn = document.getElementById(warnId);
   if (!warn) return true;
   if (isNaN(val) || val < min) {
-    warn.textContent = `⚠️ ${label} looks too low — did you enter the right number?`;
+    warn.textContent = `${label} looks too low — did you enter the right number?`;
     warn.style.display = 'block';
     input.style.borderColor = 'var(--amber)';
     return false;
   }
   if (val > max) {
-    warn.textContent = `⚠️ ${label} looks unusually high — please double-check.`;
+    warn.textContent = `${label} looks unusually high — please double-check.`;
     warn.style.display = 'block';
     input.style.borderColor = 'var(--amber)';
     return false;
@@ -475,10 +475,10 @@ function updateBuyingEstimates() {
 
   // Loan type notes
   const loanNotes = {
-    conventional: dpPct < 20 ? `Conventional loan with ${dpPct}% down requires PMI until you reach 20% equity. Est. PMI: $${pmi}/mo.` : `✅ 20%+ down — no PMI required. Best available rates.`,
+    conventional: dpPct < 20 ? `Conventional loan with ${dpPct}% down requires PMI until you reach 20% equity. Est. PMI: $${pmi}/mo.` : `20%+ down — no PMI required. Best available rates.`,
     fha: `FHA loans require as little as 3.5% down but carry Mortgage Insurance Premium (MIP) for the life of the loan. Great for credit scores 580+.`,
-    va: `✅ VA loans for veterans: 0% down required, no PMI, competitive rates. Requires Certificate of Eligibility.`,
-    usda: `✅ USDA loans for rural/suburban areas: 0% down, low rates. Income limits apply. Check usda.gov for eligibility.`
+    va: `VA loans for veterans: 0% down required, no PMI, competitive rates. Requires Certificate of Eligibility.`,
+    usda: `USDA loans for rural/suburban areas: 0% down, low rates. Income limits apply. Check usda.gov for eligibility.`
   };
   const lnNote = document.getElementById('loan-type-note');
   if (lnNote) { lnNote.textContent = loanNotes[loanType] || ''; }
@@ -523,7 +523,7 @@ function _0xe2ad9e2() {
   const note = document.getElementById('retirement-note');
   if (!note) return;
   if (match === 'full' || match === 'partial') {
-    note.textContent = '💡 An unmatched 401(k) is essentially free money — Tracent will flag this if you\'re not maximising it.';
+    note.textContent = 'An unmatched 401(k) is essentially free money — Tracent will flag this if you\'re not maximising it.';
     note.style.display = 'block';
   } else {
     note.style.display = 'none';
@@ -562,7 +562,7 @@ function _0x5d74b48() {
   const dti           = G.dti || 0;
   const creditTier    = G.creditScore || 'unknown';
   const ef            = parseInt(G.emergencyMonths) || 0;
-  const deposit       = (G.depositSaved || 0) + (G.savingsAmt || 0);
+  const deposit       = G.depositSaved || 0;
   const targetDeposit = G.targetPrice ? G.targetPrice * 0.10 : monthlyIncome * 36; // 10% or 3yrs income
   const depositPct    = targetDeposit > 0 ? Math.min(deposit / targetDeposit, 1) : 0;
   const fcf           = takeHome - (G.payment || G.rentAmt || 0) - (G.ccDebt > 0 ? Math.max(G.ccDebt * 0.02, 25) : 0);
@@ -706,19 +706,19 @@ function _0xb70f5a4(dti, fcf, credit, emergency, ccDebt, ccRate, housingType, to
 
   // Store category scores on G for use in breakdown modal
   G.scoreCategories = {
-    paymentStability: { score: cat1, weight: 30, label: 'Payment Stability', icon: '📋',
+    paymentStability: { score: cat1, weight: 30, label: 'Payment Stability', icon: '',
       value: dti + '% DTI',
       desc: dti < 28 ? 'Excellent — well below lender limits' : dti < 36 ? 'Good — some room to improve' : dti < 43 ? 'Elevated — approaching lender limits' : 'High — affecting loan eligibility' },
-    debtLoad: { score: cat2, weight: 25, label: 'Debt Load', icon: '💳',
+    debtLoad: { score: cat2, weight: 25, label: 'Debt Load', icon: '',
       value: debtRatio === 0 ? 'None' : Math.round(debtRatio * 100) + '% of income',
       desc: debtRatio === 0 ? 'Debt-free — maximum score' : debtRatio < 0.1 ? 'Minimal — strong position' : debtRatio < 0.2 ? 'Manageable — monitor closely' : 'Significant — focus on payoff' },
-    cashCushion: { score: cat3, weight: 25, label: 'Cash Cushion', icon: '🛡️',
+    cashCushion: { score: cat3, weight: 25, label: 'Cash Cushion', icon: '',
       value: ef + ' mo emergency + $' + Math.round(Math.max(0,fcf)).toLocaleString() + '/mo free',
       desc: ef >= 3 && fcfMargin >= 0.10 ? 'Strong buffer — resilient position' : ef === 0 ? 'No emergency fund — highest priority fix' : fcfMargin < 0.05 ? 'Tight margins — cash flow needs attention' : 'Building — keep growing this' },
-    creditStanding: { score: cat4, weight: 10, label: 'Credit Standing', icon: '⭐',
+    creditStanding: { score: cat4, weight: 10, label: 'Credit Standing', icon: '',
       value: credit === 'excellent' ? 'Excellent (720+)' : credit === 'fair' || credit === 'good' ? 'Good (640–719)' : credit === 'poor' || credit === 'below' ? 'Building (<640)' : 'Not provided',
       desc: cat4 >= 80 ? 'Qualifies for best rates — saves thousands' : cat4 >= 60 ? 'Eligible for most mortgages' : 'Priority area — affects every rate you receive' },
-    wealthBuilding: { score: cat5, weight: 10, label: 'Wealth Building', icon: '📈',
+    wealthBuilding: { score: cat5, weight: 10, label: 'Wealth Building', icon: '',
       value: savingsMonths >= 1 ? Math.round(savingsMonths) + ' months saved' : savings > 0 ? '$' + Math.round(savings).toLocaleString() + ' saved' : 'No savings recorded',
       desc: savingsMonths >= 6 ? 'Strong — compound growth working for you' : savingsMonths >= 3 ? 'Good foundation — keep building' : 'Early stage — even small consistent amounts count' },
   };
@@ -1083,19 +1083,19 @@ function _0x7730df6(name, monthlyIncome, expenses, stay, nonHousingPayments, ccD
 
   // Priority 1: Negative cash flow
   if (fcf < 0) {
-    color = 'red'; eyebrow = '🚨 Your Expenses Exceed Your Income';
+    color = 'red'; eyebrow = 'Expenses exceed income';
     headline = `You're spending ${_0x4f66a67(Math.abs(fcf))}/month more than you earn`;
-    recText = `${N}your total monthly obligations (${_0x4f66a67(allPayments)} housing + debt + ${_0x4f66a67(expenses)} expenses) exceed your take-home pay of ${_0x4f66a67(monthlyIncome)} by ${_0x4f66a67(Math.abs(fcf))}. This needs immediate attention before refinancing is relevant. Priority one is identifying which costs can be reduced. ${emergency === '0' ? ' ⚠️ You also have no emergency fund — this is financially vulnerable territory.' : ''}`;
+    recText = `${N}your total monthly obligations (${_0x4f66a67(allPayments)} housing + debt + ${_0x4f66a67(expenses)} expenses) exceed your take-home pay of ${_0x4f66a67(monthlyIncome)} by ${_0x4f66a67(Math.abs(fcf))}. This needs immediate attention before refinancing is relevant. Priority one is identifying which costs can be reduced. ${emergency === '0' ? ' You also have no emergency fund — this is financially vulnerable territory.' : ''}`;
   }
   // Priority 2: Credit score is limiting options
   else if (credit === 'poor') {
-    color = 'red'; eyebrow = '🔧 Credit Score is Your Biggest Obstacle';
+    color = 'red'; eyebrow = 'Credit score is the primary obstacle';
     headline = 'Build your credit to 620+ before refinancing makes sense';
     recText = `${N}with a credit score below 620, today's standard mortgage products aren't accessible at competitive rates. Specialist products exist but carry significant premiums. Your most valuable financial move right now is credit building: pay all bills on time, get your credit card utilisation below 30% (your ${_0x4f66a67(ccDebt)} balance at ${ccRate}% is likely hurting your score), and dispute any errors on your credit report. Aim for 620+ within 12 months.`;
   }
   // Priority 3: High CC debt
   else if (ccDebt > 5000 && ccRate >= 18 && currentRate > 6.5) {
-    color = 'red'; eyebrow = '⚠️ Clear Credit Cards First';
+    color = 'red'; eyebrow = 'Clear credit cards first';
     headline = `Your credit cards are costing ${_0x4f66a67(ccAnnualInterest)}/year — fix this before refinancing`;
     recText = `${N}your ${_0x4f66a67(ccDebt)} credit card balance at ${ccRate}% drains ${_0x4f66a67(ccAnnualInterest)} in annual interest — a guaranteed ${ccRate}% return if you pay it off. With your free cash flow of ${_0x4f66a67(fcf)}/month, Tracent recommends clearing the cards first, then reassessing refinancing. This will also improve your credit score, potentially getting you a better rate when you do refinance.`;
   }
@@ -1103,7 +1103,7 @@ function _0x7730df6(name, monthlyIncome, expenses, stay, nonHousingPayments, ccD
   else if ((retMatch === 'full' || retMatch === 'partial') && fcf > 500) {
     // Still show housing rec but add strong 401k note
     if (currentRate <= 6.5 + creditPremium) {
-      color = 'green'; eyebrow = '✅ Strong Position — Optimise Now';
+      color = 'green'; eyebrow = 'Strong position — optimise now';
       headline = 'Your mortgage rate is solid. But you may be missing free money.';
       recText = `${N}your ${currentRate}% rate is competitive for your credit profile. The bigger opportunity: ${retMatch === 'full' ? 'you have a full 401(k) match available — that\'s an instant 100% return on contributions. Max it before making extra mortgage payments.' : 'you have a 401(k) match available — contribute at least enough to capture the full match before directing extra cash to mortgage.'} ${totalNonHousingDebt > 0 ? `Also clear your ${_0x4f66a67(totalNonHousingDebt)} in non-housing debt.` : ''}`;
     } else {
@@ -1114,25 +1114,25 @@ function _0x7730df6(name, monthlyIncome, expenses, stay, nonHousingPayments, ccD
   }
   // Priority 5: Jumbo loan
   else if (isJumbo) {
-    color = 'amber'; eyebrow = '🏦 Jumbo Loan — Specialist Rate Rules Apply';
+    color = 'amber'; eyebrow = 'Jumbo loan — specialist rate rules apply';
     headline = 'Your loan exceeds conforming limits — compare specialist lenders';
     recText = `${N}with a balance of ${_0x4f66a67(balance)}, you're above the $766,550 conforming loan limit. Jumbo loans operate under different rules — rates may be higher or lower than standard mortgages depending on your credit (${credit}) and lender. Tracent recommends getting quotes from at least 3 specialist jumbo lenders before deciding on refinancing. Your equity position of ${_0x4f66a67(equity)} (${equityPct}%) is strong.`;
   }
   // Priority 6: PMI — should they refinance to remove it
   else if (hasPMI && equityPct >= 18) {
-    color = 'amber'; eyebrow = '💡 You May Be Able to Remove PMI';
+    color = 'amber'; eyebrow = 'You may be able to remove PMI';
     headline = `You\'re paying ${_0x4f66a67(pmiCost)}/mo in PMI — here's how to eliminate it`;
     recText = `${N}your LTV of ${ltv}% means you're paying approximately ${_0x4f66a67(pmiCost)}/month in PMI. Once you reach 20% equity (you're at ${equityPct}%), you can request PMI cancellation — saving ${_0x4f66a67(pmiCost * 12)}/year. Contact your lender to initiate the appraisal process. ${monthlySavings > 0 ? `A refinance at ${targetRefiRate.toFixed(2)}% would also eliminate PMI and save ${_0x4f66a67(monthlySavings)}/month total — break-even: ${breakeven} months.` : ''}`;
   }
   // Priority 7: Rate is competitive
   else if (currentRate <= 5.5 + creditPremium) {
-    color = 'green'; eyebrow = '✅ Excellent Mortgage Position';
+    color = 'green'; eyebrow = 'Excellent mortgage position';
     headline = 'Your rate is excellent — focus on building wealth';
     recText = `${N}at ${currentRate}%, your mortgage rate is very competitive${credit !== 'excellent' ? ` for your credit profile` : ''}. No refinancing needed. Your PITI of ${_0x4f66a67(totalHousingCost)}/month (including ${_0x4f66a67(monthlyTax)} tax and ${_0x4f66a67(monthlyIns)} insurance) gives you ${_0x4f66a67(fcf)} monthly free cash flow. ${totalNonHousingDebt > 0 ? `Priority: clear your ${_0x4f66a67(totalNonHousingDebt)} in other debts.` : `Consider directing ${_0x4f66a67(Math.round(fcf * 0.3))}/month to extra principal payments — this can save years and thousands in interest.`}`;
   }
   // Priority 8: Refinance makes sense now
   else if (monthlySavings > 0 && breakeven <= stay * 12 * 0.7 && credit !== 'below' && credit !== 'poor') {
-    color = 'green'; eyebrow = '✅ Refinance Now — Numbers Work';
+    color = 'green'; eyebrow = 'Refinance now — numbers work';
     headline = `Save ${_0x4f66a67(monthlySavings)}/month — break-even in ${breakeven} months`;
     recText = `${N}at today's rate of ~${marketRate.toFixed(2)}% (adjusted for your ${credit} credit), refinancing from ${currentRate}% saves ${_0x4f66a67(monthlySavings)}/month and breaks even in ${breakeven} months — well within your ${stay}-year plan. Closing costs: ~${_0x4f66a67(closingCosts)}. Your new PITI would be approximately ${_0x4f66a67(Math.round(newPayment + monthlyTax + monthlyIns))}/month.${maxCashOut > 20000 ? ` You also have ${_0x4f66a67(maxCashOut)} in accessible equity if needed.` : ''}`;
   }
@@ -1151,7 +1151,7 @@ function _0x7730df6(name, monthlyIncome, expenses, stay, nonHousingPayments, ccD
 
   // Life event override note
   if (lifeEvent === 'job_loss' && fcf > 0) {
-    recText += ` ⚠️ With a recent job loss, Tracent strongly recommends pausing any major financial decisions for 90 days and prioritising your emergency fund.`;
+    recText += ` With a recent job loss, Tracent strongly recommends pausing any major financial decisions for 90 days and prioritising your emergency fund.`;
   }
   if (lifeEvent === 'divorce') {
     recText += ` Note: separation may affect your mortgage qualification if the loan is jointly held — consult a housing counsellor or attorney before refinancing.`;
@@ -1216,7 +1216,7 @@ function _0x8c997eb(name, monthlyIncome, expenses, nonHousingPayments, ccDebt, c
   _sb('p-dti', dtiAfterBuying + '% (after buying)');
   _sb('p-fcf', _0x4f66a67(fcfNow) + ' (now) / ' + _0x4f66a67(fcfAfterBuying) + ' (after)');
   _sb('metric-dti', dtiAfterBuying + '%');
-  _sb('metric-savings', depositGap > 0 ? _0x4f66a67(cashGap) + ' needed' : '✅ Ready');
+  _sb('metric-savings', depositGap > 0 ? _0x4f66a67(cashGap) + ' needed' : 'Ready');
   _sb('metric-breakeven', monthsToReady < 999 ? monthsToReady + ' mo' : '—');
 
   G.fcf = fcfNow; G.homePrice = homePrice; G.depositSaved = depositSaved;
@@ -1226,27 +1226,27 @@ function _0x8c997eb(name, monthlyIncome, expenses, nonHousingPayments, ccDebt, c
   const N = name ? name + ', ' : '';
 
   if (fcfNow < 0) {
-    color = 'red'; eyebrow = '🚨 Current Budget is in the Red';
+    color = 'red'; eyebrow = 'Budget is in the red';
     headline = `Your monthly obligations already exceed income by ${_0x4f66a67(Math.abs(fcfNow))}`;
     recText = `${N}before thinking about buying, your current spending (${_0x4f66a67(rent)} rent + ${_0x4f66a67(nonHousingPayments)} debt + ${_0x4f66a67(expenses)} expenses) is outpacing your ${_0x4f66a67(monthlyIncome)} take-home. Buying would add to this pressure. Priority one is reducing current obligations.`;
   }
   else if (credit === 'poor') {
-    color = 'red'; eyebrow = '🔧 Credit Score Needs Work First';
+    color = 'red'; eyebrow = 'Credit score needs work first';
     headline = 'Focus on reaching 620+ credit score before applying for a mortgage';
     recText = `${N}below 620, most conventional and FHA lenders will either decline your application or offer rates that make the purchase unaffordable. ${loanType === 'fha' ? 'FHA requires 580+ for 3.5% down or 500+ for 10% down.' : ''} Use the next 12 months to build credit through on-time payments and reducing credit card utilisation below 30%. Your ${_0x4f66a67(ccDebt)} card balance at ${ccRate}% is likely a significant drag on your score.`;
   }
   else if (ccDebt > 8000 && dtiAfterBuying > 43) {
-    color = 'red'; eyebrow = '⚠️ Debt Will Block Your Mortgage';
+    color = 'red'; eyebrow = 'Debt will block your mortgage';
     headline = 'Pay down existing debt first — lenders will decline at this DTI';
     recText = `${N}with ${_0x4f66a67(totalNonHousingDebt)} in existing debt, your DTI after buying would be ${dtiAfterBuying}% — above the standard 43% qualifying threshold most lenders use. Paying down your credit cards (${_0x4f66a67(ccDebt)} at ${ccRate}% — costing ${_0x4f66a67(ccAnnualInterest)}/year) will reduce your DTI and improve your credit score, improving both your eligibility and the rate you're offered.`;
   }
   else if (cashGap <= 0 && dtiAfterBuying <= 43) {
-    color = 'green'; eyebrow = '✅ You\'re Ready to Buy';
+    color = 'green'; eyebrow = 'Ready to buy';
     headline = 'Deposit ready — start pre-approval conversations now';
     recText = `${N}you have enough saved for a ${depositPct}% down payment (${_0x4f66a67(Math.max(depositSaved, targetDeposit))}) plus estimated closing costs (~${_0x4f66a67(closingCosts)}). Your estimated monthly PITI would be ${_0x4f66a67(totalPITI)} (P&I ${_0x4f66a67(pi)} + PMI ${pmi > 0 ? _0x4f66a67(pmi) : '$0'} + tax ${_0x4f66a67(monthlyTax)} + insurance ${_0x4f66a67(monthlyIns)}). DTI: ${dtiAfterBuying}%.${credit === 'fair' || credit === 'below' ? ` At your current credit score, your rate is ~${marketRate.toFixed(2)}% — improving to 'good' could save ~${_0x4f66a67(_0x8ee2cd7(loanAmount, marketRate, 30) - _0x8ee2cd7(loanAmount, marketRate-0.5, 30))}/month.` : ''} ${ccDebt > 0 ? `Consider clearing your ${_0x4f66a67(ccDebt)} credit card balance before or shortly after closing.` : ''}`;
   }
   else if (dtiAfterBuying > 43) {
-    color = 'red'; eyebrow = '⚠️ Affordability Gap at This Price';
+    color = 'red'; eyebrow = 'Affordability gap at this price';
     headline = `DTI would be ${dtiAfterBuying}% — above lender thresholds`;
     const affordablePrice = Math.round((monthlyIncome * 0.43 - nonHousingPayments) / (marketRate / 1200) * (1 - Math.pow(1 + marketRate/1200, -360)));
     recText = `${N}at ${_0x4f66a67(homePrice)}, your PITI of ${_0x4f66a67(totalPITI)}/month pushes DTI to ${dtiAfterBuying}%. Lenders typically cap this at 43%. Based on your income, you can comfortably afford approximately ${_0x4f66a67(Math.max(0, affordablePrice))} — or you could ${totalNonHousingDebt > 0 ? `clear your ${_0x4f66a67(totalNonHousingDebt)} in existing debt first, which would meaningfully lower your DTI` : 'increase your income or down payment'}.`;
@@ -1320,19 +1320,19 @@ function _0xe1060a7(name, monthlyIncome, expenses, nonHousingPayments, ccDebt, c
   let color, eyebrow, headline, recText;
 
   if (maxCashOut <= 0) {
-    color = 'red'; eyebrow = '🚫 Insufficient Equity';
+    color = 'red'; eyebrow = 'Insufficient equity';
     headline = 'Not enough equity for a cash-out refinance';
     recText = `${N}your current LTV is ${Math.round((balance/homeValue)*100)}%. Lenders require you to maintain at least 20% equity — you need your home to be worth at least ${_0x4f66a67(Math.round(balance / 0.8))} to access any cash. Focus on building equity through payments or home appreciation.`;
   } else if (cashWanted > maxCashOut) {
-    color = 'amber'; eyebrow = '⚠️ Requested More Than Available';
+    color = 'amber'; eyebrow = 'Requested more than available';
     headline = `Maximum accessible equity is ${_0x4f66a67(maxCashOut)} — not ${_0x4f66a67(cashWanted)}`;
     recText = `${N}lenders cap cash-out refinances at 80% LTV. Your home (${_0x4f66a67(homeValue)}) × 80% = ${_0x4f66a67(homeValue * 0.8)}, minus your balance of ${_0x4f66a67(balance)}, leaves ${_0x4f66a67(maxCashOut)} available. ${purposeAnalysis[purpose]} New payment: ${_0x4f66a67(newPITI)}/month (${_0x4f66a67(paymentIncrease)}/mo more). Closing costs: ~${_0x4f66a67(closingCosts)}.`;
   } else if (newDTI > 43 || fcf < 200) {
-    color = 'red'; eyebrow = '⚠️ Cash-Out Would Stretch You Thin';
+    color = 'red'; eyebrow = 'Cash-out would stretch you thin';
     headline = 'The numbers work on paper but leave little room for error';
     recText = `${N}accessing ${_0x4f66a67(cashWanted)} would raise your new PITI to ${_0x4f66a67(newPITI)}/month — ${_0x4f66a67(paymentIncrease)}/month more than now. This puts your DTI at ${newDTI}% and leaves ${_0x4f66a67(Math.max(0, fcf))}/month free cash flow. ${purposeAnalysis[purpose]} Consider a HELOC instead — you'd only pay interest on what you draw, keeping payments flexible.`;
   } else {
-    color = 'green'; eyebrow = '✅ Cash-Out Refinance is Feasible';
+    color = 'green'; eyebrow = 'Cash-out refinance is feasible';
     headline = `You can access ${_0x4f66a67(Math.min(cashWanted, maxCashOut))} — here's the real cost`;
     recText = `${N}at ${newRate.toFixed(2)}% (${0.25}% above standard rate for cash-out), your new payment rises from ${_0x4f66a67(oldPITI)} to ${_0x4f66a67(newPITI)}/month — ${_0x4f66a67(paymentIncrease)}/month more. Closing costs: ~${_0x4f66a67(closingCosts)}. You'll retain ${_0x4f66a67(homeValue - newLoanAmount)} equity (${Math.round((1 - newLoanAmount/homeValue)*100)}% of home value). ${purposeAnalysis[purpose]}`;
   }
@@ -1389,29 +1389,29 @@ function _0xc58715d(name, monthlyIncome, expenses, nonHousingPayments, ccDebt, c
   let color, eyebrow, headline, recText;
 
   if (fcf < 0) {
-    color = 'red'; eyebrow = '🚨 Budget is in the Red';
+    color = 'red'; eyebrow = 'Budget is in the red';
     headline = `Monthly outgoings exceed income by ${_0x4f66a67(Math.abs(fcf))}`;
     recText = `${N}your rent (${_0x4f66a67(rent)}) + debt payments (${_0x4f66a67(nonHousingPayments)}) + expenses (${_0x4f66a67(expenses)}) total ${_0x4f66a67(rent + nonHousingPayments + expenses)} — exceeding your ${_0x4f66a67(monthlyIncome)} take-home by ${_0x4f66a67(Math.abs(fcf))}. Buying a home is not realistic until this is resolved. First priority: identify which expenses can be reduced or which debts can be cleared fastest.${ccDebt > 0 ? ` Your ${_0x4f66a67(ccDebt)} credit card balance at ${ccRate}% (costing ${_0x4f66a67(ccAnnualInterest)}/yr) should be priority one.` : ''}`;
   }
   else if (credit === 'poor' && renterGoal !== 'no') {
-    color = 'amber'; eyebrow = '🔧 Build Credit Alongside Savings';
+    color = 'amber'; eyebrow = 'Build credit alongside savings';
     headline = 'Your path to homeownership starts with credit repair';
     recText = `${N}with a below-620 credit score, conventional mortgages aren't accessible. Your 12-month plan: (1) pay all bills on time — this is the biggest credit factor; (2) get credit card utilisation below 30%; (3) check your credit report for errors at AnnualCreditReport.com. In parallel, save ${_0x4f66a67(monthlySavingCapacity)}/month toward your ${_0x4f66a67(targetDeposit)} deposit goal. With both improving, you'll be in a strong position by ${new Date(Date.now() + monthsToReady * 30 * 24 * 60 * 60 * 1000).toLocaleDateString('en-US', {month:'long',year:'numeric'})}.`;
   }
   else if (ccDebt > 5000 && ccRate >= 18) {
-    color = 'red'; eyebrow = '⚠️ Credit Card Debt is Slowing You Down';
+    color = 'red'; eyebrow = 'Credit card debt is slowing you down';
     headline = `${_0x4f66a67(ccAnnualInterest)}/year in interest — clear this before saving for a deposit`;
     recText = `${N}your ${_0x4f66a67(ccDebt)} at ${ccRate}% costs ${_0x4f66a67(ccAnnualInterest)} annually — money that could be going straight into your deposit fund. Tracent recommends a debt-first approach: use your ${_0x4f66a67(fcf)} monthly free cash flow to clear the cards first (est. ${Math.ceil(ccDebt / Math.max(fcf * 0.7, 50))} months), then redirect those payments into savings. This also improves your credit score, getting you a better mortgage rate when you're ready to buy.`;
   }
   else if (renterGoal === 'no') {
-    color = 'green'; eyebrow = '✅ Smart Renting Strategy';
+    color = 'green'; eyebrow = 'Smart renting strategy';
     headline = 'Renting by choice — here\'s how to build serious wealth';
     recText = `${N}renting gives you flexibility — the key is investing the difference. With ${_0x4f66a67(fcf)} monthly free cash flow, Tracent recommends: ${retMatch !== 'none' ? `(1) max your 401(k) to capture employer match — it's an instant return; (2) ` : '(1) '}invest ${_0x4f66a67(monthlySavingCapacity)}/month in a diversified index fund. Over 20 years at 7% average return, that's ~${_0x4f66a67(monthlySavingCapacity * 12 * 20 * 1.5)} in wealth built. ${totalNonHousingDebt > 0 ? `First clear your ${_0x4f66a67(totalNonHousingDebt)} in debt — then redirect those payments to investing.` : ''}`;
   }
   else if (monthsToReady <= 24 || renterGoal === 'yes_soon') {
     const canAfford = dtiIfBuying <= 43 && fcfAfterBuying > 300;
     color = canAfford ? 'amber' : 'red';
-    eyebrow = canAfford ? '⏳ Almost There' : '⚠️ 2 Years Is Tight';
+    eyebrow = canAfford ? 'Almost there' : '2 years is tight';
     headline = canAfford
       ? `${_0x4f66a67(cashGap)} gap — ready to buy in ~${monthsToReady} months`
       : `Buying in 2 years at ${_0x4f66a67(targetPrice)} may be a stretch`;
@@ -1484,7 +1484,7 @@ function _0x73dc3fc(housingType, fcf, balance, payment, yearsLeft, emergency, mo
     html += `<div class="rec-card">
       <div class="rec-status-bar amber"></div>
       <div class="rec-body">
-        <div class="rec-eyebrow amber">⚠️ Build Your Safety Net</div>
+        <div class="rec-eyebrow amber">Build your safety net</div>
         <div class="rec-headline" style="font-size:18px;">Emergency fund needs attention</div>
         <div class="rec-why">You currently have ${efMonths < 1 ? 'less than 1 month' : efMonths + '–' + (efMonths+1) + ' months'} of expenses covered. Tracent recommends 3–6 months minimum — this is your financial foundation before any other move.</div>
       </div>
@@ -1493,7 +1493,7 @@ function _0x73dc3fc(housingType, fcf, balance, payment, yearsLeft, emergency, mo
     html += `<div class="rec-card">
       <div class="rec-status-bar green"></div>
       <div class="rec-body">
-        <div class="rec-eyebrow green">✅ Emergency Fund Solid</div>
+        <div class="rec-eyebrow green">Emergency fund solid</div>
         <div class="rec-headline" style="font-size:18px;">You're covered for ${efMonths === 6 ? '6+' : efMonths + '–' + (efMonths+2)} months</div>
         <div class="rec-why">Tracent recommends 3–6 months of expenses. You're in the green — no action needed here.</div>
       </div>
@@ -1520,7 +1520,7 @@ function _0x73dc3fc(housingType, fcf, balance, payment, yearsLeft, emergency, mo
       html += `<div class="rec-card">
         <div class="rec-status-bar teal"></div>
         <div class="rec-body">
-          <div class="rec-eyebrow teal">💡 Opportunity</div>
+          <div class="rec-eyebrow teal">Opportunity</div>
           <div class="rec-headline" style="font-size:18px;">Extra ${_0x4f66a67(extraMonthly)}/mo cuts ${Math.round(monthsSaved / 12 * 10) / 10} years off your mortgage</div>
           <div class="rec-why">Based on your free cash flow, you could comfortably add ${_0x4f66a67(extraMonthly)} to your monthly principal payment. Over time this saves an estimated ${_0x4f66a67(interestSaved)} in interest and clears your mortgage ${Math.round(monthsSaved / 12 * 10) / 10} years early.</div>
           <button class="rec-action-btn" style="margin-top:12px;background:var(--navy);" onclick="switchTab('progress');showProgressSub('goals');_0x257a008('progress')">Set Up a Payoff Goal →</button>
@@ -1535,7 +1535,7 @@ function _0x73dc3fc(housingType, fcf, balance, payment, yearsLeft, emergency, mo
     html += `<div class="rec-card">
       <div class="rec-status-bar teal"></div>
       <div class="rec-body">
-        <div class="rec-eyebrow teal">💡 Savings Opportunity</div>
+        <div class="rec-eyebrow teal">Savings opportunity</div>
         <div class="rec-headline" style="font-size:18px;">Save ${_0x4f66a67(monthlySave)}/month — ${_0x4f66a67(monthlySave * 12)}/year toward your goal</div>
         <div class="rec-why">Your free cash flow gives you room to save ${_0x4f66a67(monthlySave)}/month (50% of FCF). Automate this transfer on payday — you won't miss what you don't see. Set a goal below to track it.</div>
         <button class="rec-action-btn" style="margin-top:12px;background:var(--navy);" onclick="switchTab('progress');showProgressSub('goals');_0x257a008('progress')">Set a Savings Goal →</button>
@@ -1556,7 +1556,7 @@ function _0xf480616(ccDebt, ccRate, totalNonHousingDebt, fcf, name, studentDebt,
     html += `<div class="rec-card">
       <div class="rec-status-bar red"></div>
       <div class="rec-body">
-        <div class="rec-eyebrow red">💳 Credit Card Priority</div>
+        <div class="rec-eyebrow red">Credit card priority</div>
         <div class="rec-headline" style="font-size:15px;">Costing ${_0x4f66a67(annualInterest)}/year at ${ccRate}%</div>
         <div class="rec-why">${_0x4f66a67(ccDebt)} balance at ${ccRate}% APR = ${_0x4f66a67(Math.round(annualInterest/12))}/month in interest alone. Paying 40% of free cash flow clears it in ~${monthsToPayoff} months — also improving your credit score.</div>
       </div></div>`;
@@ -1565,7 +1565,7 @@ function _0xf480616(ccDebt, ccRate, totalNonHousingDebt, fcf, name, studentDebt,
     html += `<div class="rec-card">
       <div class="rec-status-bar amber"></div>
       <div class="rec-body">
-        <div class="rec-eyebrow amber">🎓 Student Loan Impact</div>
+        <div class="rec-eyebrow amber">Student loan impact</div>
         <div class="rec-headline" style="font-size:15px;">Student debt affects your mortgage DTI</div>
         <div class="rec-why">${_0x4f66a67(studentDebt)} in student loans. Lenders count your monthly student payment in DTI calculations — even on IDR plans. ${credit === 'poor' || credit === 'below' ? 'Check if you qualify for Public Service Loan Forgiveness (PSLF) or income-driven forgiveness programs.' : 'Consider whether refinancing student loans makes sense for your situation.'}</div>
       </div></div>`;
@@ -1582,10 +1582,10 @@ function _0x8d99b9d(monthlyIncome, expenses, debtPayments, housingCost, name, fc
   const cfGrid = document.getElementById('cf-grid');
   if (cfGrid) {
     cfGrid.innerHTML = [
-      { icon: '🏠', label: 'Housing & debt', val: housingCost + debtPayments, color: 'var(--navy)' },
-      { icon: '🧾', label: 'Fixed expenses',  val: expenses,                  color: 'var(--gray-4)' },
-      { icon: '📊', label: 'Take-home/mo',    val: monthlyIncome,             color: 'var(--navy)' },
-      { icon: '💵', label: 'Free cash flow',  val: remaining,                 color: remaining >= 0 ? 'var(--teal)' : 'var(--red)' },
+      { icon: '', label: 'Housing & debt', val: housingCost + debtPayments, color: 'var(--navy)' },
+      { icon: '', label: 'Fixed expenses',  val: expenses,                  color: 'var(--gray-4)' },
+      { icon: '', label: 'Take-home/mo',    val: monthlyIncome,             color: 'var(--navy)' },
+      { icon: '', label: 'Free cash flow',  val: remaining,                 color: remaining >= 0 ? 'var(--teal)' : 'var(--red)' },
     ].map(b => `
       <div style="background:var(--gray-1);border-radius:10px;padding:12px;text-align:center;">
         <div style="font-size:16px;margin-bottom:4px;">${b.icon}</div>
@@ -1609,7 +1609,7 @@ function _0x8d99b9d(monthlyIncome, expenses, debtPayments, housingCost, name, fc
 
   if (remaining <= 0) {
     cfSuggestion.innerHTML = `
-      <div style="color:var(--red);font-size:13px;font-weight:600;padding:4px 0;">⚠️ Monthly outgoings exceed take-home pay.</div>
+      <div style="color:var(--red);font-size:13px;font-weight:600;padding:4px 0;">Monthly outgoings exceed take-home pay.</div>
       <div style="font-size:12px;color:var(--gray-4);margin-top:4px;">Focus on reducing your highest-cost debt or cutting a recurring expense. The Debt Plan tab shows the fastest route out.</div>`;
     return;
   }
@@ -1771,25 +1771,25 @@ function renderGoalFocus() {
   if (_isRetMode && G.goal === 'buy_home') { card.style.display = 'none'; return; }
 
   var goals = {
-    build_savings:    { icon:'🛡️', title:'Build savings & emergency fund',      sub:'Your advice is focused on growing your cash buffer and financial resilience.',    milestone: 'Hit 3 months of expenses saved' },
-    invest_more:      { icon:'📈', title:'Invest & grow wealth',                 sub:'Every recommendation is aimed at freeing up and deploying more of your income.',  milestone: 'Invest 15% of gross income monthly' },
-    buy_home:         { icon:'🏠', title:'Save for a home',                      sub:'Your plan is built around reaching your deposit target and mortgage readiness.',   milestone: 'Reach 10% deposit + closing costs' },
-    retire_early:     { icon:'🌅', title:'Build toward early retirement',         sub:'Your advice prioritises wealth compounding and financial independence milestones.',milestone: 'Hit 25× annual expenses invested' },
-    property_invest:  { icon:'🏢', title:'Invest in property',                   sub:'Focused on building the financial position to acquire investment real estate.',    milestone: 'Reach 20% deposit on investment property' },
-    pay_off_debt:     { icon:'💳', title:'Pay off debt',                         sub:'Your recommendations are ordered by the fastest path to becoming debt-free.',     milestone: 'Clear highest-rate debt first' },
+    build_savings:    { icon:'', title:'Build savings & emergency fund',      sub:'Your advice is focused on growing your cash buffer and financial resilience.',    milestone: 'Hit 3 months of expenses saved' },
+    invest_more:      { icon:'', title:'Invest & grow wealth',                 sub:'Every recommendation is aimed at freeing up and deploying more of your income.',  milestone: 'Invest 15% of gross income monthly' },
+    buy_home:         { icon:'', title:'Save for a home',                      sub:'Your plan is built around reaching your deposit target and mortgage readiness.',   milestone: 'Reach 10% deposit + closing costs' },
+    retire_early:     { icon:'', title:'Build toward early retirement',         sub:'Your advice prioritises wealth compounding and financial independence milestones.',milestone: 'Hit 25× annual expenses invested' },
+    property_invest:  { icon:'', title:'Invest in property',                   sub:'Focused on building the financial position to acquire investment real estate.',    milestone: 'Reach 20% deposit on investment property' },
+    pay_off_debt:     { icon:'', title:'Pay off debt',                         sub:'Your recommendations are ordered by the fastest path to becoming debt-free.',     milestone: 'Clear highest-rate debt first' },
   };
 
   // Retirement mode: retire_early becomes a stability/income framing, not FIRE accumulation
   if (_isRetMode) {
     goals.retire_early = {
-      icon: '🌅',
+      icon: '',
       title: 'Retirement income stability',
       sub: 'Your plan focuses on monthly income security, withdrawal readiness, and protecting your long-term financial position.',
       milestone: 'Maintain 6+ months safety buffer'
     };
   }
 
-  var g = goals[G.goal] || { icon:'🎯', title:'Improve financial position', sub:'Personalised to your numbers and situation.', milestone: 'Improve Tracent score by 10 points' };
+  var g = goals[G.goal] || { icon:'', title:'Improve financial position', sub:'Personalised to your numbers and situation.', milestone: 'Improve Tracent score by 10 points' };
 
   if (icon)  icon.textContent  = g.icon;
   if (title) title.textContent = g.title;
@@ -1856,7 +1856,7 @@ function _0x80e4d42() {
     // Net worth
     var teaserNwEl = document.getElementById('hm-nw-val-blur');
     if (teaserNwEl && G.fcf !== undefined) {
-      var approxNW = (G.balance > 0 ? Math.round(G.balance * 0.25) : 0) + (G.savingsAmt || 0) + (G.depositSaved || 0);
+      var approxNW = (G.balance > 0 ? Math.round(G.balance * 0.25) : 0) + (G.savingsAmt || 0) + (G.depositSaved || 0) + (G.retirementSavings || 0);
       teaserNwEl.textContent = approxNW >= 0 ? '$' + Math.round(approxNW/1000) + 'k' : '-$' + Math.round(Math.abs(approxNW)/1000) + 'k';
     }
     // Career Y5
@@ -1872,7 +1872,7 @@ function _0x80e4d42() {
   const score = G.score || null;
   if (score && !window._scoreCelebrated && score >= 70) {
     window._scoreCelebrated = true;
-    setTimeout(() => _0x38fc09e(score >= 85 ? '🎉 Excellent financial health!' : '✅ Good score — keep building!'), 600);
+    setTimeout(() => _0x38fc09e(score >= 85 ? 'Excellent financial health.' : 'Good score — keep building.'), 600);
   }
 
   // FCF
@@ -1914,7 +1914,7 @@ function _0x80e4d42() {
   // Net worth — actuals only, no projected home price for non-owners
   const homeVal = (G.homeValue && G.homeValue > (G.balance||0)) ? G.homeValue : (G.balance ? Math.round(G.balance * 1.25) : 0);
   const isOwner = G.housingType === 'owner' || G.housingType === 'cashout';
-  const assets = (isOwner ? homeVal : 0) + (G.savingsAmt || 0) + (G.depositSaved || 0);
+  const assets = (isOwner ? homeVal : 0) + (G.savingsAmt || 0) + (G.depositSaved || 0) + (G.retirementSavings || 0);
   const liabilities = (isOwner ? (G.balance || 0) : 0) + totalDebt;
   const nw = assets - liabilities;
   if (el('hm-networth-val')) {
@@ -1961,13 +1961,13 @@ function _0x80e4d42() {
 
   // Insights strip
   const insights = [];
-  if (fcf < 0) insights.push({ icon: '🔴', text: 'Spending exceeds take-home — review your cash flow', tab: 'recommend', nav: 'advice' });
-  else if (fcf > 0 && fcf < G.takeHome * 0.1) insights.push({ icon: '🟡', text: 'Tight margins — under 10% free cash flow', tab: 'recommend', nav: 'advice' });
-  if (dti > 43) insights.push({ icon: '⚠️', text: 'DTI above 43% — may affect loan eligibility', tab: 'debtrank', nav: 'debt' });
-  if (G.ccDebt > 1000) insights.push({ icon: '💳', text: `$${Math.round(G.ccDebt).toLocaleString()} credit card balance — priority payoff`, tab: 'debtrank', nav: 'debt' });
-  if (score && score >= 80) insights.push({ icon: '✅', text: 'Strong financial health score — keep it up', tab: 'recommend', nav: 'advice' });
-  if (G.housingType === 'owner' && G.currentRate > (G.marketRate || MARKET_RATE_30Y) + 0.75) insights.push({ icon: '🏠', text: 'Your rate is above market — check refinance options', tab: 'house', nav: 'house' });
-  if (!insights.length) insights.push({ icon: '👍', text: 'Everything looks balanced — keep building wealth', tab: 'recommend', nav: 'advice' });
+  if (fcf < 0) insights.push({ icon: '', text: 'Spending exceeds take-home — review your cash flow', tab: 'recommend', nav: 'advice' });
+  else if (fcf > 0 && fcf < G.takeHome * 0.1) insights.push({ icon: '', text: 'Tight margins — under 10% free cash flow', tab: 'recommend', nav: 'advice' });
+  if (dti > 43) insights.push({ icon: '', text: 'DTI above 43% — may affect loan eligibility', tab: 'debtrank', nav: 'debt' });
+  if (G.ccDebt > 1000) insights.push({ icon: '', text: `$${Math.round(G.ccDebt).toLocaleString()} credit card balance — priority payoff`, tab: 'debtrank', nav: 'debt' });
+  if (score && score >= 80) insights.push({ icon: '', text: 'Strong financial health score', tab: 'recommend', nav: 'advice' });
+  if (G.housingType === 'owner' && G.currentRate > (G.marketRate || MARKET_RATE_30Y) + 0.75) insights.push({ icon: '', text: 'Your rate is above market — check refinance options', tab: 'house', nav: 'house' });
+  if (!insights.length) insights.push({ icon: '', text: 'Everything looks balanced — continue building.', tab: 'recommend', nav: 'advice' });
 
   const insightsEl = el('hm-insights');
   if (insightsEl) {
@@ -2078,13 +2078,13 @@ function _0x4f4976d() {
   if (G.housingType === 'owner' || G.housingType === 'cashout') {
     const distFromTarget = Math.abs(MARKET_RATE_30Y - alertRate);
     items.push({
-      icon: '📊', color: 'amber',
+      icon: '', color: 'amber',
       title: 'Rate Watch Active',
       desc: `Watching for ${alertRate.toFixed(2)}% — market is currently ${MARKET_RATE_30Y.toFixed(2)}% (${distFromTarget.toFixed(2)}% away)`,
       time: 'Updated today'
     });
     items.push({
-      icon: '📅', color: 'green',
+      icon: '', color: 'green',
       title: 'Next scheduled recheck',
       desc: `Full re-analysis on ${fmt(recheckDate)} using updated rates`,
       time: 'Set today'
@@ -2094,7 +2094,7 @@ function _0x4f4976d() {
   // Analysis date
   if (G.income) {
     items.push({
-      icon: '✅', color: 'green',
+      icon: '', color: 'green',
       title: 'Analysis completed',
       desc: `Financial health score calculated from your inputs`,
       time: fmt(now)
@@ -2105,7 +2105,7 @@ function _0x4f4976d() {
   const goalCount = (window._goals || []).length;
   if (goalCount > 0) {
     items.push({
-      icon: '🎯', color: 'amber',
+      icon: '', color: 'amber',
       title: goalCount + ' active goal' + (goalCount > 1 ? 's' : ''),
       desc: 'Track your progress in the Goals tab',
       time: 'Active'
@@ -2181,12 +2181,12 @@ let editingGoalId = null;
 let activeCheckinGoal = null;
 
 const goalMeta = {
-  deposit:   { icon: '🏡', color: '#0077B6', bg: 'rgba(0,119,182,0.12)', label: 'House Deposit',    motivations: ['Every dollar saved is a step closer to your keys 🔑', 'Your future self will thank you for this.', 'The best time to start was yesterday. The second best is now.'] },
-  emergency: { icon: '🛡️', color: '#10B981', bg: 'rgba(16,185,129,0.12)', label: 'Emergency Fund',   motivations: ['Security is freedom. Keep going.', 'This fund lets you say no when life says yes.', 'Peace of mind has a price — you\'re paying it.'] },
-  debt:      { icon: '💳', color: '#E63946', bg: 'rgba(230,57,70,0.12)',  label: 'Debt Payoff',       motivations: ['Every payment is buying back your future.', 'Debt-free is a feeling you\'re earning right now.', 'You\'re cutting the cost of your past. Keep cutting.'] },
-  invest:    { icon: '📈', color: '#F4A261', bg: 'rgba(244,162,97,0.12)', label: 'Investment Fund',   motivations: ['Compound interest doesn\'t sleep. Keep feeding it.', 'The market rewards the patient. Stay consistent.', 'Investing monthly beats timing the market every time.'] },
-  retire:    { icon: '🌴', color: '#9B59B6', bg: 'rgba(155,89,182,0.12)', label: 'Retirement',        motivations: ['Future you is counting on present you.', 'The earlier you invest, the less you need to.', 'Every contribution today is a day of freedom later.'] },
-  custom:    { icon: '⭐', color: '#F4A261', bg: 'rgba(244,162,97,0.12)', label: 'Custom Goal',       motivations: ['Goals without plans are just wishes. You\'ve got both.', 'You set the target. Now hit it.', 'Progress over perfection — keep showing up.'] },
+  deposit:   { icon: '', color: '#0077B6', bg: 'rgba(0,119,182,0.12)', label: 'House Deposit',    motivations: ['Every dollar saved narrows the gap.', 'Your future self will thank you for this.', 'The best time to start was yesterday. The second best is now.'] },
+  emergency: { icon: '', color: '#10B981', bg: 'rgba(16,185,129,0.12)', label: 'Emergency Fund',   motivations: ['Security is freedom.', 'This fund lets you say no when life says yes.', 'Peace of mind has a price — you\'re paying it.'] },
+  debt:      { icon: '', color: '#E63946', bg: 'rgba(230,57,70,0.12)',  label: 'Debt Payoff',       motivations: ['Every payment is buying back your future.', 'Debt-free is a position you\'re earning right now.', 'You\'re cutting the cost of your past.'] },
+  invest:    { icon: '', color: '#F4A261', bg: 'rgba(244,162,97,0.12)', label: 'Investment Fund',   motivations: ['Compound interest doesn\'t sleep.', 'The market rewards the patient.', 'Investing monthly beats timing the market.'] },
+  retire:    { icon: '', color: '#9B59B6', bg: 'rgba(155,89,182,0.12)', label: 'Retirement',        motivations: ['Future you is counting on present you.', 'The earlier you invest, the less you need to.', 'Every contribution today is a day of freedom later.'] },
+  custom:    { icon: '', color: '#F4A261', bg: 'rgba(244,162,97,0.12)', label: 'Custom Goal',       motivations: ['Goals without plans are just wishes. You\'ve got both.', 'You set the target. Now hit it.', 'Progress over perfection — keep showing up.'] },
 };
 
 function selectGoalType(type, el) {
@@ -2251,7 +2251,7 @@ function _0x338efee() {
   if (goals.length === 0) {
     { const _gl = document.getElementById('goals-list'); if (_gl) _gl.innerHTML = `
       <div class="empty-goals">
-        <div class="empty-icon">🎯</div>
+        <div class="empty-icon"></div>
         <strong style="color:var(--navy);font-size:16px;">No goals set yet</strong><br>
         Pick a goal type above to start tracking your progress and get monthly reminders.
       </div>`; }
@@ -2266,8 +2266,8 @@ function _0x338efee() {
     const monthsLeft = goal.monthly > 0 ? Math.ceil(remaining / goal.monthly) : null;
     const targetDate = monthsLeft ? _0x760196b(monthsLeft) : null;
     const streakHtml = goal.streak > 0
-      ? `<span class="streak-pill">🔥 ${goal.streak} check-in${goal.streak > 1 ? 's' : ''}</span>` : '';
-    const reminderHtml = `<span class="reminder-tag">🔔 ${goal.reminder}</span>`;
+      ? `<span class="streak-pill">${goal.streak} check-in${goal.streak > 1 ? 's' : ''}</span>` : '';
+    const reminderHtml = `<span class="reminder-tag">${goal.reminder}</span>`;
     const lastCheckinText = goal.lastCheckin
       ? `Last updated ${_0x390f7bb(goal.lastCheckin)}`
       : 'No check-ins yet — tap to log progress';
@@ -2293,20 +2293,20 @@ function _0x338efee() {
           </div>
           <div class="goal-progress-meta">
             <span style="color:${meta.color};font-weight:600;">${pct}% complete</span>
-            <span>${remaining > 0 ? '$' + Math.round(remaining).toLocaleString() + ' to go' : '🎉 Goal reached!'}${targetDate ? ' · ' + targetDate : ''}</span>
+            <span>${remaining > 0 ? '$' + Math.round(remaining).toLocaleString() + ' to go' : 'Goal reached.'}${targetDate ? ' · ' + targetDate : ''}</span>
           </div>
         </div>
         ${goal.monthly > 0 ? `
         <div style="padding:8px 18px 4px;">
           <div style="background:var(--gray-1);border-radius:10px;padding:10px 14px;font-size:13px;color:var(--gray-4);line-height:1.5;">
-            💰 Saving <strong style="color:var(--navy);">$${goal.monthly.toLocaleString()}/month</strong>
+            Saving <strong style="color:var(--navy);">$${goal.monthly.toLocaleString()}/month</strong>
             ${monthsLeft ? ` · On track to finish <strong style="color:${meta.color};">${targetDate}</strong>` : ''}
             ${goal.checkins && goal.checkins.length > 0 ? ` · Added <strong style="color:var(--teal);">$${Math.round(goal.checkins.reduce((s,c)=>s+(c.added||0),0)).toLocaleString()}</strong> total` : ''}
           </div>
         </div>` : ''}
         <div class="goal-card-footer">
 
-          <button class="goal-action-btn secondary" onclick="showMilestones(${goal.id})">🏆 Milestones</button>
+          <button class="goal-action-btn secondary" onclick="showMilestones(${goal.id})">Milestones</button>
           <button class="goal-action-btn danger" onclick="deleteGoal(${goal.id})">✕ Remove</button>
         </div>
       </div>`;
@@ -2319,11 +2319,11 @@ function showMilestones(id) {
   if (!goal) return;
   const meta = goalMeta[goal.type] || goalMeta.custom;
   const milestones = [25, 50, 75, 100];
-  let msg = `🏆 Milestones for "${goal.name}"\n\n`;
+  let msg = `Milestones for "${goal.name}"\n\n`;
   milestones.forEach(m => {
     const amt = Math.round(goal.target * m / 100);
     const reached = goal.current >= amt;
-    msg += `${reached ? '✅' : '⏳'} ${m}% — $${amt.toLocaleString()}${reached ? ' (reached!)' : ''}\n`;
+    msg += `${m}% — $${amt.toLocaleString()}${reached ? ' (reached)' : ''}\n`;
   });
   alert(msg);
 }
@@ -2334,7 +2334,7 @@ function _0x74237db(name) {
   const month = new Date().toLocaleString('default', { month: 'long' });
 
   if (goals.length === 0) {
-    if (titleEl) titleEl.textContent = `Hey ${name} — here's your ${month} update 👋`;
+    if (titleEl) titleEl.textContent = `Your ${month} update, ${name}`;
     if (bodyEl) bodyEl.textContent = 'Set a goal above and Tracent will personalise this message every month with your real numbers, encouragement, and your single most important next action.';
     return;
   }
@@ -2347,8 +2347,8 @@ function _0x74237db(name) {
   const motivation = meta.motivations[new Date().getDate() % meta.motivations.length];
   const monthsLeft = topGoal.monthly > 0 ? Math.ceil(remaining / topGoal.monthly) : null;
 
-  titleEl.textContent = `Hey ${name} — your ${month} financial check-in 👋`;
-  bodyEl.innerHTML = `Your <strong>${topGoal.name}</strong> is ${pct}% complete — $${Math.round(topGoal.current).toLocaleString()} of $${Math.round(topGoal.target).toLocaleString()} saved.${monthsLeft ? ` You're on track to finish in ~${monthsLeft} months.` : ''}<br><br><em>${motivation}</em><br><br>💡 <strong>This month's action:</strong> ${remaining > 0 ? `Put $${topGoal.monthly.toLocaleString()} toward your ${topGoal.name} goal before the 1st.` : '🎉 Goal complete! Time to set your next one.'}`;
+  titleEl.textContent = `${name} — your ${month} financial check-in`;
+  bodyEl.innerHTML = `Your <strong>${topGoal.name}</strong> is ${pct}% complete — $${Math.round(topGoal.current).toLocaleString()} of $${Math.round(topGoal.target).toLocaleString()} saved.${monthsLeft ? ` You're on track to finish in ~${monthsLeft} months.` : ''}<br><br><em>${motivation}</em><br><br><strong>This month's action:</strong> ${remaining > 0 ? `Put $${topGoal.monthly.toLocaleString()} toward your ${topGoal.name} goal before the 1st.` : 'Goal complete. Time to set your next one.'}`;
 }
 
 function _0x760196b(monthsLeft) {
@@ -2403,7 +2403,7 @@ function _0x340b247() {
   const el = document.getElementById('rate-watch-content-buyer') || document.getElementById('rate-watch-content');
   if (!el) return;
 
-  const deposit     = G.depositSaved || G.savingsAmt || 0;
+  const deposit     = G.depositSaved || 0;
   const targetPrice = G.homePrice || 0;
   const credit      = G.credit || 'fair';
   const baseRate    = BASE_MARKET_RATE + (CREDIT_PREMIUM[credit] || 0);
@@ -2471,13 +2471,13 @@ function _0x340b247() {
 
     <!-- Rent vs buy card -->
     <div class="simulator-card">
-      <h3 style="font-size:15px;">⚖️ Rent vs Buy at this rate</h3>
+      <h3 style="font-size:15px;">Rent vs Buy at this rate</h3>
       <div id="rw-rent-vs-buy"></div>
     </div>
 
     ${creditPremium > 0 ? `
     <div class="simulator-card" style="border-left:3px solid var(--amber);">
-      <div class="rec-eyebrow amber" style="display:inline-flex;margin-bottom:16px;">⚠️ Credit Premium Active</div>
+      <div class="rec-eyebrow amber" style="display:inline-flex;margin-bottom:16px;">Credit premium active</div>
       <div style="font-size:14px;font-weight:600;color:var(--navy);margin-bottom:6px;">Your credit score is costing you ${creditPremium.toFixed(1)}% extra</div>
       <div style="font-size:13px;color:var(--gray-4);line-height:1.6;">Improving your credit score one tier is equivalent to rates falling ${creditPremium.toFixed(1)}% — often achievable faster than waiting for the Bank of England to cut. On a ${_0x4f66a67(targetPrice||300000)} home that's roughly <strong style="color:var(--teal);">$${Math.round(mp(Math.max(0,(targetPrice||300000)-deposit), baseRate, 30) - mp(Math.max(0,(targetPrice||300000)-deposit), Math.max(3,baseRate-creditPremium*0.6), 30)).toLocaleString()}/month</strong> saved.</div>
     </div>` : ''}
@@ -2489,7 +2489,7 @@ function _0x340b247() {
 function updateRateWatch(rate) {
   rate = Math.max(3, Math.min(9, parseFloat(rate)));
 
-  const deposit     = G.depositSaved || G.savingsAmt || 0;
+  const deposit     = G.depositSaved || 0;
   const targetPrice = G.homePrice || 0;
   const credit      = G.credit || 'fair';
   const baseRate    = BASE_MARKET_RATE + (CREDIT_PREMIUM[credit] || 0);
@@ -2560,8 +2560,8 @@ function updateRateWatch(rate) {
     const baseDti = takeHome > 0 ? Math.round(((basePI + nonHousing) / takeHome) * 100) : 0;
     const dtiDelta = dti - baseDti;
     const gapChip = gap >= 0
-      ? `<span style="background:rgba(16,185,129,0.12);color:var(--green);padding:3px 10px;border-radius:20px;font-weight:600;">✅ $${Math.round(gap/1000)}K headroom</span>`
-      : `<span style="background:rgba(230,57,70,0.1);color:var(--red);padding:3px 10px;border-radius:20px;font-weight:600;">⚠️ $${Math.round(Math.abs(gap)/1000)}K over max</span>`;
+      ? `<span style="background:rgba(16,185,129,0.12);color:var(--green);padding:3px 10px;border-radius:20px;font-weight:600;">$${Math.round(gap/1000)}K headroom</span>`
+      : `<span style="background:rgba(230,57,70,0.1);color:var(--red);padding:3px 10px;border-radius:20px;font-weight:600;">$${Math.round(Math.abs(gap)/1000)}K over max</span>`;
     dtiEl.innerHTML = `
       <div style="background:var(--gray-1);border-radius:12px;padding:14px;margin-bottom:12px;border:var(--card-border);">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
@@ -2618,11 +2618,11 @@ function updateRateWatch(rate) {
           <div style="background:${dti<=43?'var(--teal-dim)':'rgba(230,57,70,0.07)'};border-radius:12px;padding:14px;text-align:center;border:1.5px solid ${dti<=43?'rgba(0,119,182,0.25)':'rgba(230,57,70,0.2)'};">
             <div style="font-size:10px;font-weight:700;color:${dti<=43?'var(--teal)':'var(--red)'};letter-spacing:1px;text-transform:uppercase;margin-bottom:6px;">Buy at ${rate.toFixed(2)}%</div>
             <div style="font-family:var(--font-display);font-size:22px;color:var(--navy);">$${targetPI.toLocaleString()}/mo</div>
-            <div style="font-size:11px;color:var(--gray-4);margin-top:4px;">${targetPI <= monthlyRent ? '✅ Less than rent' : '+$'+(targetPI-monthlyRent).toLocaleString()+'/mo vs rent'} · equity builds</div>
+            <div style="font-size:11px;color:var(--gray-4);margin-top:4px;">${targetPI <= monthlyRent ? 'Less than rent' : '+$'+(targetPI-monthlyRent).toLocaleString()+'/mo vs rent'} · equity builds</div>
           </div>
         </div>
         <div style="background:var(--navy);border-radius:12px;padding:14px;font-size:13px;color:rgba(255,255,255,0.8);line-height:1.6;">
-          💡 <strong style="color:var(--teal-light);">The honest trade-off:</strong>
+          <strong style="color:var(--teal-light);">The trade-off:</strong>
           ${targetPI <= monthlyRent
             ? `At ${rate.toFixed(2)}%, your P&I (${_0x4f66a67(targetPI)}) is <em>lower</em> than your rent — every payment builds equity.`
             : `You'd pay ${_0x4f66a67(targetPI - monthlyRent)}/mo more than rent, but into an asset you own.`}
@@ -2686,10 +2686,10 @@ function updateSimulator(rateVal) {
     vEl.textContent = `At ${rate.toFixed(2)}%, your payment increases by $${Math.abs(Math.round(diff))}/month. Your current rate of ${G.currentRate}% is better — don't refinance unless you need to.`;
     vEl.className = 'sim-verdict bad';
   } else if (breakeven && breakeven <= 24) {
-    vEl.textContent = `✅ At ${rate.toFixed(2)}%, refinancing saves $${Math.round(diff)}/month and breaks even in just ${breakeven} months. Tracent says: act when rates reach this level.`;
+    vEl.textContent = `At ${rate.toFixed(2)}%, refinancing saves $${Math.round(diff)}/month and breaks even in ${breakeven} months.`;
     vEl.className = 'sim-verdict good';
   } else if (breakeven && breakeven <= 48) {
-    vEl.textContent = `⏳ At ${rate.toFixed(2)}%, you'd save $${Math.round(diff)}/month with a ${breakeven}-month break-even. Reasonable — depends on how long you plan to stay.`;
+    vEl.textContent = `At ${rate.toFixed(2)}%, you'd save $${Math.round(diff)}/month with a ${breakeven}-month break-even. Reasonable — depends on how long you plan to stay.`;
     vEl.className = 'sim-verdict neutral';
   } else {
     vEl.textContent = `At ${rate.toFixed(2)}%, the savings ($${Math.round(diff)}/mo) don't justify closing costs within a reasonable timeframe. Wait for a better rate.`;
@@ -2753,9 +2753,9 @@ function _0x7bdbfe0() {
     <div style="margin-top:12px;padding:10px 14px;border-radius:10px;font-size:12px;line-height:1.6;
       background:${beTarget && beTarget <= 24 ? 'rgba(16,185,129,0.1)' : beTarget && beTarget <= 48 ? 'rgba(244,162,97,0.1)' : 'rgba(0,119,182,0.07)'};
       color:${beTarget && beTarget <= 24 ? 'var(--green)' : beTarget && beTarget <= 48 ? 'var(--amber)' : 'var(--teal)'};">
-      ${beTarget && beTarget <= 24 ? '✅ At your target rate, refinancing makes strong financial sense — break-even under 24 months.' :
-        beTarget && beTarget <= 48 ? `⏳ Break-even of ${beTarget} months is reasonable if you plan to stay ${Math.ceil(beTarget/12)+1}+ more years.` :
-        `📊 Use the slider above to find a rate where the numbers work for your situation.`}
+      ${beTarget && beTarget <= 24 ? 'At your target rate, refinancing makes sense — break-even under 24 months.' :
+        beTarget && beTarget <= 48 ? `Break-even of ${beTarget} months is reasonable if you plan to stay ${Math.ceil(beTarget/12)+1}+ more years.` :
+        `Use the slider above to find a rate where the numbers work for your situation.`}
     </div>
     <button class="rec-action-btn" style="margin-top:12px;" onclick="openScenarios()">See Full Rate Scenario Comparison</button>`;
 }
@@ -2780,17 +2780,17 @@ function _0x3e799ba() {
   if (_gMethod) debtMethod = _gMethod;
 
   const debts = [];
-  if (G.ccDebt > 0)   debts.push({ name:'Credit Card',  balance:G.ccDebt,    rate:G.ccRate||21,            minPayment:Math.max(25,Math.round(G.ccDebt*0.02)),  icon:'💳', color:'red'  });
-  if (G.carDebt > 0)  debts.push({ name:'Car Loan',     balance:G.carDebt,   rate:G.carRate||7.5,          minPayment:G.carPayment||300,                        icon:'🚗', color:'amber'});
-  if (G.otherDebt>0)  debts.push({ name:'Other Loans',  balance:G.otherDebt, rate:G.otherRate||9.0,        minPayment:G.otherPayment||150,                      icon:'📋', color:'amber'});
-  if (G.housingType==='owner'&&G.balance>0) debts.push({ name:'Mortgage', balance:G.balance, rate:G.currentRate, minPayment:G.payment, icon:'🏡', color:'teal'});
-  if (G.studentDebt>0) debts.push({ name:'Student Loan', balance:G.studentDebt, rate:G.studentRate||5.5, minPayment:G.idrPayment||Math.max(G.studentDebt*0.01,100), icon:'🎓', color:'amber'});
+  if (G.ccDebt > 0)   debts.push({ name:'Credit Card',  balance:G.ccDebt,    rate:G.ccRate||21,            minPayment:Math.max(25,Math.round(G.ccDebt*0.02)),  icon:'', color:'red'  });
+  if (G.carDebt > 0)  debts.push({ name:'Car Loan',     balance:G.carDebt,   rate:G.carRate||7.5,          minPayment:G.carPayment||300,                        icon:'', color:'amber'});
+  if (G.otherDebt>0)  debts.push({ name:'Other Loans',  balance:G.otherDebt, rate:G.otherRate||9.0,        minPayment:G.otherPayment||150,                      icon:'', color:'amber'});
+  if (G.housingType==='owner'&&G.balance>0) debts.push({ name:'Mortgage', balance:G.balance, rate:G.currentRate, minPayment:G.payment, icon:'', color:'teal'});
+  if (G.studentDebt>0) debts.push({ name:'Student Loan', balance:G.studentDebt, rate:G.studentRate||5.5, minPayment:G.idrPayment||Math.max(G.studentDebt*0.01,100), icon:'', color:'amber'});
 
   const rankList   = document.getElementById('debt-rank-list');
   const summaryEl  = document.getElementById('debt-summary');
 
   if (debts.length === 0) {
-    rankList.innerHTML  = '<div style="text-align:center;padding:30px;color:var(--gray-4);font-size:14px;">🎉 No debts found! Your Tracent score gets a boost.</div>';
+    rankList.innerHTML  = '<div style="text-align:center;padding:30px;color:var(--gray-4);font-size:14px;">No debts found. Your score gets a boost.</div>';
     summaryEl.innerHTML = '';
     return;
   }
@@ -2904,9 +2904,9 @@ function _0x3e799ba() {
         : 'Pay minimums only until higher-priority debts are gone.';
 
     rankHtml += `<div class="debt-rank-item">
-      <div class="debt-rank-num ${priorityClass}">${isMortgage ? '🏡' : i+1}</div>
+      <div class="debt-rank-num ${priorityClass}">${i+1}</div>
       <div class="debt-rank-info">
-        <div class="debt-rank-title">${d.icon} ${d.name}</div>
+        <div class="debt-rank-title">${d.name}</div>
         <div class="debt-rank-desc">${reasonText}<br>Costing <strong>${fmt(monthlyInterest)}/month</strong> in interest (${d.rate}% APR).</div>
         <div class="debt-rank-bar-wrap"><div class="debt-rank-bar ${d.color}" style="width:${pct}%"></div></div>
         <div class="debt-rank-meta">
@@ -2922,7 +2922,6 @@ function _0x3e799ba() {
   let cascadeHtml = '';
   if (nonMortgage.length > 0) {
     const methodLabel = isAvalanche ? 'Avalanche' : 'Snowball';
-    const methodEmoji = isAvalanche ? '🏔️' : '⛄';
 
     // Method comparison callout
     let comparisonHtml = '';
@@ -2933,7 +2932,7 @@ function _0x3e799ba() {
       comparisonHtml = `
         <div style="background:${currentIsBetter?'rgba(16,185,129,0.08)':'rgba(244,162,97,0.08)'};border:1px solid ${currentIsBetter?'rgba(16,185,129,0.2)':'rgba(244,162,97,0.2)'};border-radius:12px;padding:12px 14px;margin-bottom:14px;">
           <div style="font-size:12px;font-weight:700;color:${currentIsBetter?'var(--green)':'var(--amber)'};margin-bottom:4px;">
-            ${currentIsBetter ? '✅ Optimal method for your debts' : `💡 Switch to ${betterMethod} to save more`}
+            ${currentIsBetter ? 'Optimal method for your debts' : `Switch to ${betterMethod} to save more`}
           </div>
           <div style="font-size:12px;color:var(--gray-4);line-height:1.5;">
             ${avBetter
@@ -2955,7 +2954,7 @@ function _0x3e799ba() {
     <div class="rec-card" style="margin-top:4px;">
       <div class="rec-status-bar ${extraCash > 0 ? 'teal' : 'amber'}"></div>
       <div class="rec-body">
-        <div class="rec-eyebrow teal">${methodEmoji} ${methodLabel} Payoff Plan</div>
+        <div class="rec-eyebrow teal">${methodLabel} Payoff Plan</div>
         <div class="rec-headline" style="font-size:18px;">Debt-free in <strong>${activeResult.months} months</strong>${interestSaved > 0 ? ` · saves ${fmt(interestSaved)}` : ''}</div>
         <div style="font-size:13px;color:var(--gray-4);line-height:1.6;margin-bottom:14px;">
           ${extraCash > 0
@@ -2976,7 +2975,6 @@ function _0x3e799ba() {
               <div style="font-size:12px;font-weight:700;color:var(--teal);">Mo. ${e.month}</div>
             </div>`).join('')}
           <div style="display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:10px;background:rgba(16,185,129,0.08);margin-bottom:6px;border-left:3px solid var(--green);">
-            <div style="font-size:20px;">🎉</div>
             <div style="flex:1;">
               <div style="font-size:13px;font-weight:600;color:var(--navy);">All consumer debts cleared</div>
               <div style="font-size:12px;color:var(--gray-4);">${fmt(nonMortgage.reduce((s,d)=>s+d.minPayment,0)+extraCash)}/mo freed for savings or investing</div>
@@ -3009,7 +3007,7 @@ function _0x3e799ba() {
     cascadeHtml = `<div class="rec-card" style="margin-top:4px;">
       <div class="rec-status-bar teal"></div>
       <div class="rec-body">
-        <div class="rec-eyebrow teal">📊 Debt Summary</div>
+        <div class="rec-eyebrow teal">Debt Summary</div>
         <div class="rec-headline" style="font-size:15px;">${fmt(totalAnnualInterest)}/year in total interest</div>
         <div class="rec-why">Total debt: ${fmt(totalDebt)}. Only your mortgage remains — you're in a strong position.</div>
       </div>
@@ -3064,8 +3062,8 @@ function _0x3e799ba() {
     timelineEl.innerHTML = `<svg width="100%" height="${H+20}" viewBox="0 0 ${W} ${H+20}" style="overflow:visible;">
       <path d="${toPath(avPts)}" fill="none" stroke="var(--teal)" stroke-width="2" stroke-linecap="round"/>
       <path d="${toPath(sbPts)}" fill="none" stroke="var(--amber)" stroke-width="1.5" stroke-linecap="round" stroke-dasharray="4 2"/>
-      <text x="4"  y="${H+16}" font-size="9" fill="var(--teal)">🏔️ Avalanche</text>
-      <text x="${W/2}" y="${H+16}" font-size="9" fill="var(--amber)" text-anchor="middle">⛄ Snowball (dashed)</text>
+      <text x="4"  y="${H+16}" font-size="9" fill="var(--teal)">Avalanche</text>
+      <text x="${W/2}" y="${H+16}" font-size="9" fill="var(--amber)" text-anchor="middle">Snowball (dashed)</text>
       <text x="${W}" y="${H+16}" font-size="9" fill="var(--gray-4)" text-anchor="end">${maxM} mo</text>
     </svg>`;
   }
@@ -3091,7 +3089,7 @@ function _0xf056049(overrides) {
       categories: [
         {
           id: 'paymentStability', weight: 30, score: cats.paymentStability.score,
-          label: 'Payment Stability', icon: '📋',
+          label: 'Payment Stability', icon: '',
           value: cats.paymentStability.value,
           why: cats.paymentStability.desc,
           fixLabel: 'What if my DTI was lower?',
@@ -3102,7 +3100,7 @@ function _0xf056049(overrides) {
         },
         {
           id: 'debtLoad', weight: 25, score: cats.debtLoad.score,
-          label: 'Debt Load', icon: '💳',
+          label: 'Debt Load', icon: '',
           value: cats.debtLoad.value,
           why: cats.debtLoad.desc,
           fixLabel: 'What if I paid down debt?',
@@ -3113,7 +3111,7 @@ function _0xf056049(overrides) {
         },
         {
           id: 'cashCushion', weight: 25, score: cats.cashCushion.score,
-          label: 'Cash Cushion', icon: '🛡️',
+          label: 'Cash Cushion', icon: '',
           value: cats.cashCushion.value,
           why: cats.cashCushion.desc,
           fixLabel: 'What if I grew my emergency fund?',
@@ -3124,7 +3122,7 @@ function _0xf056049(overrides) {
         },
         {
           id: 'creditStanding', weight: 10, score: cats.creditStanding.score,
-          label: 'Credit Standing', icon: '⭐',
+          label: 'Credit Standing', icon: '',
           value: cats.creditStanding.value,
           why: cats.creditStanding.desc,
           fixLabel: 'What if my credit improved?',
@@ -3141,7 +3139,7 @@ function _0xf056049(overrides) {
         },
         {
           id: 'wealthBuilding', weight: 10, score: cats.wealthBuilding.score,
-          label: 'Wealth Building', icon: '📈',
+          label: 'Wealth Building', icon: '',
           value: cats.wealthBuilding.value,
           why: cats.wealthBuilding.desc,
           fixLabel: 'What if I saved more?',
@@ -3184,11 +3182,11 @@ function _0xf056049(overrides) {
   return {
     total,
     categories: [
-      { id:'paymentStability', weight:30, score:s1, label:'Payment Stability', icon:'📋', value: dti+'% DTI', why: dti<28?'Healthy DTI':dti<36?'Manageable':'Elevated — reduce debt or raise income', fixLabel:'What if my DTI was lower?', fixType:'range', fixKey:'dti', fixMin:10, fixMax:60, fixStep:1, fixVal:dti, fixUnit:'%', fixHint: dti>28?'Below 36% unlocks more points.':null },
-      { id:'debtLoad', weight:25, score:s2, label:'Debt Load', icon:'💳', value: debtRatio===0?'Debt-free':Math.round(debtRatio*100)+'% of income', why: debtRatio===0?'Debt-free':'Consumer debt vs income', fixLabel:'What if I paid down debt?', fixType:'range', fixKey:'ccDebt', fixMin:0, fixMax:Math.max(ccDebt+5000,20000), fixStep:500, fixVal:ccDebt, fixUnit:'$', fixHint: ccDebt>0?'Clearing CC debt has biggest impact.':null },
-      { id:'cashCushion', weight:25, score:s3, label:'Cash Cushion', icon:'🛡️', value: efMo+' mo emergency · '+fmtCash(fcfVal)+'/mo free', why: efMo===0?'No emergency fund':efMo<3?'Under 3 months':'Good buffer', fixLabel:'What if I grew my emergency fund?', fixType:'range', fixKey:'efMo', fixMin:0, fixMax:12, fixStep:1, fixVal:efMo, fixUnit:' mo', fixHint: efMo<3?'3 months unlocks a significant boost.':null },
-      { id:'creditStanding', weight:10, score:s4, label:'Credit Standing', icon:'⭐', value: credit==='excellent'?'Excellent (720+)':credit==='fair'||credit==='good'?'Good (640–719)':'Building (<640)', why:'Credit band affects every rate you receive', fixLabel:'What if my credit improved?', fixType:'select', fixKey:'credit', fixOptions:[{value:'excellent',label:'Excellent (760+)'},{value:'good',label:'Good (720–759)'},{value:'fair',label:'Fair (680–719)'},{value:'below',label:'Below avg (620–679)'},{value:'poor',label:'Poor (<620)'}], fixVal:credit, fixHint:'Improving credit saves thousands on future loans.' },
-      { id:'wealthBuilding', weight:10, score:s5, label:'Wealth Building', icon:'📈', value: savingsMo>=1?Math.round(savingsMo)+' months saved':'No savings recorded', why: savingsMo>=6?'Strong — compound growth working':'Build savings to improve this', fixLabel:'What if I saved more?', fixType:'range', fixKey:'savings', fixMin:0, fixMax:Math.max(savings*3,50000), fixStep:1000, fixVal:savings, fixUnit:'$', fixHint:'3+ months of income in savings moves this significantly.' },
+      { id:'paymentStability', weight:30, score:s1, label:'Payment Stability', icon:'', value: dti+'% DTI', why: dti<28?'Healthy DTI':dti<36?'Manageable':'Elevated — reduce debt or raise income', fixLabel:'What if my DTI was lower?', fixType:'range', fixKey:'dti', fixMin:10, fixMax:60, fixStep:1, fixVal:dti, fixUnit:'%', fixHint: dti>28?'Below 36% unlocks more points.':null },
+      { id:'debtLoad', weight:25, score:s2, label:'Debt Load', icon:'', value: debtRatio===0?'Debt-free':Math.round(debtRatio*100)+'% of income', why: debtRatio===0?'Debt-free':'Consumer debt vs income', fixLabel:'What if I paid down debt?', fixType:'range', fixKey:'ccDebt', fixMin:0, fixMax:Math.max(ccDebt+5000,20000), fixStep:500, fixVal:ccDebt, fixUnit:'$', fixHint: ccDebt>0?'Clearing CC debt has biggest impact.':null },
+      { id:'cashCushion', weight:25, score:s3, label:'Cash Cushion', icon:'', value: efMo+' mo emergency · '+fmtCash(fcfVal)+'/mo free', why: efMo===0?'No emergency fund':efMo<3?'Under 3 months':'Good buffer', fixLabel:'What if I grew my emergency fund?', fixType:'range', fixKey:'efMo', fixMin:0, fixMax:12, fixStep:1, fixVal:efMo, fixUnit:' mo', fixHint: efMo<3?'3 months unlocks a significant boost.':null },
+      { id:'creditStanding', weight:10, score:s4, label:'Credit Standing', icon:'', value: credit==='excellent'?'Excellent (720+)':credit==='fair'||credit==='good'?'Good (640–719)':'Building (<640)', why:'Credit band affects every rate you receive', fixLabel:'What if my credit improved?', fixType:'select', fixKey:'credit', fixOptions:[{value:'excellent',label:'Excellent (760+)'},{value:'good',label:'Good (720–759)'},{value:'fair',label:'Fair (680–719)'},{value:'below',label:'Below avg (620–679)'},{value:'poor',label:'Poor (<620)'}], fixVal:credit, fixHint:'Improving credit saves thousands on future loans.' },
+      { id:'wealthBuilding', weight:10, score:s5, label:'Wealth Building', icon:'', value: savingsMo>=1?Math.round(savingsMo)+' months saved':'No savings recorded', why: savingsMo>=6?'Strong — compound growth working':'Build savings to improve this', fixLabel:'What if I saved more?', fixType:'range', fixKey:'savings', fixMin:0, fixMax:Math.max(savings*3,50000), fixStep:1000, fixVal:savings, fixUnit:'$', fixHint:'3+ months of income in savings moves this significantly.' },
     ]
   };
 }
@@ -3271,7 +3269,7 @@ function _0xdbcabb1() {
             <span>${cat.fixUnit === '$' ? '$0' : cat.fixMin + cat.fixUnit}</span>
             <span>${cat.fixUnit === '$' ? '$' + Math.round(cat.fixMax).toLocaleString() : cat.fixMax + cat.fixUnit}</span>
           </div>
-          ${cat.fixHint ? `<div style="font-size:11px;color:var(--gray-4);background:var(--gray-1);border-radius:8px;padding:8px 10px;margin-top:10px;line-height:1.5;">💡 ${cat.fixHint}</div>` : ''}
+          ${cat.fixHint ? `<div style="font-size:11px;color:var(--gray-4);background:var(--gray-1);border-radius:8px;padding:8px 10px;margin-top:10px;line-height:1.5;">${cat.fixHint}</div>` : ''}
         </div>`;
     } else if (cat.fixType === 'select') {
       const curVal = _sbdWhatIfState[cat.fixKey] || cat.fixVal;
@@ -3292,7 +3290,7 @@ function _0xdbcabb1() {
               </div>`;
             }).join('')}
           </div>
-          ${cat.fixHint ? `<div style="font-size:11px;color:var(--gray-4);background:var(--gray-1);border-radius:8px;padding:8px 10px;margin-top:10px;line-height:1.5;">💡 ${cat.fixHint}</div>` : ''}
+          ${cat.fixHint ? `<div style="font-size:11px;color:var(--gray-4);background:var(--gray-1);border-radius:8px;padding:8px 10px;margin-top:10px;line-height:1.5;">${cat.fixHint}</div>` : ''}
         </div>`;
     }
 
@@ -3534,22 +3532,22 @@ function _0x01d514a(score) {
   if (G.dti !== undefined) {
     const dti = G.dti;
     if (dti < 28) {
-      factors.push({ icon: '✅', label: 'Low debt-to-income ratio', detail: dti + '% DTI — lenders love this. Strong mortgage qualification.', positive: true });
+      factors.push({ icon: '', label: 'Low debt-to-income ratio', detail: dti + '% DTI — lenders love this. Strong mortgage qualification.', positive: true });
     } else if (dti < 43) {
-      factors.push({ icon: '⚠️', label: 'Moderate DTI', detail: 'Your ' + dti + '% DTI is acceptable but leaves less room. Below 36% strengthens your mortgage application.', positive: false });
+      factors.push({ icon: '', label: 'Moderate DTI', detail: 'Your ' + dti + '% DTI is acceptable but leaves less room. Below 36% strengthens your mortgage application.', positive: false });
     } else {
-      factors.push({ icon: '🔴', label: 'High debt-to-income ratio', detail: dti + '% DTI — above lender thresholds. Reducing debt is your #1 score lever.', positive: false });
+      factors.push({ icon: '', label: 'High debt-to-income ratio', detail: dti + '% DTI — above lender thresholds. Reducing debt is your #1 score lever.', positive: false });
     }
   }
 
   // Credit factor
   if (G.creditScore) {
     if (G.creditScore === 'excellent') {
-      factors.push({ icon: '✅', label: 'Strong credit score (720+)', detail: 'You qualify for the best mortgage rates — saving thousands over the loan life.', positive: true });
+      factors.push({ icon: '', label: 'Strong credit score (720+)', detail: 'You qualify for the best mortgage rates — saving thousands over the loan life.', positive: true });
     } else if (G.creditScore === 'fair') {
-      factors.push({ icon: '⚠️', label: 'Good credit (640–719)', detail: 'Mortgage-eligible but higher rates apply. Each tier up saves ~0.25% on your rate.', positive: false });
+      factors.push({ icon: '', label: 'Good credit (640–719)', detail: 'Mortgage-eligible but higher rates apply. Each tier up saves ~0.25% on your rate.', positive: false });
     } else {
-      factors.push({ icon: '🔴', label: 'Building credit (<640)', detail: 'Focus here first \u2014 most lenders need 620+ minimum. Some FHA options at 580+.', positive: false });
+      factors.push({ icon: '', label: 'Building credit (<640)', detail: 'Focus here first — most lenders need 620+ minimum. Some FHA options at 580+.', positive: false });
     }
   }
 
@@ -3559,11 +3557,11 @@ function _0x01d514a(score) {
     const monthlyIncome = G.income / 12;
     const savingsRate = monthlyIncome > 0 ? Math.round((fcf / monthlyIncome) * 100) : 0;
     if (fcf >= 1000) {
-      factors.push({ icon: '✅', label: 'Healthy free cash flow', detail: '$' + Math.round(fcf).toLocaleString() + '/mo free — ' + savingsRate + '% savings rate. Compounds fast toward a deposit.', positive: true });
+      factors.push({ icon: '', label: 'Healthy free cash flow', detail: '$' + Math.round(fcf).toLocaleString() + '/mo free — ' + savingsRate + '% savings rate. Compounds fast toward a deposit.', positive: true });
     } else if (fcf >= 200) {
-      factors.push({ icon: '⚠️', label: 'Tight cash flow', detail: 'Only $' + Math.round(fcf).toLocaleString() + '/mo free. Reducing one expense category could unlock meaningful savings momentum.', positive: false });
+      factors.push({ icon: '', label: 'Tight cash flow', detail: 'Only $' + Math.round(fcf).toLocaleString() + '/mo free. Reducing one expense category could unlock meaningful savings momentum.', positive: false });
     } else {
-      factors.push({ icon: '🔴', label: 'Negative or minimal cash flow', detail: 'Spending exceeds or matches income — a deposit won\u2019t grow from here. This is the first thing to fix.', positive: false });
+      factors.push({ icon: '', label: 'Negative or minimal cash flow', detail: 'Spending exceeds or matches income — a deposit won\'t grow from here. This is the first thing to fix.', positive: false });
     }
   }
 
@@ -3571,9 +3569,9 @@ function _0x01d514a(score) {
   if (G.housingType === 'owner' && G.currentRate > 0) {
     const mktRate = window.MARKET_RATE_30Y || 6.72;
     if (G.currentRate > mktRate + 0.5) {
-      factors.push({ icon: '⚠️', label: 'Above-market mortgage rate', detail: 'Your rate of ' + G.currentRate.toFixed(2) + '% is ' + (G.currentRate - mktRate).toFixed(2) + '% above market. Refinancing is worth modelling.', positive: false });
+      factors.push({ icon: '', label: 'Above-market mortgage rate', detail: 'Your rate of ' + G.currentRate.toFixed(2) + '% is ' + (G.currentRate - mktRate).toFixed(2) + '% above market. Refinancing is worth modelling.', positive: false });
     } else {
-      factors.push({ icon: '✅', label: 'Competitive mortgage rate', detail: 'Your ' + G.currentRate.toFixed(2) + '% rate is near market. No immediate action needed unless rates drop further.', positive: true });
+      factors.push({ icon: '', label: 'Competitive mortgage rate', detail: 'Your ' + G.currentRate.toFixed(2) + '% rate is near market. No immediate action needed unless rates drop further.', positive: true });
     }
   } else if (G.housingType === 'buying') {
     const dep = G.depositSaved || 0;
@@ -3581,9 +3579,9 @@ function _0x01d514a(score) {
     if (target > 0) {
       const pct = Math.round(dep / target * 100);
       if (pct >= 100) {
-        factors.push({ icon: '✅', label: 'Deposit target reached', detail: 'You have enough for a 10% deposit. Check DTI and credit to complete your readiness picture.', positive: true });
+        factors.push({ icon: '', label: 'Deposit target reached', detail: 'You have enough for a 10% deposit. Check DTI and credit to complete your readiness picture.', positive: true });
       } else {
-        factors.push({ icon: '⚠️', label: 'Building deposit (' + pct + '% of target)', detail: 'Focus on cash flow to close the gap faster. Time to first home depends on your monthly savings rate.', positive: false });
+        factors.push({ icon: '', label: 'Building deposit (' + pct + '% of target)', detail: 'Focus on cash flow to close the gap faster. Time to first home depends on your monthly savings rate.', positive: false });
       }
     }
   }
@@ -3636,13 +3634,17 @@ function _0x4b08b5e(monthlyIncome) {
     ? G.homeValue
     : (G.balance > 0 ? Math.round(G.balance / (1 - 0.03 * yearsOwned) * 1.03) : G.balance * 1.25);
   const homeEquity = Math.max(0, homeValue - G.balance);
-  const cashSavings = G.savingsAmt || G.depositSaved || Math.max(0, G.fcf * 4);
+  // liquidSavings: cash + deposit only — used for liquidity ratio (retirement funds aren't liquid)
+  const liquidSavings = (G.savingsAmt || 0) + (G.depositSaved || 0);
+  // cashSavings: full asset picture including retirement portfolio — used for net worth total
+  const cashSavings = (liquidSavings + (G.retirementSavings || 0)) || Math.max(0, G.fcf * 4);
   const totalAssets = homeValue + cashSavings;
   const totalLiabilities = G.balance + G.ccDebt + G.carDebt + G.otherDebt;
   const netWorth = totalAssets - totalLiabilities;
   const allPayments = G.payment + G.carPayment + G.otherPayment + Math.max(0, G.ccDebt * 0.02);
   const dti = Math.round((allPayments / monthlyIncome) * 100);
-  const liquidityMonths = (G.expenses + G.payment) > 0 ? Math.round(cashSavings / (G.expenses + G.payment)) : 0;
+  // liquidityMonths uses liquid savings only — retirement portfolio is not liquid emergency funds
+  const liquidityMonths = (G.expenses + G.payment) > 0 ? Math.round(liquidSavings / (G.expenses + G.payment)) : 0;
   const equityPct = homeValue > 0 ? Math.round((homeEquity / homeValue) * 100) : 0;
 
   _0xb8a2b9e(typeof netWorthAdj !== 'undefined' ? netWorthAdj : netWorth, 'Your current net worth snapshot', typeof splitEq !== 'undefined' && splitEq < 1 ? 'Showing your 50% equity share' : null);
@@ -3657,29 +3659,32 @@ function _0x4b08b5e(monthlyIncome) {
   var homeDisplayLabel = splitEq < 1 ? 'Home equity (your 50% share)' : 'Home — estimated market value';
   var totalAssetsAdj = homeDisplayVal + cashSavings;
   var netWorthAdj = totalAssetsAdj - totalLiabilities;
-  let aHtml = _0xb7aa5c8('🏡', homeDisplayLabel, homeDisplayVal, 'positive');
-  aHtml += _0xb7aa5c8('💵', 'Cash & savings (estimated)', cashSavings, 'positive');
+  let aHtml = _0xb7aa5c8('', homeDisplayLabel, homeDisplayVal, 'positive');
+  // Show liquid savings and retirement savings as separate rows when both are present
+  var _displayLiquid = liquidSavings || (!G.retirementSavings ? Math.max(0, G.fcf * 4) : 0);
+  if (_displayLiquid > 0) aHtml += _0xb7aa5c8('', 'Cash & savings (estimated)', _displayLiquid, 'positive');
+  if (G.retirementSavings > 0) aHtml += _0xb7aa5c8('', 'Retirement savings', G.retirementSavings, 'positive');
   const _ar = document.getElementById(window._tracentPlus ? 'nw-asset-rows-unlocked' : 'nw-asset-rows'); if (_ar) _ar.innerHTML = aHtml;
 
-  let lHtml = _0xb7aa5c8('🏡', 'Mortgage remaining', G.balance, 'negative');
-  if (G.ccDebt > 0) lHtml += _0xb7aa5c8('💳', 'Credit card debt', G.ccDebt, 'negative');
-  if (G.carDebt > 0) lHtml += _0xb7aa5c8('🚗', 'Car loan', G.carDebt, 'negative');
-  if (G.otherDebt > 0) lHtml += _0xb7aa5c8('📋', 'Other loans', G.otherDebt, 'negative');
+  let lHtml = _0xb7aa5c8('', 'Mortgage remaining', G.balance, 'negative');
+  if (G.ccDebt > 0) lHtml += _0xb7aa5c8('', 'Credit card debt', G.ccDebt, 'negative');
+  if (G.carDebt > 0) lHtml += _0xb7aa5c8('', 'Car loan', G.carDebt, 'negative');
+  if (G.otherDebt > 0) lHtml += _0xb7aa5c8('', 'Other loans', G.otherDebt, 'negative');
   const _lr = document.getElementById(window._tracentPlus ? 'nw-liability-rows-unlocked' : 'nw-liability-rows'); if (_lr) _lr.innerHTML = lHtml;
 
   _0xa9e1fb8(dti, liquidityMonths, equityPct + '% equity in home',
     (G.ccDebt + G.carDebt + G.otherDebt) > 0
       ? Math.ceil((G.ccDebt + G.carDebt + G.otherDebt) / Math.max(G.fcf * 0.4, 50)) + ' months to non-housing debt free'
-      : '✅ No non-mortgage debt');
+      : 'No non-mortgage debt');
 }
 
 function _0xda59b7c(monthlyIncome) {
   // ACTUALS ONLY — show where the user stands TODAY, not a hypothetical purchase
-  const cashNow    = G.depositSaved || 0;
+  const cashNow    = G.depositSaved || 0;  // deposit savings only — used for deposit progress/gap
   const studentDebt = G.studentDebt || 0;
   const nonHousingDebt = (G.ccDebt||0) + (G.carDebt||0) + (G.otherDebt||0) + studentDebt;
-  const totalAssets = cashNow;
-  const netWorthNow = cashNow - nonHousingDebt;
+  const totalAssets = cashNow + (G.retirementSavings || 0);  // net worth includes retirement savings
+  const netWorthNow = totalAssets - nonHousingDebt;
 
   const dti = Math.round((((G.rentAmt||0) + (G.carPayment||0) + (G.otherPayment||0) + Math.max(0,(G.ccDebt||0)*0.02)) / monthlyIncome) * 100);
   const targetPrice = G.homePrice || 0;
@@ -3704,22 +3709,24 @@ function _0xda59b7c(monthlyIncome) {
       <div style="background:rgba(255,255,255,0.12);border-radius:4px;height:8px;overflow:hidden;margin-bottom:8px;">
         <div style="width:${depPct}%;height:100%;background:linear-gradient(90deg,var(--teal),var(--teal-light));border-radius:4px;transition:width 0.8s ease;"></div>
       </div>
-      <div style="font-size:12px;color:rgba(255,255,255,0.5);">${depPct >= 100 ? '✅ Deposit target met — check your DTI & credit score' : monthsToReady < 999 ? `~${monthsToReady} months away saving 50% of free cash flow` : 'Increase monthly savings to hit target faster'}</div>
+      <div style="font-size:12px;color:rgba(255,255,255,0.5);">${depPct >= 100 ? 'Deposit target met — check your DTI & credit score' : monthsToReady < 999 ? `~${monthsToReady} months away saving 50% of free cash flow` : 'Increase monthly savings to hit target faster'}</div>
     </div>` : '';
 
-  if (e('nw-asset-rows')) e('nw-asset-rows').innerHTML = readyBanner + _0xb7aa5c8('💵', 'Savings / deposit fund', cashNow, 'positive');
+  var _buyingAssetHtml = readyBanner + _0xb7aa5c8('', 'Savings / deposit fund', cashNow, 'positive');
+  if (G.retirementSavings > 0) _buyingAssetHtml += _0xb7aa5c8('', 'Retirement savings', G.retirementSavings, 'positive');
+  if (e('nw-asset-rows')) e('nw-asset-rows').innerHTML = _buyingAssetHtml;
 
   let lHtml = '';
-  if (G.ccDebt > 0) lHtml += _0xb7aa5c8('💳', 'Credit card debt', G.ccDebt, 'negative');
-  if (G.carDebt > 0) lHtml += _0xb7aa5c8('🚗', 'Car loan', G.carDebt, 'negative');
-  if (studentDebt > 0) lHtml += _0xb7aa5c8('🎓', 'Student loans', studentDebt, 'negative');
-  if (G.otherDebt > 0) lHtml += _0xb7aa5c8('📋', 'Other loans', G.otherDebt, 'negative');
-  if (!lHtml) lHtml = `<div style="padding:10px 0;font-size:13px;color:var(--teal);">🎉 No consumer debt — great position to buy from</div>`;
+  if (G.ccDebt > 0) lHtml += _0xb7aa5c8('', 'Credit card debt', G.ccDebt, 'negative');
+  if (G.carDebt > 0) lHtml += _0xb7aa5c8('', 'Car loan', G.carDebt, 'negative');
+  if (studentDebt > 0) lHtml += _0xb7aa5c8('', 'Student loans', studentDebt, 'negative');
+  if (G.otherDebt > 0) lHtml += _0xb7aa5c8('', 'Other loans', G.otherDebt, 'negative');
+  if (!lHtml) lHtml = `<div style="padding:10px 0;font-size:13px;color:var(--teal);">No consumer debt — strong position to buy from</div>`;
   if (e('nw-liability-rows')) e('nw-liability-rows').innerHTML = lHtml;
 
   _0xa9e1fb8(
     dti + '% current DTI',
-    depositGap > 0 ? '$' + Math.round(depositGap).toLocaleString() + ' deposit gap' : '✅ Deposit ready',
+    depositGap > 0 ? '$' + Math.round(depositGap).toLocaleString() + ' deposit gap' : 'Deposit ready',
     G.rentAmt ? '$' + Math.round(G.rentAmt).toLocaleString() + '/mo rent (current)' : 'No rent entered',
     'Net worth based on actual figures only'
   );
@@ -3727,13 +3734,18 @@ function _0xda59b7c(monthlyIncome) {
 
 function _0x30a56de(monthlyIncome) {
   // For renters wanting to buy: show PROJECTED net worth after purchase, not actuals
-  const cashSavings  = G.savingsAmt || 0;
+  // houseFunds: only funds explicitly saved for a house deposit — used for all deposit readiness calculations
+  const houseFunds     = G.depositSaved || 0;
+  // generalSavings: general liquid savings — NOT automatically available for a house purchase
+  const generalSavings = G.savingsAmt || 0;
+  // cashSavings: full asset picture — used for net worth total (all three buckets)
+  const cashSavings    = generalSavings + houseFunds + (G.retirementSavings || 0);
   const targetPrice  = G.homePrice  || 0;
   const nonHousingDebt = (G.ccDebt||0) + (G.carDebt||0) + (G.otherDebt||0) + (G.studentDebt||0);
   const netWorthNow  = cashSavings - nonHousingDebt;
 
-  // Projected purchase scenario
-  const deposit      = Math.min(cashSavings, targetPrice * 0.1);
+  // Projected purchase scenario — deposit funds only (general savings and retirement aren't earmarked for a house purchase)
+  const deposit      = Math.min(houseFunds, targetPrice * 0.1);
   const loanAmount   = Math.max(0, targetPrice - deposit);
   const depositPct   = targetPrice > 0 ? Math.round((deposit / targetPrice) * 100) : 0;
 
@@ -3750,10 +3762,10 @@ function _0x30a56de(monthlyIncome) {
   const nwAfterBuy   = targetPrice - loanAmount - nonHousingDebt; // net worth day-of-purchase
   const nwIn5Yrs     = equityIn5Yrs - nonHousingDebt;             // 5-yr projection
 
-  // Savings-to-deposit months
+  // Savings-to-deposit months — house funds only (general savings and retirement excluded from deposit timeline)
   const monthlySave  = Math.max(0, G.fcf * 0.5);
   const depositTarget = targetPrice * 0.1;
-  const depositGap   = Math.max(0, depositTarget - cashSavings);
+  const depositGap   = Math.max(0, depositTarget - houseFunds);
   const monthsAway   = monthlySave > 0 && depositGap > 0 ? Math.ceil(depositGap / monthlySave) : (depositGap === 0 ? 0 : 999);
 
   // Hero: actuals only — savings minus debts, no house price included
@@ -3784,28 +3796,32 @@ function _0x30a56de(monthlyIncome) {
       </div>
     </div>
     <div style="background:var(--teal-dim);border:1.5px solid rgba(0,119,182,0.25);border-radius:12px;padding:14px;margin-bottom:12px;font-size:13px;color:var(--navy);line-height:1.6;">
-      <strong>📈 5-year projection:</strong> At 3%/yr appreciation, your home equity grows your net worth to
+      <strong>5-year projection:</strong> At 3%/yr appreciation, your home equity grows your net worth to
       <strong style="color:var(--teal);">${nwIn5Yrs>=0?'$':'-$'}${Math.abs(Math.round(nwIn5Yrs/1000))}K</strong> by ${new Date().getFullYear()+5}.
-      ${monthsAway === 0 ? ' ✅ You already have enough for a 10% deposit.' : monthsAway < 999 ? ` You're ~${monthsAway} months from a 10% deposit at your current saving rate.` : ''}
+      ${monthsAway === 0 ? ' You already have enough for a 10% deposit.' : monthsAway < 999 ? ` You're ~${monthsAway} months from a 10% deposit at your current saving rate.` : ''}
     </div>` : '';
 
   // Write to visible unlocked rows (primary) and compat hidden rows
   const assetRowsUnlocked = document.getElementById('nw-asset-rows-unlocked');
   const assetRows = document.getElementById('nw-asset-rows');
-  const _aHtml = bannerHtml + _0xb7aa5c8('💵', 'Savings / deposit fund', cashSavings, 'positive');
-  if (assetRowsUnlocked) assetRowsUnlocked.innerHTML = _aHtml;
-  if (assetRows) assetRows.innerHTML = _aHtml;
+  var _aHtml2 = bannerHtml;
+  if (generalSavings > 0) _aHtml2 += _0xb7aa5c8('', 'General savings', generalSavings, 'positive');
+  if (houseFunds > 0) _aHtml2 += _0xb7aa5c8('', 'Deposit fund', houseFunds, 'positive');
+  if (G.retirementSavings > 0) _aHtml2 += _0xb7aa5c8('', 'Retirement savings', G.retirementSavings, 'positive');
+  if (!generalSavings && !houseFunds && !G.retirementSavings) _aHtml2 += _0xb7aa5c8('', 'Savings / deposit fund', 0, 'positive');
+  if (assetRowsUnlocked) assetRowsUnlocked.innerHTML = _aHtml2;
+  if (assetRows) assetRows.innerHTML = _aHtml2;
 
   const liabRowsUnlocked = document.getElementById('nw-liability-rows-unlocked');
   const liabRows = document.getElementById('nw-liability-rows');
   if (liabRowsUnlocked || liabRows) {
     // Actual debts only — no projected mortgage
     let lHtml = '';
-    if (G.ccDebt  > 0) lHtml += _0xb7aa5c8('💳', 'Credit card debt', G.ccDebt,  'negative');
-    if (G.carDebt > 0) lHtml += _0xb7aa5c8('🚗', 'Car loan',          G.carDebt, 'negative');
-    if (G.studentDebt > 0) lHtml += _0xb7aa5c8('🎓', 'Student loans', G.studentDebt, 'negative');
-    if (G.otherDebt > 0) lHtml += _0xb7aa5c8('📋', 'Other loans',     G.otherDebt, 'negative');
-    if (!lHtml) lHtml = '<div class="nw-row" style="color:var(--green);font-size:13px;padding:12px 0;">✅ No consumer debts — great position to buy from</div>';
+    if (G.ccDebt  > 0) lHtml += _0xb7aa5c8('', 'Credit card debt', G.ccDebt,  'negative');
+    if (G.carDebt > 0) lHtml += _0xb7aa5c8('', 'Car loan',          G.carDebt, 'negative');
+    if (G.studentDebt > 0) lHtml += _0xb7aa5c8('', 'Student loans', G.studentDebt, 'negative');
+    if (G.otherDebt > 0) lHtml += _0xb7aa5c8('', 'Other loans',     G.otherDebt, 'negative');
+    if (!lHtml) lHtml = '<div class="nw-row" style="color:var(--green);font-size:13px;padding:12px 0;">No consumer debts — strong position to buy from</div>';
     if (liabRowsUnlocked) liabRowsUnlocked.innerHTML = lHtml;
     if (liabRows) liabRows.innerHTML = lHtml;
   }
@@ -3814,9 +3830,9 @@ function _0x30a56de(monthlyIncome) {
   const dtiNow = Math.round(((rent + (G.carPayment||0) + (G.otherPayment||0) + Math.max(0,(G.ccDebt||0)*0.02)) / monthlyIncome) * 100);
   _0xa9e1fb8(
     dtiNow + '% current DTI',
-    monthsAway === 0 ? '✅ Deposit ready' : (monthsAway < 999 ? monthsAway + ' months to deposit' : 'Save more to reach deposit'),
+    monthsAway === 0 ? 'Deposit ready' : (monthsAway < 999 ? monthsAway + ' months to deposit' : 'Save more to reach deposit'),
     targetPrice > 0 ? depositPct + '% equity at purchase' : 'N/A',
-    nonHousingDebt > 0 ? Math.ceil(nonHousingDebt / Math.max((G.fcf||1) * 0.4, 50)) + ' months to debt-free' : '✅ Debt-free'
+    nonHousingDebt > 0 ? Math.ceil(nonHousingDebt / Math.max((G.fcf||1) * 0.4, 50)) + ' months to debt-free' : 'Debt-free'
   );
 }
 
@@ -4109,7 +4125,7 @@ function renderCareerEngine() {
     <!-- Role match pill -->
     <div style="display:flex;align-items:center;gap:8px;margin-bottom:16px;">
       <div style="background:var(--teal-dim);border:1px solid rgba(0,119,182,0.2);border-radius:20px;padding:5px 12px;font-size:12px;font-weight:600;color:var(--teal);">${gap.roleTitle}</div>
-      ${isAboveNational ? '<div style="background:rgba(16,185,129,0.10);border:1px solid rgba(16,185,129,0.2);border-radius:20px;padding:5px 12px;font-size:12px;font-weight:600;color:#10B981;">📍 ' + stateName + ' premium applied</div>' : ''}
+      ${isAboveNational ? '<div style="background:rgba(16,185,129,0.10);border:1px solid rgba(16,185,129,0.2);border-radius:20px;padding:5px 12px;font-size:12px;font-weight:600;color:#10B981;">' + stateName + ' premium applied</div>' : ''}
     </div>
 
     <!-- Salary comparison: 3-bar view -->
@@ -4154,7 +4170,7 @@ function renderCareerEngine() {
     <!-- CT vs National context card -->
     ${isAboveNational ? `
     <div style="background:rgba(0,119,182,0.06);border:1px solid rgba(0,119,182,0.15);border-radius:14px;padding:14px 16px;margin-top:14px;">
-      <div style="font-size:11px;font-weight:700;color:var(--teal);margin-bottom:6px;">📍 Connecticut Salary Context</div>
+      <div style="font-size:11px;font-weight:700;color:var(--teal);margin-bottom:6px;">Connecticut Salary Context</div>
       <div style="font-size:13px;color:var(--navy);line-height:1.6;">
         ${stateName} salaries for <strong>${gap.roleTitle}</strong> run approximately <strong>${Math.round((stateAdj - 1) * 100)}% above the national median</strong> due to higher cost of living and regional employer concentration.
         The median in ${stateName} is estimated at <strong>$${Math.round(gap.marketMedian/1000)}k</strong> vs. $${Math.round(MARKET_WAGES[gap.matched]?.national/1000)}k nationally.
@@ -4162,7 +4178,7 @@ function renderCareerEngine() {
       <div style="font-size:11px;color:var(--gray-4);margin-top:8px;">Source: BLS Occupational Employment Statistics, CT Dept of Labor (2024). Anonymised market data — not individual salary data.</div>
     </div>` : `
     <div style="background:var(--gray-1);border-radius:14px;padding:12px 14px;margin-top:14px;">
-      <div style="font-size:11px;color:var(--gray-4);line-height:1.6;">📊 Market data based on BLS national occupational averages (2024). Anonymised — you're seeing market benchmarks, not individual data.</div>
+      <div style="font-size:11px;color:var(--gray-4);line-height:1.6;">Market data based on BLS national occupational averages (2024). Anonymised — you're seeing market benchmarks, not individual data.</div>
     </div>`}
   `;
 
@@ -4265,19 +4281,19 @@ function updatePromoSim() {
 
     var _html = '<div style="font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:rgba(255,255,255,0.2);margin-bottom:4px;padding-top:4px;border-top:1px solid rgba(255,255,255,0.08);">System Impact at Raise</div>';
 
-    _html += _row('💰', 'Savings Rate',
+    _html += _row('', 'Savings Rate',
       (_srDelta > 0 ? '+' : '') + _srDelta + ' pts',
       _curSR + '% → ' + _newSR + '%',
       _srDelta > 0 ? '#34D399' : '#F8A750');
 
     if (_totalDebt > 0) {
-      _html += _row('💳', 'Debt Payoff',
+      _html += _row('', 'Debt Payoff',
         _debtMoSaved > 0 ? _debtMoSaved + ' mo sooner' : 'accelerated',
         _debtMoSaved >= 12 ? '~' + Math.round(_debtMoSaved/12*10)/10 + ' yr sooner' : 'extra directed to debt',
         '#00A8E8');
     }
 
-    _html += _row('📈', '5-Yr Extra Wealth',
+    _html += _row('', '5-Yr Extra Wealth',
       '+$' + _nw5k + 'k',
       'vs. no raise · 5% growth',
       '#10B981');
@@ -4476,7 +4492,7 @@ function _0xf0f2b75() {
     if (!snap.savedAt || Date.now() - snap.savedAt > 90 * 24 * 60 * 60 * 1000) return false;
     if (snap.G) {
       const DEFAULT_G = {
-        income: 0, expenses: 0, ccDebt: 0, ccRate: 21,
+        income: 0, expenses: 0, ccDebt: 0,
         carDebt: 0, carPayment: 0, studentDebt: 0, otherDebt: 0, otherPayment: 0,
         homePrice: 0, depositSaved: 0, savingsAmt: 0, housingType: 'owner', debtMethod: 'avalanche'
       };
@@ -4497,6 +4513,16 @@ function _0xf0f2b75() {
     // read real user data. Without this, window.G stays undefined for returning users
     // who skip score recomputation, causing BSE to compute wrong archetype (score=0).
     window.G = G;
+    // Mark as real initialized data so tracentHasRealData() returns true for returning users.
+    if (window.G && (
+      window.G.income ||
+      window.G.ccDebt ||
+      window.G.carDebt ||
+      window.G.studentDebt ||
+      window.G.savingsAmt
+    )) {
+      window.G.__initialized = true;
+    }
     return true;
   } catch(e) { return false; }
 }
@@ -4614,20 +4640,20 @@ function renderNextBestMoves() {
   var fmt = function(n) { return '$' + Math.round(Math.abs(n)).toLocaleString(); };
 
   if (emergency === 0)
-    moves.push({ icon:'🛡️', title:'Build an emergency fund', body:'No emergency savings detected. Even $1,000 is a critical buffer against unexpected costs.', priority:'high' });
+    moves.push({ icon:'', title:'Build an emergency fund', body:'No emergency savings detected. Even $1,000 is a critical buffer against unexpected costs.', priority:'high' });
   if (ccDebt > 0 && dti > 20)
-    moves.push({ icon:'💳', title:'Attack your credit card balance', body:'Credit card debt at high interest is costing you ' + fmt(ccDebt * 0.20 / 12) + '/mo. Clearing it is an instant raise.', priority:'high' });
+    moves.push({ icon:'', title:'Pay down your credit card balance', body:'Credit card debt at high interest is costing you ' + fmt(ccDebt * 0.20 / 12) + '/mo. Clearing it is an instant raise.', priority:'high' });
   if (fcf < 0)
-    moves.push({ icon:'🔴', title:'Spending exceeds take-home', body:'Your outgoings exceed your income by ' + fmt(Math.abs(fcf)) + '/mo. Review expenses before any other goal.', priority:'high' });
+    moves.push({ icon:'', title:'Spending exceeds take-home', body:'Your outgoings exceed your income by ' + fmt(Math.abs(fcf)) + '/mo. Review expenses before any other goal.', priority:'high' });
   if (fcf > 200 && emergency < 3)
-    moves.push({ icon:'📈', title:'Grow your emergency fund', body:'You have ' + fmt(fcf) + '/mo free cash flow. Automate ' + fmt(fcf * 0.5) + ' of it into savings.', priority:'medium' });
+    moves.push({ icon:'', title:'Grow your emergency fund', body:'You have ' + fmt(fcf) + '/mo free cash flow. Automate ' + fmt(fcf * 0.5) + ' of it into savings.', priority:'medium' });
   if (dti > 36 && ccDebt === 0)
-    moves.push({ icon:'🏠', title:'DTI is elevated', body:'Your debt-to-income ratio of ' + dti + '% is above the 36% guideline. Focus on debt payoff before new credit.', priority:'medium' });
+    moves.push({ icon:'', title:'DTI is elevated', body:'Your debt-to-income ratio of ' + dti + '% is above the 36% guideline. Focus on debt payoff before new credit.', priority:'medium' });
   if (score >= 70 && fcf > 0)
-    moves.push({ icon:'🚀', title:'Looking strong', body:'Score ' + score + '/100. Keep building — redirect ' + fmt(fcf * 0.3) + '/mo to long-term investments.', priority:'low' });
+    moves.push({ icon:'', title:'Position is strong', body:'Score ' + score + '/100. Keep building — redirect ' + fmt(fcf * 0.3) + '/mo to long-term investments.', priority:'low' });
 
   if (moves.length === 0)
-    moves.push({ icon:'✅', title:'Financial health looks solid', body:'Keep reviewing your numbers monthly. Small consistent improvements compound fast.', priority:'low' });
+    moves.push({ icon:'', title:'Financial health looks solid', body:'Keep reviewing your numbers monthly. Small consistent improvements compound fast.', priority:'low' });
 
   var colors = { high:'#E63946', medium:'#F8A750', low:'#10B981' };
   wrap.innerHTML = moves.slice(0,3).map(function(m) {
@@ -4653,7 +4679,7 @@ function shareScore(score, label) {
     navigator.clipboard.writeText(text).then(() => {
       const btn = event.currentTarget;
       const orig = btn.innerHTML;
-      btn.textContent = '✅ Copied!';
+      btn.textContent = 'Copied';
       setTimeout(() => { btn.innerHTML = orig; }, 2000);
     }).catch(() => {
       alert('Your Tracent score: ' + score + '/100 (' + label + ')');
@@ -5257,7 +5283,7 @@ function showPromoCelebration(type,title,income,prevIncome,raise,raiseAmt) {
   var headline=typeLabels[type]||'Achievement logged!';
   var emoji=typeEmojis[type]||'\uD83C\uDF89';
   var name=G.firstname||G.name||'';
-  var greeting=name?'Congratulations, '+name+'!':'Congratulations!';
+  var greeting=name?'Welcome, '+name+'.':'Your analysis is ready.';
   var sub=fmt(income)+'/year';
   if(prevIncome>0&&type!=='bonus') sub+=' \u00b7 '+(raise>0?'+'+raise+'% \u00b7 +'+fmt(Math.abs(raiseAmt))+'/yr more':'updated');
   if(title) sub=title+' \u00b7 '+sub;

@@ -31,21 +31,9 @@
   }
 
   /* ── Debt tab adaptation ───────────────────────────────── */
+  // Visibility of debt tab modules is owned by BSE.
+  // This function is retained as a no-op stub so call sites in _render() remain valid.
   function _applyDebtTab(mode) {
-    var accel   = document.getElementById('bse-debt-accelerator-card');
-    var method  = document.getElementById('bse-debt-method-card');
-    var tabDebt = document.getElementById('tab-debtrank');
-
-    // All modes: remove strategy-hidden so the strategy selector is always
-    // visible on the Debt tab. bseApplyModuleVis adds this class during home-tab
-    // render; it is never removed unless BSE reruns while the tab is active.
-    if (tabDebt) tabDebt.classList.remove('bse-debt-strategy-hidden');
-    // Strategy selector visible for all modes
-    if (method) method.style.display = '';
-    // Accelerator slider: hidden for CALM (complexity) and retirement (simplicity priority —
-    // debt framing shifts to monthly flexibility, not payoff-speed competition)
-    var _retMode = _isRetirementMode();
-    if (accel) accel.style.display = (mode === 'CALM' || _retMode) ? 'none' : '';
   }
 
   /* ── NBM supportive note ───────────────────────────────── */
@@ -72,40 +60,16 @@
   // CALM: collapse secondary metric sections that BSE may leave open
   // RETIREMENT: collapse metric/driver strips (not strategy — pre_retirement uses it;
   //   BSE already suppresses strategy for in_retirement via show.modeStrategy:false)
-  var _SECONDARY_IDS = ['bse-metrics-strip', 'bse-driver-strip', 'bse-mode-strategy'];
-
+  // Progressive disclosure is owned by BSE via bseApplyModuleVis.
+  // This function is retained as a no-op stub so call sites in _render() remain valid.
   function _applyProgressiveDisclosure(mode) {
-    var _retMode = _isRetirementMode();
-    _SECONDARY_IDS.forEach(function (id) {
-      var el = document.getElementById(id);
-      if (!el) return;
-      var _shouldCollapse = (mode === 'CALM') ||
-        (_retMode && id !== 'bse-mode-strategy');
-      if (_shouldCollapse) {
-        // Only hide if BSE hasn't already hidden it
-        if (el.style.display !== 'none') {
-          el.setAttribute('data-xp-collapsed', '1');
-          el.style.display = 'none';
-        }
-      } else {
-        // Restore only if WE hid it, not if BSE hid it
-        if (el.getAttribute('data-xp-collapsed') === '1') {
-          el.removeAttribute('data-xp-collapsed');
-          el.style.display = '';
-        }
-      }
-    });
   }
 
   /* ── Retirement mode detection ────────────────────────── */
   function _isRetirementMode() {
-    // Primary: G.isRetirementMode is the authoritative flag set by BSE._compute()
-    if (window.G && window.G.isRetirementMode) return true;
-    // Secondary checks for before BSE has run
-    var navStyle = (window.BSE && window.BSE.navStyle) || '';
+    // Authoritative source only — G.isRetirementMode is set by BSE._compute()
     var g = window.G || {};
-    var age = parseInt(g.age || g.currentAge || 0);
-    return navStyle === 'retirement' || age >= 60;
+    return !!(g && g.isRetirementMode);
   }
 
   /* ── Retirement hero ───────────────────────────────────── */
@@ -184,7 +148,6 @@
     h += '</div>';
 
     el.innerHTML = h;
-    el.style.display = 'block';
   }
 
   function _clearRetirementHero() {
@@ -197,54 +160,29 @@
     var b = document.body;
     if (active) {
       b.classList.add('xp-mode-retirement');
-      // For age-only path (BSE archetype is NOT in_retirement/pre_retirement),
-      // also add the BSE retirement body class so existing CSS injection rules apply.
-      var arch = (window.BSE && window.BSE.archetype) || '';
-      if (arch !== 'in_retirement' && arch !== 'pre_retirement') {
-        b.classList.add('bse-arch-in_retirement');
-      }
-      // Override NBM eyebrow for age-only path where BSE tone is still 'standard'
-      var nbmStyle = (window.BSE && window.BSE.nbmStyle) || '';
-      if (nbmStyle !== 'readiness_first' && nbmStyle !== 'stability_first') {
-        var eye = document.querySelector('#v21-nbm-card .v21-nbm-eyebrow');
-        if (eye) eye.innerHTML = '<span class="v21-live-dot"></span>Next step for your plan';
-        var meta = document.querySelector('#v21-nbm-card .v21-nbm-meta');
-        if (meta) meta.style.display = 'none';
-      }
     } else {
       b.classList.remove('xp-mode-retirement');
-      // Only remove the supplemental BSE class if WE added it (not if BSE set it)
-      var arch = (window.BSE && window.BSE.archetype) || '';
-      if (arch !== 'in_retirement' && arch !== 'pre_retirement') {
-        b.classList.remove('bse-arch-in_retirement');
-      }
     }
   }
 
   /* ── Settings modal APR section ───────────────────────── */
+  // Modal state (display) is owned by modals.js.
+  // Only chevron text and non-structural helper text are safe for XP to set.
   function _applySettingsModal() {
     var mode = _getMode();
-    var aprFields  = document.getElementById('se-apr-fields');
     var aprChevron = document.getElementById('se-apr-chevron');
     var aprHelper  = document.getElementById('se-apr-helper');
     var creditHelper = document.getElementById('se-credit-helper');
 
-    if (!aprFields) return;
-
     if (mode === 'CALM') {
-      // Stay collapsed — CALM users see the toggle but section is closed
-      aprFields.style.display = 'none';
       if (aprChevron) aprChevron.textContent = '\u25b8';
       if (aprHelper)  aprHelper.style.display = 'none';
     } else if (mode === 'STANDARD') {
-      // Auto-expand, no helper text
-      aprFields.style.display = 'block';
       if (aprChevron) aprChevron.textContent = '\u25be';
       if (aprHelper)  aprHelper.style.display = 'none';
       if (creditHelper) creditHelper.style.display = 'none';
     } else {
-      // EXPANDED — auto-expand + show helper texts
-      aprFields.style.display = 'block';
+      // EXPANDED — show helper texts
       if (aprChevron)   aprChevron.textContent = '\u25be';
       if (aprHelper)    aprHelper.style.display = 'block';
       if (creditHelper) creditHelper.style.display = 'block';
@@ -266,9 +204,10 @@
   }
 
   /* ── Event wiring ──────────────────────────────────────── */
-  // Fire ~80ms after BSE completes so BSE render pass runs first
-  document.addEventListener('tracent:scoreComputed', function () {
-    setTimeout(_render, 80);
+  // Fire at 160ms — after BSE _renderHome (120ms) has completed its pass
+  document.addEventListener('tracent:scoreComputed', function (e) {
+    if (!e.detail || !e.detail.final) return;
+    setTimeout(_render, 160);
   });
 
   /* ═══ PUBLIC API ═══════════════════════════════════════════ */

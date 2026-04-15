@@ -904,9 +904,9 @@
      8. UI — RENDER RESPONSE
   ═══════════════════════════════════════════════════════ */
   var VERDICT_STYLE = {
-    safe:       { bg:'rgba(16,185,129,0.07)', border:'rgba(16,185,129,0.20)', label:'✅ Safe' },
-    borderline: { bg:'rgba(245,158,11,0.07)', border:'rgba(245,158,11,0.22)', label:'⚠️ Borderline' },
-    risky:      { bg:'rgba(239,68,68,0.07)',  border:'rgba(239,68,68,0.20)',  label:'🔴 Risky' }
+    safe:       { bg:'rgba(16,185,129,0.07)', border:'rgba(16,185,129,0.20)', label:'Safe' },
+    borderline: { bg:'rgba(245,158,11,0.07)', border:'rgba(245,158,11,0.22)', label:'Borderline' },
+    risky:      { bg:'rgba(239,68,68,0.07)',  border:'rgba(239,68,68,0.20)',  label:'Risky' }
   };
 
   function renderResponse(container, resp, intent, purchasePre){
@@ -924,11 +924,11 @@
     }
 
     var sections = [
-      { key:'grounding',       label:'What I can see', icon:'🔍' },
-      { key:'answer',          label:'Direct answer',  icon:'✦' },
-      { key:'reasoning',       label:'Why this',       icon:'📐' },
-      { key:'impact',          label:'Impact',         icon:'📊' },
-      { key:'recommendation',  label:'Next step',      icon:'→', highlight: true }
+      { key:'grounding',       label:'What I can see', icon:'' },
+      { key:'answer',          label:'Direct answer',  icon:'' },
+      { key:'reasoning',       label:'Why this',       icon:'' },
+      { key:'impact',          label:'Impact',         icon:'' },
+      { key:'recommendation',  label:'Next step',      icon:'', highlight: true }
     ];
 
     sections.forEach(function(sec){

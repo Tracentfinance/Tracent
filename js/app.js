@@ -19,12 +19,15 @@
   function g(){ return window.G || null; }
 
   /* ── session state ──────────────────────────────────────── */
-  var SEEN_KEY      = 'tracent_dashboard_seen_count';
   var WAITLIST_KEY  = 'tracent_waitlist_email';
   var PREMIUM_SHOWN = 'tracent_premium_shown_ts';
 
+  // Session count deferred to BSE._mem.sessions — do NOT maintain a parallel counter.
   function sessionCount(){
-    try { return Number(localStorage.getItem(SEEN_KEY)||'0'); } catch(e){ return 0; }
+    try {
+      var mem = JSON.parse(localStorage.getItem('tracent_v3') || '{}');
+      return (mem._mem && mem._mem.sessions) ? Number(mem._mem.sessions) : 0;
+    } catch(e){ return 0; }
   }
   function hasWaitlistEmail(){
     try { return !!localStorage.getItem(WAITLIST_KEY); } catch(e){ return false; }
@@ -41,30 +44,38 @@
   // When user taps a depth feature (salary coach, AI, scenarios), mark the flag
   function markDepthAttempt(){
     window.__tracent_premiumDepthAttempted = true;
-    // Refresh premium teaser visibility immediately
-    var el = document.getElementById('v21-premium-teaser');
-    if (el && !window._tracentPlus) el.style.display = 'block';
+    // Premium teaser visibility is owned by BSE via bseApplyModuleVis.
+    // Do NOT write style.display here — let the next RPA cycle apply it.
   }
   window.tracent_markDepthAttempt = markDepthAttempt;
 
-  // Patch depth-feature entry points to mark depth attempt
-  var _origOpenSalary = window.openSalaryNegotiation;
-  window.openSalaryNegotiation = function(){
-    markDepthAttempt();
-    if (typeof _origOpenSalary === 'function') _origOpenSalary();
-  };
-  // openWhatIf depth trigger
-  var _origOpenWhatIf = window.openWhatIf;
-  window.openWhatIf = function(){
-    markDepthAttempt();
-    if (typeof _origOpenWhatIf === 'function') _origOpenWhatIf();
-  };
+  // Patch depth-feature entry points to mark depth attempt.
+  // Lazy-captured after current task queue so definitions from later scripts are available.
+  setTimeout(function() {
+    var _origOpenSalary = window.openSalaryNegotiation;
+    if (typeof _origOpenSalary === 'function') {
+      window.openSalaryNegotiation = function() {
+        markDepthAttempt();
+        return _origOpenSalary.apply(this, arguments);
+      };
+    }
 
-  var _origOpenScenarios = window.openScenarios;
-  window.openScenarios = function(){
-    markDepthAttempt();
-    if (typeof _origOpenScenarios === 'function') _origOpenScenarios();
-  };
+    var _origOpenWhatIf = window.openWhatIf;
+    if (typeof _origOpenWhatIf === 'function') {
+      window.openWhatIf = function() {
+        markDepthAttempt();
+        return _origOpenWhatIf.apply(this, arguments);
+      };
+    }
+
+    var _origOpenScenarios = window.openScenarios;
+    if (typeof _origOpenScenarios === 'function') {
+      window.openScenarios = function() {
+        markDepthAttempt();
+        return _origOpenScenarios.apply(this, arguments);
+      };
+    }
+  }, 0);
 
   /* ════════════════════════════════════════════════════════
      1. WEEKLY CHECK-IN — rich snapshot + one next action
@@ -87,7 +98,7 @@
     var drag = drivers.find(function(d){ return d.type === 'negative'; });
 
     // Next 7-day action from mode-aware NBM
-    var moves = (typeof v21GetRankedMoves === 'function') ? v21GetRankedMoves() : [];
+    var moves = (typeof window._v21GetRankedMovesLegacy === 'function') ? window._v21GetRankedMovesLegacy() : [];
     var nextMove = moves[0];
 
     // Score display
@@ -123,22 +134,22 @@
       // Win / drag
       '<div class="tret-row-pair">' +
         '<div class="tret-signal tret-win">' +
-          '<div class="tret-signal-label">✅ This week\'s win</div>' +
+          '<div class="tret-signal-label">This week\'s win</div>' +
           '<div class="tret-signal-text">' +
             (win ? win.text : (score && score >= 65 ? 'Score is holding steady above 65' : 'Complete a full re-analysis to surface wins')) +
           '</div>' +
         '</div>' +
         '<div class="tret-signal tret-drag">' +
-          '<div class="tret-signal-label">⚠️ Biggest drag</div>' +
+          '<div class="tret-signal-label">Biggest drag</div>' +
           '<div class="tret-signal-text">' +
-            (drag ? drag.text : (gv && (gv.ccDebt||0) > 0 ? 'CC interest cost: ' + fmt(Math.round((gv.ccDebt||0)*(gv.ccRate||21)/100/12)) + '/mo' : 'No active drag factors found')) +
+            (drag ? drag.text : (gv && (gv.ccDebt||0) > 0 && gv.ccRate != null ? 'CC interest cost: ' + fmt(Math.round((gv.ccDebt||0)*(gv.ccRate)/100/12)) + '/mo' : 'No active drag factors found')) +
           '</div>' +
         '</div>' +
       '</div>' +
 
       // Next 7-day action
       '<div class="tret-next-action">' +
-        '<div class="tret-next-label">📍 Your one move this week</div>' +
+        '<div class="tret-next-label">Your one move this week</div>' +
         (nextMove
           ? '<div class="tret-next-title">' + nextMove.title + '</div>' +
             '<div class="tret-next-detail">' + nextMove.action + '</div>'
@@ -186,7 +197,7 @@
     var drivers   = (gv && gv.lastScoreDrivers) || [];
     var wins      = drivers.filter(function(d){ return d.type==='positive'; });
     var drags     = drivers.filter(function(d){ return d.type==='negative'; });
-    var moves     = (typeof v21GetRankedMoves === 'function') ? v21GetRankedMoves() : [];
+    var moves     = (typeof window._v21GetRankedMovesLegacy === 'function') ? window._v21GetRankedMovesLegacy() : [];
 
     // What changed narrative
     var whatChanged = (function(){
@@ -269,12 +280,12 @@
       // Gain and blocker
       '<div class="tret-row-pair">' +
         '<div class="tret-signal tret-win">' +
-          '<div class="tret-signal-label">📈 Biggest gain</div>' +
+          '<div class="tret-signal-label">Biggest gain</div>' +
           '<div class="tret-signal-text">' + (wins[0] ? wins[0].text : 'Complete analysis to see gains') + '</div>' +
         '</div>' +
         '<div class="tret-signal tret-drag">' +
-          '<div class="tret-signal-label">🚧 Biggest blocker</div>' +
-          '<div class="tret-signal-text">' + (drags[0] ? drags[0].text : (gv && (gv.ccDebt||0)>0 ? 'CC debt at '+(gv.ccRate||21)+'%' : 'No major blockers identified')) + '</div>' +
+          '<div class="tret-signal-label">Biggest blocker</div>' +
+          '<div class="tret-signal-text">' + (drags[0] ? drags[0].text : (gv && (gv.ccDebt||0)>0 && gv.ccRate != null ? 'CC debt at '+gv.ccRate+'%' : 'No major blockers identified')) + '</div>' +
         '</div>' +
       '</div>' +
 
@@ -292,7 +303,7 @@
   ════════════════════════════════════════════════════════ */
   var LIFE_EVENT_PATHS = {
     raise: {
-      icon: '📈', label: 'Got a raise',
+      icon: '', label: 'Got a raise',
       steps: [
         { n:1, title:'Don\'t inflate your lifestyle first', body:'Wait 30 days before changing spending. Use the pause to decide intentionally where the extra income goes.' },
         { n:2, title:'Allocate the increase in priority order', body:'(1) Top up emergency fund if under 3 months. (2) Increase retirement contribution to capture any match gap. (3) Direct remainder to your primary goal: debt, deposit, or investment.' },
@@ -300,7 +311,7 @@
       ]
     },
     new_job: {
-      icon: '🚀', label: 'New job',
+      icon: '', label: 'New job',
       steps: [
         { n:1, title:'Check your benefits before your first payday', body:'Confirm 401k enrollment, match vesting schedule, and health coverage. Gaps in the first 30 days cost real money.' },
         { n:2, title:'Do not change your spending rate yet', body:'Income may shift during the transition. Keep your old budget for 60 days and treat any difference as a buffer.' },
@@ -308,7 +319,7 @@
       ]
     },
     job_loss: {
-      icon: '⚠️', label: 'Job loss',
+      icon: '', label: 'Job loss',
       steps: [
         { n:1, title:'Pause all non-essential savings and investments', body:'Protect cash flow first. Redirect freed-up money to covering fixed obligations: housing, food, minimum debt payments.' },
         { n:2, title:'Activate emergency fund — that\'s what it\'s for', body:'This is the scenario it was built for. Use it without guilt. Replenishing it is a future problem.' },
@@ -316,7 +327,7 @@
       ]
     },
     move: {
-      icon: '📦', label: 'Moving home',
+      icon: '', label: 'Moving home',
       steps: [
         { n:1, title:'Calculate your full cost-of-move, not just rent', body:'Add: deposits, movers, overlap rent, setup costs. Most people underestimate by 40%. Budget that number before committing.' },
         { n:2, title:'If buying: check your DTI before applying', body:'Your DTI after the purchase will determine your rate. Run the Tracent Home mode with the new target price before you get pre-approved.' },
@@ -324,7 +335,7 @@
       ]
     },
     new_baby: {
-      icon: '👶', label: 'New baby',
+      icon: '', label: 'New baby',
       steps: [
         { n:1, title:'Childcare cost must enter your budget now', body:'Average US childcare runs $1,200–$2,400/month. If it\'s not in your plan, your free cash flow figure is wrong. Add it before making any other financial moves.' },
         { n:2, title:'Build emergency fund to 6 months', body:'The standard 3-month target was set for two adults without dependents. With a child, the downside of a cash shortfall is significantly higher. Extend the target.' },
@@ -332,7 +343,7 @@
       ]
     },
     major_purchase: {
-      icon: '🛒', label: 'Major purchase',
+      icon: '', label: 'Major purchase',
       steps: [
         { n:1, title:'Run the "What if" scenario before committing', body:'A large purchase affects your emergency fund, DTI, and free cash flow simultaneously. Understand the post-purchase position before you sign anything.' },
         { n:2, title:'Check whether debt financing makes sense', body:'If financing: compare the APR against your highest-return alternative. Financing a depreciating asset at 8%+ while holding CC debt at 20% is the wrong sequence.' },
@@ -340,7 +351,7 @@
       ]
     },
     rate_drop: {
-      icon: '📉', label: 'Rate drop',
+      icon: '', label: 'Rate drop',
       steps: [
         { n:1, title:'Check your break-even before refinancing', body:'Closing costs typically run 1.5–3% of your loan. Divide that by your monthly savings. If break-even is under 24 months and you plan to stay, refinancing likely makes sense.' },
         { n:2, title:'Get three quotes on the same day', body:'Rates vary between lenders. Comparing quotes within a 24-hour window ensures you\'re comparing equivalent market conditions.' },
@@ -348,7 +359,7 @@
       ]
     },
     debt_milestone: {
-      icon: '🏁', label: 'Debt payoff milestone',
+      icon: '', label: 'Debt payoff milestone',
       steps: [
         { n:1, title:'Redirect the freed payment immediately — don\'t spend it', body:'The month you pay off a debt is the highest-risk month for lifestyle inflation. Set up an automatic transfer the same day.' },
         { n:2, title:'Apply the freed payment to the next debt in rank', body:'This is the debt avalanche/snowball cascade. Your monthly payment total stays the same. Your debt elimination accelerates.' },
@@ -484,7 +495,7 @@
       G.v21LastCheckin   = new Date().toISOString();
       if (hasYes && typeof _0x36940e3 === 'function') _0x36940e3();
     }
-    if (typeof v21ShowToast === 'function') v21ShowToast('Check-in saved ✓');
+    if (typeof v21ShowToast === 'function') v21ShowToast('Check-in saved');
     closeModal('v21-checkin-overlay');
   };
 
@@ -579,43 +590,41 @@
     }
   };
 
-  // Refresh premium teaser visibility after render
-  var _prevRPAfull = window.v21RenderPostAnalysis;
-  window.v21RenderPostAnalysis = function(){
-    if (typeof _prevRPAfull === 'function') _prevRPAfull();
-    var el = document.getElementById('v21-premium-teaser');
-    if (el && !window._tracentPlus){
-      el.style.display = premiumEligible() ? 'block' : 'none';
-    }
-    // ── Supabase persist (inputs only) ──
-    if (typeof TracentSupabase !== 'undefined' && TracentSupabase.isConfigured()) {
-      try { TracentSupabase.saveProfile(); } catch(e) {}
-    }
-    // ── Feature layer renders (after BSE._compute has run) ──
-    // Adaptive dashboard + debt experience read G + BSE and render into staged containers.
-    // Runs on a short delay to ensure BSE._renderHome has applied its DOM decisions first.
-    setTimeout(function() {
-      // Skip adaptive dashboard when Decision Flow Renderer has taken over (scoreFinal users)
-      var _dfrActive = (window.G && window.G.scoreFinal) ||
-                       (function(){ var el = document.getElementById('bse-focus-mode'); return el && el.innerHTML && el.innerHTML.length > 0; }());
-      if (typeof TracentRenderAdaptiveDashboard !== 'undefined') {
-        if (_dfrActive) {
-          try { TracentRenderAdaptiveDashboard.hide(); } catch(e) {}
-        } else {
-          try { TracentRenderAdaptiveDashboard.render(); } catch(e) { console.warn('[Tracent:Features] Dashboard render:', e); }
+  // Refresh premium teaser visibility after render.
+  // Wrapped lazily after DOMContentLoaded so BSE has already defined v21RenderPostAnalysis.
+  setTimeout(function() {
+    var _prevRPA = window.v21RenderPostAnalysis;
+    window.v21RenderPostAnalysis = function(){
+      if (typeof _prevRPA === 'function') _prevRPA();
+      var el = document.getElementById('v21-premium-teaser');
+      if (el && !window._tracentPlus){
+        el.style.display = premiumEligible() ? 'block' : 'none';
+      }
+      // ── Feature layer renders (after BSE._compute has run) ──
+      // Adaptive dashboard + debt experience read G + BSE and render into staged containers.
+      // Runs on a short delay to ensure BSE._renderHome has applied its DOM decisions first.
+      setTimeout(function() {
+        // Skip adaptive dashboard when Decision Flow Renderer has taken over (scoreFinal users)
+        var _dfrActive = (window.G && window.G.scoreFinal) ||
+                         (function(){ var el = document.getElementById('bse-focus-mode'); return el && el.innerHTML && el.innerHTML.length > 0; }());
+        if (typeof TracentRenderAdaptiveDashboard !== 'undefined') {
+          if (_dfrActive) {
+            try { TracentRenderAdaptiveDashboard.hide(); } catch(e) {}
+          } else {
+            try { TracentRenderAdaptiveDashboard.render(); } catch(e) { console.warn('[Tracent:Features] Dashboard render:', e); }
+          }
         }
-      }
-      if (typeof TracentRenderDebtExperience !== 'undefined') {
-        try { TracentRenderDebtExperience.render(); } catch(e) { console.warn('[Tracent:Features] Debt render:', e); }
-      }
-    }, 80);
-  };
+        if (typeof TracentRenderDebtExperience !== 'undefined') {
+          try { TracentRenderDebtExperience.render(); } catch(e) { console.warn('[Tracent:Features] Debt render:', e); }
+        }
+      }, 80);
+    };
+  }, 0);
 
   // ── Global recompute + render utilities ──
   // Called by settings saves or any module that needs a full refresh.
   window.recomputeAll = function() {
     try {
-      if (typeof G !== 'undefined') window.G = G;
       if (typeof window.computeAndShow === 'function') window.computeAndShow();
     } catch(e) { console.warn('[Tracent] recomputeAll error', e); }
   };
@@ -629,21 +638,7 @@
 
   // Update premium sub-copy to sell continuity, not basic understanding
   document.addEventListener('DOMContentLoaded', function(){
-    // ── Supabase boot: load inputs, merge into G ──
-    if (typeof TracentSupabase !== 'undefined' && TracentSupabase.isConfigured()) {
-      TracentSupabase.loadProfile().then(function(data) {
-        // Guard: skip if data is absent or too sparse to be a real profile
-        if (!data || Object.keys(data).length < 3) return;
-        var g = window.G || {};
-        Object.assign(g, data);
-        // Never allow derived values from stored data
-        delete g.fcf; delete g.dti; delete g.totalDebt; delete g.totalPayments; delete g.scoreFinal;
-        window.G = g;
-        console.log('[Tracent:App] Hydrated safely', Object.keys(data).length, 'fields');
-      }).catch(function(e) {
-        console.warn('[Tracent:App] Profile load error:', e);
-      });
-    }
+    // Hydration is owned exclusively by TracentHydration.boot() — do NOT load profile here.
 
     var premSub = document.querySelector('#v21-premium-teaser .v21-premium-sub');
     if (premSub) premSub.textContent = 'Edge extends your free plan with continuity: monthly digests, saved scenarios, deeper AI analysis, and salary coaching — built for people already using Tracent, not just starting.';
@@ -702,12 +697,12 @@
     })();
 
     // ── Observation: SESSION_RETURN ─────────────────────────
+    // Session count sourced from BSE._mem.sessions (tracent_v3) — no parallel counter written here.
     try {
-      var _seenCount = Number(localStorage.getItem('tracent_seen') || '0');
-      if (_seenCount >= 1) {
-        try { tracentTrack('session_return', { session_n: _seenCount + 1, ts: Date.now() }); } catch(e) {}
+      var _bseSessions = sessionCount();
+      if (_bseSessions >= 1) {
+        try { tracentTrack('session_return', { session_n: _bseSessions, ts: Date.now() }); } catch(e) {}
       }
-      localStorage.setItem('tracent_seen', String(_seenCount + 1));
     } catch(e) {}
 
     // ── Observation: INPUT_EDITED ────────────────────────────

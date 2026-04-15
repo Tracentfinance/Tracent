@@ -41,7 +41,10 @@
     return { v:3, sessions:0, debtLayerMax:1, density:null, archetype:null, modeVisits:{}, avoiderCount:0, nbmClicks:0 };
   })();
   function _saveMem(){ try{ localStorage.setItem(MEM_KEY, JSON.stringify(_mem)); }catch(e){} }
-  _mem.sessions = (_mem.sessions||0) + 1;
+  if (!_mem._counted) {
+    _mem.sessions = (_mem.sessions || 0) + 1;
+    _mem._counted = true;
+  }
   _saveMem();
 
   /* ----------------------------------------------------------
@@ -125,7 +128,7 @@
     var ps = window.pbfdeState || {};
     var fcf      = g.fcf || 0;
     var income   = g.income || 0;
-    var takeHome = g.takeHome || (function(){if(!income)return 0;var s=(window.STATE_TAX&&document.getElementById('state'))?((window.STATE_TAX)[document.getElementById('state').value]||0):0,f=income<=11600?income*0.10:income<=47150?1160+(income-11600)*0.12:income<=100525?5426+(income-47150)*0.22:income<=191950?17169+(income-100525)*0.24:39111+(income-191950)*0.32;f=Math.max(0,f-14600*0.12);var c=Math.min(income,168600)*0.062+income*0.0145;return Math.round(Math.max(income*0.5,income-f-c-income*s)/12)})();
+    var takeHome = g.takeHome;
     var ccDebt   = g.ccDebt   || 0;
     var totDebt  = (g.ccDebt||0)+(g.carDebt||0)+(g.studentDebt||0)+(g.otherDebt||0);
     var dti      = g.dti || 0;
@@ -133,7 +136,7 @@
     var _efProvided = _efRaw !== undefined && _efRaw !== null && _efRaw !== '';
     var efMo     = _efProvided ? parseInt(_efRaw, 10) : null;
     var score    = g.score || 0;
-    var intent   = g.primaryIntent || ps.activeModule || 'stable';
+    var intent   = g.primaryIntent || 'stable';
     var age      = parseInt(g.currentAge||g.age||0);
     var retAge   = parseInt(g.retireAge||g.retirementAge||65);
     var ageRange = g.ageRange || '';
@@ -192,8 +195,6 @@
       else if (BSE.stress>=4||score<55)                                   at='anxious_overwhelmed';
       else                                                                at='stable_confident';
     }
-    /* memory can upgrade density for returning power users */
-    if (_mem.density==='full'&&at!=='in_retirement'&&at!=='anxious_overwhelmed') at='optimizer';
     BSE.archetype = at;
 
     /* stage */
@@ -327,48 +328,32 @@
         {id:'nav-settings',label:'Settings',show:true}
       ]
     };
-    var items=cfgs[BSE.navStyle]||cfgs.standard;
-    /* Delegate DOM application to navigation.js */
-    if(typeof window.bseApplyNavConfig === 'function') window.bseApplyNavConfig(items);
 
-    /* ── Debt nav override: always show Debt tab when user has meaningful liabilities ── */
-    /* Retirement navStyle hides nav-debt by default, but debt payoff is relevant regardless
-       of retirement intent. Show the button whenever any consumer debt exists. */
+    /* Clone items so overrides do not mutate the cfgs templates */
+    var items = (cfgs[BSE.navStyle]||cfgs.standard).map(function(i){
+      return {id:i.id, label:i.label, show:i.show};
+    });
+
     var _g = window.G || {};
     var _totDebt = (_g.ccDebt||0)+(_g.carDebt||0)+(_g.studentDebt||0)+(_g.otherDebt||0);
-    if (_totDebt > 0) {
-      var _nd = document.getElementById('nav-debt');
-      if (_nd) { _nd.style.display = ''; }
-    }
-
-    /* ── House nav override: show + prioritise House tab for buyers and homeowners ── */
-    /* BSE configs default nav-house to hidden; show it whenever housing context is relevant.
-       Covers: explicit buying intent, owner/cashout housingType, or home primary intent.
-       When house is relevant AND is the user's primary intent, physically reinsert nav-house
-       into the second slot (after nav-home) so it reads as the primary product destination. */
     var _ht = _g.housingType || '';
     var _houseRelevant = (_ht === 'buying' || _ht === 'owner' || _ht === 'cashout')
       || (_g.primaryIntent === 'home');
-    if (_houseRelevant) {
-      var _nh = document.getElementById('nav-house');
-      if (_nh) {
-        _nh.style.display = '';
-        /* Priority slot: reinsert after nav-home when house is the primary intent.
-           Checks DOM position first — only moves if not already in position 2. */
-        var _housePrimary = (_g.primaryIntent === 'home')
-          || (_ht === 'buying')
-          || (_ht === 'owner' || _ht === 'cashout');
-        if (_housePrimary) {
-          var _nav = _nh.parentNode;
-          var _navHome = document.getElementById('nav-home');
-          if (_nav && _navHome && _navHome.nextElementSibling !== _nh) {
-            /* insertBefore(node, ref) places node before ref —
-               so inserting before the current second item puts house second */
-            _nav.insertBefore(_nh, _navHome.nextElementSibling);
-          }
-        }
-      }
+
+    /* Debt nav override: always show Debt tab when user has meaningful liabilities.
+       Applied to items array before config is delegated — no direct DOM writes. */
+    if (_totDebt > 0) {
+      items.forEach(function(i){ if (i.id === 'nav-debt') i.show = true; });
     }
+
+    /* House nav override: show House tab for relevant housing context.
+       Applied to items array before config is delegated — no direct DOM writes. */
+    if (_houseRelevant) {
+      items.forEach(function(i){ if (i.id === 'nav-house') i.show = true; });
+    }
+
+    /* Delegate DOM application to navigation.js */
+    if(typeof window.bseApplyNavConfig === 'function') window.bseApplyNavConfig(items);
 
     /* ── Retirement structural enforcement ── */
     _enforceRetirementLifeStage();
@@ -450,10 +435,6 @@
   window.bseToggleDetail=function(){
     _detailMode=!_detailMode;
     if(_detailMode){
-      _mem.density='full';
-      ['v21-mode-rail-home','home-metrics','v21-verdict-block','v21-compact-score','v21-retention-card'].forEach(function(id){
-        var el=document.getElementById(id); if(el) el.style.display='';
-      });
       var tabHome=document.getElementById('tab-home');
       if(tabHome) tabHome.classList.remove('bse-focus-active');
     } else {
@@ -476,7 +457,7 @@
   };
 
   window.bseOpenRetirementReview=function(){
-    try{ switchTab('progress'); setNavByName('progress'); setTimeout(function(){ showProgressSub('retirement'); },80); }catch(e){}
+    try{ switchTab('progress'); setNavByName('progress'); setTimeout(function(){ if (typeof showProgressSub === 'function') showProgressSub('retirement'); },80); }catch(e){}
     try{tracentTrack('bse_retirement_review',{archetype:BSE.archetype});}catch(e){}
   };
 
@@ -510,7 +491,7 @@
     /* Step 2: Fire existing downstream passes (score band, verdict, NBM, retention...) */
     if(typeof _downstreamRPA==='function') _downstreamRPA();
     /* Step 3: BSE enforces its rendering decisions over everything downstream built */
-    setTimeout(_renderHome, 50);
+    setTimeout(_renderHome, 120);
   };
 
   /* Intercept switchTab — rebuild relief and focus when entering those tabs */
@@ -519,7 +500,7 @@
     if(typeof _downstreamSwitch==='function') _downstreamSwitch(tabId);
     if(tabId==='debtrank'||tabId==='debt'){
       _mem.modeVisits=_mem.modeVisits||{}; _mem.modeVisits.debt=(_mem.modeVisits.debt||0)+1; _saveMem();
-      setTimeout(function(){ if(BSE.initialized){ _compute(); _buildDebtRelief(); _applyModuleVis(); }},80);
+      setTimeout(function(){ if(BSE.initialized){ _buildDebtRelief(); _applyModuleVis(); }},80);
     }
     if(tabId==='home'){ setTimeout(function(){ if(BSE.initialized) _buildFocusCard(); },80); }
   };
@@ -564,8 +545,6 @@
       '#tab-debtrank.bse-debt-strategy-hidden #bse-debt-strategy{display:none!important}',
       '#tab-debtrank.bse-debt-strategy-hidden #debt-rank-list{display:none!important}',
       '#tab-debtrank.bse-debt-strategy-hidden #debt-countdown-banner{display:none!important}',
-      /* Debt relief always visible even when strategy hidden */
-      '#tab-debtrank.bse-debt-strategy-hidden #bse-debt-relief{display:block!important}',
 
       /* Global: stressed users suppress mode rail and premium */
       '.bse-stress-high #v21-mode-rail,.bse-stress-high #v21-mode-rail-home{display:none!important}',
@@ -634,6 +613,10 @@
       '.bse-dr-int{font-size:11px;color:var(--red)}',
       '.bse-dl-strategy-btn{width:100%;padding:12px;background:var(--sky-dim);border:1.5px solid var(--sky-border);color:var(--teal);border-radius:12px;font-family:var(--font-body);font-size:13px;font-weight:700;cursor:pointer}',
       '.bse-dl-reveal{display:block;width:100%;padding:12px;background:var(--gray-1);border:1px solid var(--gray-2);border-radius:12px;font-family:var(--font-body);font-size:13px;color:var(--gray-4);cursor:pointer;margin-top:8px;-webkit-tap-highlight-color:transparent}',
+
+      /* Empty container guards — prevent blank layout space when content has not been rendered */
+      '#bse-debt-relief:empty{display:none!important}',
+      '.bse-focus-wrap:empty{display:none!important}',
     ].join('');
     document.head.appendChild(s);
   }

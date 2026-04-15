@@ -30,7 +30,7 @@ function closeModal(id) {
       tracentTrack('modal_completed', { modalId: id, dwellMs: dwell });
     } else {
       tracentTrack('modal_abandoned', { modalId: id, dwellMs: dwell });
-      pbfdeState.modalAbandons = (pbfdeState.modalAbandons || 0) + 1;
+      // pbfdeTrack (inside tracentTrack) owns the modalAbandons increment — no direct write here
     }
     delete window.TRACENT_TELEMETRY.modalState[id];
   } catch(e) {}
@@ -47,7 +47,13 @@ function openSignup()       { openSignInSheet(); }
 function closeSignup()      { closeSignInSheet(); }
 function hideSignOutSheet() { var el = document.getElementById('signout-sheet-overlay'); if (el) el.style.display = 'none'; }
 function showSignOutSheet() { var el = document.getElementById('signout-sheet-overlay'); if (el) el.style.display = 'flex'; }
-function doSignOut()        { try { localStorage.removeItem(typeof STORAGE_KEY !== 'undefined' ? STORAGE_KEY : 'tracent_v3'); } catch(e) {} location.reload(); }
+function doSignOut() {
+  if (window.tracentLogout) {
+    window.tracentLogout();
+  } else {
+    location.reload();
+  }
+}
 
 // ── Modals ────────────────────────────────────────────────
 function openScoreBreakdown()  { openModal('score-breakdown-overlay'); }
@@ -73,10 +79,12 @@ function openSettingsEdit(section) {
     var el = document.getElementById(id);
     if (el && val !== undefined && val !== null && val !== '') el.value = val;
   }
-  function _fmtInput(n) { return n ? Math.round(n).toLocaleString('en-US') : ''; }
+  function _fmtInput(n) { return (n !== null && n !== undefined) ? Math.round(n).toLocaleString('en-US') : ''; }
   _prefill('se-income',       _fmtInput(g.income));
   _prefill('se-takehome',     _fmtInput(g.takeHome));
-  _prefill('se-savings',      _fmtInput(g.savingsAmt || g.depositSaved));
+  var _seIntent = (typeof G !== 'undefined') ? G.primaryIntent : null;
+  var _seSavings = (_seIntent === 'home') ? g.depositSaved : g.savingsAmt;
+  _prefill('se-savings',      _fmtInput(_seSavings));
   _prefill('se-home-value',   _fmtInput(g.homeValue));
   _prefill('se-cc-debt',      _fmtInput(g.ccDebt));
   _prefill('se-car-debt',     _fmtInput(g.carDebt));
@@ -86,11 +94,11 @@ function openSettingsEdit(section) {
   _prefill('se-job-title', g.jobTitle || '');
   var _seStateEl = document.getElementById('se-state');
   if (_seStateEl && g.state) _seStateEl.value = g.state;
-  // Rates — only prefill if explicitly stored (not default)
-  if (g.ccRate      && g.ccRate      !== 21)  _prefill('se-cc-rate',      g.ccRate);
-  if (g.carRate     && g.carRate     !== 7.5) _prefill('se-car-rate',     g.carRate);
-  if (g.studentRate && g.studentRate !== 5.5) _prefill('se-student-rate', g.studentRate);
-  if (g.otherRate   && g.otherRate   !== 9.0) _prefill('se-other-rate',   g.otherRate);
+  // Rates — only prefill if user explicitly entered a value (not missing/inferred)
+  if (g.ccRate      != null && g.ccRate_meta      !== 'missing') _prefill('se-cc-rate',      g.ccRate);
+  if (g.carRate     != null && g.carRate_meta     !== 'missing') _prefill('se-car-rate',     g.carRate);
+  if (g.studentRate != null && g.studentRate_meta !== 'missing') _prefill('se-student-rate', g.studentRate);
+  if (g.otherRate   != null && g.otherRate_meta   !== 'missing') _prefill('se-other-rate',   g.otherRate);
   // Credit score
   var creditEl = document.getElementById('se-credit');
   if (creditEl && g.credit) creditEl.value = g.credit;
@@ -156,13 +164,21 @@ function saveSettingsEdit() {
   var _g = (typeof G !== 'undefined') ? G : (window.G || {});
   if (income      > 0)  { _g.income      = income;      window.G && (window.G.income      = income); }
   if (takeHome    > 0)  { _g.takeHome    = takeHome;    window.G && (window.G.takeHome    = takeHome); }
-  _g.savingsAmt  = savings;   window.G && (window.G.savingsAmt  = savings);
+  // Write savings to the correct field based on intent — home uses depositSaved, all others use savingsAmt
+  var _seIntent = (typeof G !== 'undefined') ? G.primaryIntent : null;
+  if (_seIntent === 'home') {
+    _g.depositSaved = savings; window.G && (window.G.depositSaved = savings);
+  } else {
+    _g.savingsAmt = savings; window.G && (window.G.savingsAmt = savings);
+  }
   if (homeValue   > 0)  { _g.homeValue   = homeValue;   window.G && (window.G.homeValue   = homeValue); }
   _g.ccDebt      = ccDebt;      window.G && (window.G.ccDebt      = ccDebt);
   _g.carDebt     = carDebt;     window.G && (window.G.carDebt     = carDebt);
-  _g.carPayment  = carPmt;      window.G && (window.G.carPayment  = carPmt);
-  _g.studentDebt = studentDebt; window.G && (window.G.studentDebt = studentDebt);
-  _g.otherDebt   = otherDebt;   window.G && (window.G.otherDebt   = otherDebt);
+  _g.carPayment     = carPmt;      window.G && (window.G.carPayment     = carPmt);
+  _g.studentDebt    = studentDebt; window.G && (window.G.studentDebt    = studentDebt);
+  _g.studentPayment = stuPmt;      window.G && (window.G.studentPayment = stuPmt);
+  _g.otherDebt      = otherDebt;   window.G && (window.G.otherDebt      = otherDebt);
+  _g.otherPayment   = othPmt;      window.G && (window.G.otherPayment   = othPmt);
   if (emergency)              { _g.emergency = emergency; window.G && (window.G.emergency = emergency); }
   // Write rates to G — only if user entered a value
   var anyRateProvided = false;
@@ -181,7 +197,7 @@ function saveSettingsEdit() {
   if (income   > 0) _setInput('income',          income);
   if (takeHome > 0) _setInput('takehome',         takeHome);
   _setInput('cc-debt',         ccDebt);
-  _setInput('cc-rate',         _g.ccRate || 21);
+  if (_g.ccRate) _setInput('cc-rate', _g.ccRate); // never inject a default — leave blank if missing
   _setInput('car-debt',        carDebt);
   _setInput('car-payment',     carPmt);
   _setInput('student-debt',    studentDebt);
@@ -193,8 +209,11 @@ function saveSettingsEdit() {
   // Assets — write to housing-path DOM inputs so recompute reads the saved values.
   // Bug fix: renter path reads #renter-savings, buying path reads #deposit-saved,
   // owner path reads #home-value. Without these writes they revert to 0 on recompute.
-  _setInput('renter-savings', savings);
-  _setInput('deposit-saved',  savings);
+  if ((typeof G !== 'undefined') && G.primaryIntent === 'home') {
+    _setInput('deposit-saved',  savings);
+  } else {
+    _setInput('renter-savings', savings);
+  }
   if (homeValue > 0) _setInput('home-value', homeValue);
   // Career — write job title and state to engine DOM inputs
   if (jobTitle) {
@@ -243,13 +262,14 @@ function toggleGrowStructure() {
       var el = document.getElementById(id);
       if (el && val !== undefined && val !== null && val !== '') el.value = val;
     }
-    _pf('ge-savings',      g.savingsAmt   ? Math.round(g.savingsAmt).toLocaleString('en-US')   : '');
-    _pf('ge-home-value',   g.homeValue    ? Math.round(g.homeValue).toLocaleString('en-US')    : '');
-    _pf('ge-mortgage',     g.balance      ? Math.round(g.balance).toLocaleString('en-US')      : '');
-    _pf('ge-cc-debt',      g.ccDebt       ? Math.round(g.ccDebt).toLocaleString('en-US')       : '');
-    _pf('ge-car-debt',     g.carDebt      ? Math.round(g.carDebt).toLocaleString('en-US')      : '');
-    _pf('ge-student-debt', g.studentDebt  ? Math.round(g.studentDebt).toLocaleString('en-US')  : '');
-    _pf('ge-other-debt',   g.otherDebt    ? Math.round(g.otherDebt).toLocaleString('en-US')    : '');
+    function _fmt(n) { return (n !== null && n !== undefined) ? Math.round(n).toLocaleString('en-US') : ''; }
+    _pf('ge-savings',      _fmt(g.savingsAmt));
+    _pf('ge-home-value',   _fmt(g.homeValue));
+    _pf('ge-mortgage',     _fmt(g.balance));
+    _pf('ge-cc-debt',      _fmt(g.ccDebt));
+    _pf('ge-car-debt',     _fmt(g.carDebt));
+    _pf('ge-student-debt', _fmt(g.studentDebt));
+    _pf('ge-other-debt',   _fmt(g.otherDebt));
     var rmEl = document.getElementById('ge-ret-match');
     if (rmEl && g.retMatch) rmEl.value = g.retMatch;
     body.style.display = 'block';
@@ -261,6 +281,7 @@ function toggleGrowStructure() {
 }
 
 function saveGrowStructure() {
+  if (typeof G !== 'undefined' && G.primaryIntent === 'home') return;
   function _num(id) {
     var el = document.getElementById(id);
     if (!el) return 0;
@@ -293,14 +314,16 @@ function saveGrowStructure() {
   var carPmt = carDebt     > 0 ? Math.round(carDebt / 60)                     : 0;
   var stuPmt = studentDebt > 0 ? Math.max(Math.round(studentDebt / 120), 100) : 0;
   var othPmt = otherDebt   > 0 ? Math.max(Math.round(otherDebt / 60), 50)     : 0;
-  _g.carPayment = carPmt; window.G && (window.G.carPayment = carPmt);
+  _g.carPayment     = carPmt; window.G && (window.G.carPayment     = carPmt);
+  _g.studentPayment = stuPmt; window.G && (window.G.studentPayment = stuPmt);
+  _g.otherPayment   = othPmt; window.G && (window.G.otherPayment   = othPmt);
 
   // Investments / capacity
   if (retMatch) { _g.retMatch = retMatch; window.G && (window.G.retMatch = retMatch); }
 
   // Sync hidden engine inputs (legacy-calculations.js reads these)
   _setInput('cc-debt',         ccDebt);
-  _setInput('cc-rate',         _g.ccRate || 21);
+  if (_g.ccRate) _setInput('cc-rate', _g.ccRate); // never inject a default — leave blank if missing
   _setInput('car-debt',        carDebt);
   _setInput('car-payment',     carPmt);
   _setInput('student-debt',    studentDebt);
@@ -346,7 +369,9 @@ function startFreshAnalysis()  {
     return;
   }
   window._v21_settingsMode = false;
-  if (typeof G !== 'undefined') { G = { _scoreHistory: G._scoreHistory || [] }; }
+  // Preserve score history then replace window.G — avoids local binding diverging from window.G
+  var _hist = (window.G && window.G._scoreHistory) || [];
+  window.G = { _scoreHistory: _hist };
   showScreen('screen-onboarding');
   startOnboarding();
 }
@@ -397,7 +422,7 @@ function submitFeedback() {
   try { var prev=JSON.parse(localStorage.getItem('tracent_feedback')||'[]'); prev.push(entry); localStorage.setItem('tracent_feedback',JSON.stringify(prev)); } catch(e) {}
   console.log('[Tracent feedback]', entry);
   closeFeedback();
-  if (typeof v21ShowToast === 'function') v21ShowToast('Feedback sent – thank you ❤');
+  if (typeof v21ShowToast === 'function') v21ShowToast('Feedback sent — thank you');
 }
 
 // ── Legal modal ───────────────────────────────────────────
@@ -463,7 +488,7 @@ function saveAlertEmail() {
   if (!input || !input.value.trim()) return;
   if (typeof G !== 'undefined') G.userEmail = input.value.trim();
   if (typeof _0x36940e3 === 'function') _0x36940e3();
-  if (typeof v21ShowToast === 'function') v21ShowToast('Email saved ✓');
+  if (typeof v21ShowToast === 'function') v21ShowToast('Email saved');
 }
 function resetAlertEmail() {
   var input = document.getElementById('settings-email-input');
@@ -479,7 +504,7 @@ function unlockPremium() {
   closePaywall();
   var stripe = window._stripeMonthlyLink || 'YOUR_MONTHLY_LINK';
   if (stripe !== 'YOUR_MONTHLY_LINK') window.open(stripe, '_blank');
-  if (typeof v21ShowToast === 'function') v21ShowToast('Edge unlocked ✓');
+  if (typeof v21ShowToast === 'function') v21ShowToast('Edge unlocked');
 }
 function openTierComparison() { openSignInSheet(); }
 
@@ -537,27 +562,68 @@ function tracentLogout() {
   ];
   _keys.forEach(function(k) { try { localStorage.removeItem(k); } catch(e) {} });
 
-  // 2. Zero out window.G safely — wipe all properties, leave object intact
+  // 2. Reset window.G — single reassignment, no in-place wipe (avoids reference divergence)
+  try { window.G = {}; } catch(e) { window.G = {}; }
+
+  // 3. Mark BSE as uninitialized — clear derived fields so _compute() starts from scratch
   try {
-    var _wg = window.G;
-    if (_wg && typeof _wg === 'object') {
-      Object.keys(_wg).forEach(function(k) { try { delete _wg[k]; } catch(e) {} });
+    if (window.BSE) {
+      window.BSE.initialized = false;
+      window.BSE.archetype   = null;
+      window.BSE.navStyle    = null;
+      window.BSE.showMap     = null;
+      window.BSE.stressFlags = null;
     }
-    window.G = {};
-  } catch(e) { window.G = {}; }
+  } catch(e) {}
 
-  // 3. Reset file-scoped G if accessible (legacy-calculations.js)
-  try { if (typeof G !== 'undefined' && G !== window.G) { Object.keys(G).forEach(function(k) { try { delete G[k]; } catch(e) {} }); } } catch(e) {}
+  // 4. Re-initialize pbfdeState to clean defaults (not just empty object — PBFDE reads typed fields)
+  try {
+    if (window.pbfdeState && typeof window.pbfdeState === 'object') {
+      var _pbfdeDefaults = {
+        version: 1, sessionStart: Date.now(), actionsTaken: 0,
+        hesitationCount: 0, commitmentRate: 0, nbmViewCount: 0,
+        nbmClickCount: 0, nbmIgnoreCount: 0, streak: 0,
+        lastCommitTs: 0, lastNbmViewTs: 0, screenDwell: {},
+        firstActionDelay: {}, ignoredCtas: 0, modalAbandons: 0,
+        repeatedTapCount: 0, flowAbandons: 0, ahaFired: false,
+        ahaHistory: [], stage: 'observe',
+        psych: { confidence: 'unknown', anxiety: 'unknown', avoidance: false, decisionSpeed: null },
+        activeModule: null, behavioralScore: 0, lastNBM: null, lastReason: null, lastChips: null
+      };
+      Object.keys(window.pbfdeState).forEach(function(k) { try { delete window.pbfdeState[k]; } catch(e) {} });
+      Object.keys(_pbfdeDefaults).forEach(function(k) { window.pbfdeState[k] = _pbfdeDefaults[k]; });
+    }
+  } catch(e) {}
 
-  // 4. Mark BSE as uninitialized so it recomputes cleanly next session
-  try { if (window.BSE) { window.BSE.initialized = false; window.BSE.archetype = 'stable_confident'; } } catch(e) {}
+  // 5. Reset TRACENT_TELEMETRY in-memory session state — next session starts fresh
+  try {
+    if (window.TRACENT_TELEMETRY) {
+      window.TRACENT_TELEMETRY.events            = [];
+      window.TRACENT_TELEMETRY.modalState        = {};
+      window.TRACENT_TELEMETRY.currentScreen     = null;
+      window.TRACENT_TELEMETRY.screenEnteredAt   = {};
+      window.TRACENT_TELEMETRY.firstActionAt     = {};
+      window.TRACENT_TELEMETRY.screenActionCount = {};
+      window.TRACENT_TELEMETRY.lastActionTs      = 0;
+      window.TRACENT_TELEMETRY.tapHistory        = {};
+      window.TRACENT_TELEMETRY.flowState = {
+        onboardingStarted:  false,
+        intentComplete:     false,
+        resilienceComplete: false,
+        previewSeen:        false,
+        refinementComplete: false,
+        dashboardEntered:   false
+      };
+    }
+  } catch(e) {}
 
-  // 5. Reset pbfdeState
-  try { if (window.pbfdeState && typeof window.pbfdeState === 'object') {
-    Object.keys(window.pbfdeState).forEach(function(k) { try { delete window.pbfdeState[k]; } catch(e) {} });
-  }} catch(e) {}
+  // 6. Reset bridge-scoped vars so the next onboarding starts at index 0 with no stale mode
+  try { if (typeof _v21MoveIndex  !== 'undefined') _v21MoveIndex  = 0;           } catch(e) {}
+  try { if (typeof _v21PhaseStack !== 'undefined') _v21PhaseStack = ['intent'];   } catch(e) {}
+  try { window._v21ModeManuallySelected = false; } catch(e) {}
+  try { window._v21NbmLastCycleKey      = null;  } catch(e) {}
 
-  // 6. Hide dashboard nav + return to splash
+  // 7. Hide dashboard nav + return to splash
   try {
     var nav = document.getElementById('bottom-nav');
     if (nav) nav.style.display = 'none';

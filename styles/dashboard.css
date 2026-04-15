@@ -165,24 +165,7 @@
   font-size: 36px !important;
 }
 
-/* ── Lower-module de-emphasis on Focus/Home ───────────────
-   Visible but secondary — opacity restores on interaction.
-   BSE display:none states are unaffected (opacity on hidden = noop).
-────────────────────────────────────────────────────────── */
-#tab-home .v21-nbm-card,
-#tab-home #home-metrics,
-#tab-home #v21-verdict-block {
-  opacity: 0.85;
-  transition: opacity 0.3s ease;
-}
-#tab-home .v21-nbm-card:hover,
-#tab-home .v21-nbm-card:focus-within,
-#tab-home #home-metrics:hover,
-#tab-home #home-metrics:focus-within,
-#tab-home #v21-verdict-block:hover,
-#tab-home #v21-verdict-block:focus-within {
-  opacity: 1;
-}
+
 .dash-header.compact .dash-topbar { padding-bottom: 12px; }
 
 .score-greeting {

@@ -36,7 +36,13 @@
    */
   function applyHydrationToEngine(profileData) {
     if (!profileData) return;
-    var g = window.G || {};
+
+    // Start from a clean object — do NOT merge stale window.G financial fields.
+    // Stale computed or partial data from a prior session must not contaminate
+    // the restored profile. Only non-financial metadata is preserved.
+    var _prior = window.G || {};
+    var g = {};
+    if (_prior._scoreHistory) g._scoreHistory = _prior._scoreHistory;
 
     // ── Top-level profile fields ─────────────────────────
     if (profileData.firstname)           g.firstname      = profileData.firstname;
@@ -59,6 +65,8 @@
       // Aliases — engine reads both names
       if (fi.homePrice)     g.targetHomePrice = fi.homePrice;
       if (fi.depositSaved)  g.downPayment     = fi.depositSaved;
+      // Mark G as carrying real hydrated data — financial_inputs block was present
+      g.__initialized = true;
     }
 
     // ── Preferences ──────────────────────────────────────
@@ -97,6 +105,8 @@
     });
 
     // Canonical: goals live in G.goals
+    // Read existing G so __initialized and financial fields are preserved.
+    // Goals alone do not constitute real financial data — do not set __initialized here.
     var g = window.G || {};
     g.goals = mapped;
     window.G = g;
@@ -138,8 +148,8 @@
       'other-debt':       g.otherDebt,
       'emergency':        g.emergency,
       'retirement-match': g.retMatch,
-      'home-price':       g.homePrice || g.targetHomePrice,
-      'deposit-saved':    g.depositSaved || g.downPayment,
+      'home-price':       (g.homePrice    != null) ? g.homePrice    : g.targetHomePrice,
+      'deposit-saved':    (g.depositSaved != null) ? g.depositSaved : g.downPayment,
       'current-rent':     g.currentRent,
       'purchase-price':   g.purchasePrice,
       'firstname':        g.firstname
@@ -237,10 +247,12 @@
           applyHydrationToEngine(profile);
           result.source = 'supabase';
 
-          // ── FIX 1: Always recalculate after profile hydration ──
-          // Partial / mid-flow users still need engine recomputation,
-          // not just users with onboarding_complete === true.
-          triggerRecalculation();
+          // ── FIX 1: Recalculate after profile hydration only when real data exists ──
+          // Partial / mid-flow profiles with no financial inputs must not trigger
+          // engine computation — empty G produces phantom scores and archetypes.
+          if (typeof window.tracentHasRealData === 'function' && window.tracentHasRealData()) {
+            triggerRecalculation();
+          }
 
           // 4. Load + apply goals from Supabase
           if (window.TracentGoalsStore) {
@@ -248,10 +260,12 @@
               var goalsData = await TracentGoalsStore.loadAll();
               if (goalsData && goalsData.length > 0) {
                 applyGoalsToEngine(goalsData);
-                // ── FIX 2: Recalculate after goals hydration ──
-                // Goals are canonical state; stale UI is worse than
-                // a second recalculation during boot.
-                triggerRecalculation();
+                // ── FIX 2: Recalculate after goals hydration only when real data exists ──
+                // Goals are canonical state but do not independently constitute
+                // valid financial state — guard the same way as profile hydration.
+                if (typeof window.tracentHasRealData === 'function' && window.tracentHasRealData()) {
+                  triggerRecalculation();
+                }
               }
             } catch(e) {
               console.warn('[Tracent:Hydration] Goals load failed:', e);

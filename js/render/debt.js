@@ -48,7 +48,7 @@ window.toggleSplitCosts = function () {
   var lbl = document.getElementById('split-btn-label');
   var note = document.getElementById('split-note');
   if (btn) btn.classList.toggle('active', window._splitCosts);
-  if (lbl) lbl.textContent = window._splitCosts ? 'Splitting costs ✓' : 'Split with partner';
+  if (lbl) lbl.textContent = window._splitCosts ? 'Splitting costs' : 'Split with partner';
   if (note) note.style.display = window._splitCosts ? 'block' : 'none';
   if (typeof calcOwnerMortgage === 'function') calcOwnerMortgage();
   var expHint = document.getElementById('expenses-split-hint');

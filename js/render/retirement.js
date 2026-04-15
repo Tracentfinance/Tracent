@@ -123,10 +123,14 @@
     // Accumulation projections — only computed when projection gate passes
     var fvCurrent = 0, fvIdeal = 0;
     if (hasProjectionData && !isInRetirement) {
+      // Compound the existing retirement savings forward — this is the starting balance,
+      // not a contribution stream. Missing it was causing $2M+ portfolios to show ~$0-base projections.
+      var _portfolio   = g.retirementSavings || 0;
+      var _portfolioFV = _portfolio > 0 ? Math.round(_portfolio * Math.pow(1.07, _yrs)) : 0;
       var curMoContrib   = income > 0 ? Math.round(income * 0.06 / 12) : 0;
       var idealMoContrib = income > 0 ? Math.round(income * 0.15 / 12) : 0;
-      fvCurrent = _fv(curMoContrib);
-      fvIdeal   = _fv(idealMoContrib);
+      fvCurrent = _portfolioFV + _fv(curMoContrib);
+      fvIdeal   = _portfolioFV + _fv(idealMoContrib);
     }
 
     var trajLabel, trajColor;
@@ -279,14 +283,14 @@
     if (mode === 'today') {
       indicator.innerHTML =
         '<div class="v21-ctx-bar v21-ctx-today">' +
-          '<span class="v21-ctx-label">📊 Mission control</span>' +
+          '<span class="v21-ctx-label">Mission control</span>' +
           '<span class="v21-ctx-sub">What matters now · This week\u2019s priority</span>' +
         '</div>';
       indicator.style.display = 'block';
     } else if (mode === 'home') {
       indicator.innerHTML =
         '<div class="v21-ctx-bar v21-ctx-home">' +
-          '<span class="v21-ctx-label">🏠 Home readiness</span>' +
+          '<span class="v21-ctx-label">Home readiness</span>' +
           '<span class="v21-ctx-sub">Deposit · Affordability · DTI · Timing</span>' +
         '</div>';
       indicator.style.display = 'block';
@@ -581,11 +585,11 @@
 
     /* Quick nav tiles to each section */
     var TILES = [
-      { id:'income',   label:'Income',         note:'Sources & coverage', icon:'💵' },
-      { id:'runway',   label:'Runway',          note:'How long it lasts',  icon:'📅' },
-      { id:'spending', label:'Spending',        note:'Withdrawal pace',    icon:'⚖️' },
-      { id:'health',   label:'Health & Taxes',  note:'Key watch items',    icon:'🏥' },
-      { id:'plan',     label:'Your next move',  note:'One clear action',   icon:'📋' }
+      { id:'income',   label:'Income',         note:'Sources & coverage', icon:'' },
+      { id:'runway',   label:'Runway',          note:'How long it lasts',  icon:'' },
+      { id:'spending', label:'Spending',        note:'Withdrawal pace',    icon:'' },
+      { id:'health',   label:'Health & Taxes',  note:'Key watch items',    icon:'' },
+      { id:'plan',     label:'Your next move',  note:'One clear action',   icon:'' }
     ];
     html += '<div class="ret-tile-grid">';
     TILES.forEach(function(t){
@@ -685,9 +689,9 @@
     /* Three scenario cards */
     html += '<div class="ret-divider-label">What changes the runway</div>';
     html += '<div class="ret-scenario-grid">';
-    html += retScenario('If spending rises 10%',         d.runwaySpendUp, d.runwayBase, '💸');
-    html += retScenario('If markets fall 20%',           d.runwayMktWeak, d.runwayBase, '📉');
-    html += retScenario('If healthcare adds $600/mo',    d.runwayHC,      d.runwayBase, '🏥');
+    html += retScenario('If spending rises 10%',         d.runwaySpendUp, d.runwayBase, '');
+    html += retScenario('If markets fall 20%',           d.runwayMktWeak, d.runwayBase, '');
+    html += retScenario('If healthcare adds $600/mo',    d.runwayHC,      d.runwayBase, '');
     html += '</div>';
 
     /* Debt note */
@@ -795,7 +799,7 @@
     /* Healthcare reserve status */
     html += '<div class="ret-ht-card" style="border-color:' + hcColor + '20;">';
     html +=   '<div class="ret-ht-card-row">';
-    html +=     '<div class="ret-ht-card-icon">🛡️</div>';
+    html +=     '<div class="ret-ht-card-icon"></div>';
     html +=     '<div>';
     html +=       '<div class="ret-ht-card-title">Healthcare reserve</div>';
     html +=       '<div class="ret-ht-card-status" style="color:' + hcColor + ';">' + { covered:'Covered', partial:'Partially covered', low:'Build this first' }[hcReserve] + '</div>';
@@ -806,7 +810,7 @@
 
     /* Medicare note */
     html += '<div class="ret-ht-row">';
-    html +=   '<div class="ret-ht-icon">🏥</div>';
+    html +=   '<div class="ret-ht-icon"></div>';
     html +=   '<div>';
     html +=     '<div class="ret-ht-label">Medicare ' + (preMedicare ? 'bridge' : 'status') + '</div>';
     html +=     '<div class="ret-ht-text">' + (preMedicare
@@ -817,7 +821,7 @@
 
     /* Tax order */
     html += '<div class="ret-ht-row">';
-    html +=   '<div class="ret-ht-icon">🧾</div>';
+    html +=   '<div class="ret-ht-icon"></div>';
     html +=   '<div>';
     html +=     '<div class="ret-ht-label">Tax-efficient withdrawal order</div>';
     html +=     '<div class="ret-ht-text">Draw from taxable accounts first, then traditional IRA/401(k), then Roth last. This order typically reduces lifetime tax drag.</div>';
@@ -826,7 +830,7 @@
 
     /* RMD */
     html += '<div class="ret-ht-row">';
-    html +=   '<div class="ret-ht-icon">📅</div>';
+    html +=   '<div class="ret-ht-icon"></div>';
     html +=   '<div>';
     html +=     '<div class="ret-ht-label">Required Minimum Distributions</div>';
     html +=     '<div class="ret-ht-text">RMDs from traditional accounts begin at age 73. Roth IRAs have no RMDs during your lifetime -- useful for legacy planning.</div>';
@@ -853,28 +857,28 @@
     /* Retirement-specific move generation */
     if (d.withdrawPace === 'risky' || d.withdrawPace === 'stretched'){
       var reduceBy = Math.round(d.netMonthlyDraw - d.safeWithdrawMo);
-      moves.push({ icon:'⬇️', title:'Reduce monthly withdrawals by ' + fmt(Math.max(50, reduceBy)), text:'Your current withdrawal pace is above the sustainable threshold. Reducing withdrawals protects the portfolio from running short in later years.' });
+      moves.push({ icon:'', title:'Reduce monthly withdrawals by ' + fmt(Math.max(50, reduceBy)), text:'Your current withdrawal pace is above the sustainable threshold. Reducing withdrawals protects the portfolio from running short in later years.' });
     }
     if (d.efMonths < 12){
-      moves.push({ icon:'🛡️', title:'Protect your healthcare reserve', text:'Build or maintain a 12-month cash cushion before drawing more from the portfolio. This prevents forced selling during market downturns.' });
+      moves.push({ icon:'', title:'Protect your healthcare reserve', text:'Build or maintain a 12-month cash cushion before drawing more from the portfolio. This prevents forced selling during market downturns.' });
     }
     if (d.totalDebt > 0){
-      moves.push({ icon:'🔗', title:'Clear remaining debt before drawing down', text:'Entering or continuing retirement with ' + fmt(d.totalDebt) + ' in debt reduces your monthly income flexibility and increases risk.' });
+      moves.push({ icon:'', title:'Clear remaining debt before drawing down', text:'Entering or continuing retirement with ' + fmt(d.totalDebt) + ' in debt reduces your monthly income flexibility and increases risk.' });
     }
     if (d.yearsTo >= 1){
-      moves.push({ icon:'📋', title:'Compare Social Security claiming timing', text:'Claiming SS at 62 reduces lifetime benefits. Each year of delay before age 70 increases your monthly benefit by roughly 6–8%.' });
+      moves.push({ icon:'', title:'Compare Social Security claiming timing', text:'Claiming SS at 62 reduces lifetime benefits. Each year of delay before age 70 increases your monthly benefit by roughly 6–8%.' });
     }
     if (!d.matchFull && d.grossIncome > 0){
-      moves.push({ icon:'💼', title:'Capture your full employer match', text:'Every dollar of uncaptured match is a guaranteed return. Confirm your contribution rate covers the full match percentage.' });
+      moves.push({ icon:'', title:'Capture your full employer match', text:'Every dollar of uncaptured match is a guaranteed return. Confirm your contribution rate covers the full match percentage.' });
     }
     if (d.yearsTo > 3){
-      moves.push({ icon:'📈', title:'Raise contributions by 1% this year', text:'Small consistent increases compound significantly over ' + d.yearsTo + ' years. Even 1% more per year can add years to your runway.' });
+      moves.push({ icon:'', title:'Raise contributions by 1% this year', text:'Small consistent increases compound significantly over ' + d.yearsTo + ' years. Even 1% more per year can add years to your runway.' });
     }
     if (d.withdrawPace === 'safe' && d.efMonths >= 12 && d.totalDebt === 0){
-      moves.push({ icon:'✅', title:'Keep steady -- your plan is in good shape', text:'Regular annual reviews and consistent withdrawal discipline are the most important things now. Small adjustments made early matter more than large corrections made late.' });
+      moves.push({ icon:'', title:'Your plan is in good shape', text:'Regular annual reviews and consistent withdrawal discipline are the most important things now. Small adjustments made early matter more than large corrections made late.' });
     }
     if (moves.length === 0){
-      moves.push({ icon:'📋', title:'Review your plan once a year', text:'Set a fixed annual date to review income, withdrawals, and portfolio balance. Consistency protects against reactive decisions.' });
+      moves.push({ icon:'', title:'Review your plan once a year', text:'Set a fixed annual date to review income, withdrawals, and portfolio balance. Consistency protects against reactive decisions.' });
     }
 
     var top   = moves[0];
@@ -915,11 +919,11 @@
      SECTION REGISTRY
   -------------------------------------------------------- */
   var SECTIONS = [
-    { id:'income',   label:'Income',         icon:'💵', render: renderIncome   },
-    { id:'runway',   label:'Runway',          icon:'📅', render: renderRunway   },
-    { id:'spending', label:'Spending',        icon:'⚖️', render: renderSpending },
-    { id:'health',   label:'Health & Taxes',  icon:'🏥', render: renderHealth   },
-    { id:'plan',     label:'Plan',            icon:'📋', render: renderPlan     }
+    { id:'income',   label:'Income',         icon:'', render: renderIncome   },
+    { id:'runway',   label:'Runway',          icon:'', render: renderRunway   },
+    { id:'spending', label:'Spending',        icon:'', render: renderSpending },
+    { id:'health',   label:'Health & Taxes',  icon:'', render: renderHealth   },
+    { id:'plan',     label:'Plan',            icon:'', render: renderPlan     }
   ];
   var _activeSection = null;  /* null = landing view */
 
@@ -1473,9 +1477,14 @@ window.buildRetireStrategyHTML = function() {
   var monthlyIdeal   = Math.round(idealContrib / 12);
 
   function fv(monthlyPmt, years) { var r = 0.07/12, n = years*12; return Math.round(monthlyPmt * ((Math.pow(1+r,n)-1)/r)); }
-  var fvCurrent  = canProject ? fv(monthlyContrib, 30) : 0;
-  var fvIdeal    = canProject ? fv(monthlyIdeal, 30) : 0;
-  var debtDragFV = annualInt > 0 && canProject ? fv(Math.round(annualInt/12), 30) : 0;
+  // Years to retirement — use actual user inputs so portfolio growth is anchored to real timeline
+  var _retYrs      = Math.max(10, parseInt(g.retirementAge || g.retireAge || 65) - parseInt(g.currentAge || g.age || 35));
+  // Compound the existing retirement savings forward — this is the starting balance, not a contribution stream
+  var _portfolio   = g.retirementSavings || 0;
+  var _portfolioFV = _portfolio > 0 ? Math.round(_portfolio * Math.pow(1.07, _retYrs)) : 0;
+  var fvCurrent  = canProject ? (_portfolioFV + fv(monthlyContrib, _retYrs)) : 0;
+  var fvIdeal    = canProject ? (_portfolioFV + fv(monthlyIdeal,   _retYrs)) : 0;
+  var debtDragFV = annualInt > 0 && canProject ? fv(Math.round(annualInt/12), _retYrs) : 0;
 
   var futureImpact = (function() {
     if (!matchCapture && matchStatus !== 'none') {
