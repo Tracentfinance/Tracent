@@ -992,37 +992,69 @@
 
     /* Headline logic */
     var fmt2 = function(n){ return '$'+(Number(n)||0).toLocaleString('en-US',{maximumFractionDigits:0}); };
-    /* Verdict is a compact context line — NOT a headline. NBM is the headline. */
+    /* Band label — mirrors compact score row vocabulary */
+    var _bandLabel = (typeof v21BandForScore === 'function')
+      ? v21BandForScore(score).label.replace(/[⬤●🔴🟡🔵🟢⬡]\s*/,'')
+      : '';
+    /* Primary constraint suffix — fires when FCF data is unavailable */
+    var _dti = Number(gv.dti || 0);
+    var _efMo = efMo; // already computed above
+    var _constraintSuffix = _dti > 43 ? ' DTI is your main constraint.'
+      : _dti > 36 ? ' DTI is approaching the lender limit.'
+      : (_efMo < 1 && String(gv.emergency || '') !== '') ? ' Emergency fund is the gap.'
+      : '';
+    /* Verdict is a compact supporting line — NBM is the primary decision. */
     var ctxLine;
     if(fcf < 0 && _hasTrustedCashflowInputs(gv)){
       ctxLine = 'Running a ' + fmt2(Math.abs(fcf)) + '/mo deficit \u2014 fix this first, everything else waits.';
     } else if(ccDebt > 5000 || (totDebt > 0 && (totDebt/(gv.takeHome||1)) > 0.5)){
       var _debtLbl = ccDebt > 5000 ? fmt2(ccDebt) + ' CC debt' : fmt2(totDebt) + ' total debt';
-      ctxLine = _debtLbl + ' is your biggest drag \u2014 reducing it unlocks everything below.';
+      ctxLine = _debtLbl + ' is your biggest drag \u2014 the plan below addresses this directly.';
     } else if(intent === 'home' && depPct < 70){
       var _tp = gv.homePrice||gv.targetHomePrice||gv.purchasePrice||0;
       var _ds = gv.depositSaved||gv.downPayment||0;
       var _gap = _tp > 0 ? Math.max(0, Math.round(_tp * 0.13 - _ds)) : 0;
       ctxLine = _gap > 0 ? fmt2(_gap) + ' away from deposit + closing \u2014 here\u2019s the fastest path.' : 'Deposit is your current constraint.';
     } else if(score < 55){
-      var _fcfSuffix55 = (_hasTrustedCashflowInputs(gv) && fcf > 0) ? ' ' + fmt2(fcf) + '/mo to work with.' : '';
-      ctxLine = 'Score ' + score + ' \u2014 foundation needs work.' + _fcfSuffix55;
+      var _fcfSuffix55 = (_hasTrustedCashflowInputs(gv) && fcf > 0) ? ' ' + fmt2(fcf) + '/mo to work with.' : _constraintSuffix;
+      ctxLine = 'Score ' + score + ' \u2014 ' + (_bandLabel || 'Fragile') + '. Foundation needs work.' + _fcfSuffix55;
     } else if(score < 70){
-      var _fcfSuffix70 = (_hasTrustedCashflowInputs(gv) && fcf > 0) ? ' ' + fmt2(fcf) + '/mo surplus.' : '';
-      ctxLine = 'Score ' + score + ' \u2014 stable, with clear room to improve.' + _fcfSuffix70;
+      var _fcfSuffix70 = (_hasTrustedCashflowInputs(gv) && fcf > 0) ? ' ' + fmt2(fcf) + '/mo surplus.' : _constraintSuffix;
+      ctxLine = 'Score ' + score + ' \u2014 ' + (_bandLabel || 'Stabilizing') + '.' + _fcfSuffix70;
     } else if(score < 85){
-      var _fcfSuffix85 = (_hasTrustedCashflowInputs(gv) && fcf > 0) ? ' ' + fmt2(fcf) + '/mo to deploy.' : ' Now it\u2019s about optimisation.';
-      ctxLine = 'Score ' + score + ' \u2014 strong.' + _fcfSuffix85;
+      var _fcfSuffix85 = (_hasTrustedCashflowInputs(gv) && fcf > 0) ? ' ' + fmt2(fcf) + '/mo to deploy.' : _constraintSuffix;
+      ctxLine = 'Score ' + score + ' \u2014 ' + (_bandLabel || 'Advancing') + '.' + _fcfSuffix85;
     } else {
-      var _fcfSuffix99 = (_hasTrustedCashflowInputs(gv) && fcf > 0) ? ' ' + fmt2(fcf) + '/mo surplus.' : ' Protect and compound.';
-      ctxLine = 'Score ' + score + ' \u2014 excellent position.' + _fcfSuffix99;
+      var _fcfSuffix99 = (_hasTrustedCashflowInputs(gv) && fcf > 0) ? ' ' + fmt2(fcf) + '/mo surplus.' : _constraintSuffix;
+      ctxLine = 'Score ' + score + ' \u2014 ' + (_bandLabel || 'Compounding') + '.' + _fcfSuffix99;
     }
+
+    /* Trust / continuity signal */
+    var _trustMsg = (function(){
+      try {
+        var count = Number(localStorage.getItem('tracent_dashboard_seen_count') || '0');
+        if (count <= 1) {
+          // First session — store baseline hash, show provenance label
+          var _h0 = [gv.income||0, gv.score||0, gv.savingsAmt||0, gv.ccDebt||0].join('|');
+          localStorage.setItem('tracent_input_hash', _h0);
+          return 'Based on your current inputs';
+        }
+        // Returning session — compare hash
+        var _hash = [gv.income||0, gv.score||0, gv.savingsAmt||0, gv.ccDebt||0].join('|');
+        var _stored = localStorage.getItem('tracent_input_hash');
+        localStorage.setItem('tracent_input_hash', _hash);
+        return (_stored && _stored !== _hash)
+          ? 'Updated based on your latest inputs'
+          : 'No changes since your last visit';
+      } catch(e) { return ''; }
+    })();
 
     var el = document.getElementById('v21-verdict-block');
     if(!el) return;
     el.innerHTML =
       '<div class="v21-verdict-inner tdp-fade-item">' +
         '<div class="v21-verdict-ctx" id="v21-verdict-headline">' + ctxLine + '</div>' +
+        (_trustMsg ? '<div class="v21-verdict-trust">' + _trustMsg + '</div>' : '') +
       '</div>';
     el.style.display = 'block';
   }
@@ -1122,9 +1154,9 @@
 
   /* ── 5. STAGGER ENTRANCE ───────────────────────────────── */
   var STAGGER_ORDER = [
+    'v21-nbm-card',
     'v21-verdict-block',
     'v21-authority-card',
-    'v21-nbm-card',
     'v21-mode-rail-home',
     'v21-driver-strip',
     'v21-mode-strategy',
@@ -1168,6 +1200,190 @@
     if(eyebrow) eyebrow.style.display = 'none';
   }
 
+  /* ── 8. GUIDED INPUT (empty state replacement) ─────────── */
+  function _giEfMonths(savings, takeHome) {
+    var mo   = takeHome > 0 ? savings / takeHome : 0;
+    var opts = [0, 1, 2, 3, 6, 9, 12];
+    var best = 0, bestDist = Infinity;
+    opts.forEach(function(o){ var d=Math.abs(o-mo); if(d<bestDist){bestDist=d;best=o;} });
+    return best;
+  }
+
+  function _giSetHiddenInput(id, val) {
+    var el = document.getElementById(id);
+    if (!el) return;
+    if (el.tagName === 'SELECT') {
+      var t = String(val), found = false;
+      for (var i=0;i<el.options.length;i++){
+        if(el.options[i].value===t){el.value=t;found=true;break;}
+      }
+      if (!found) el.value = el.options[0] ? el.options[0].value : '0';
+    } else {
+      el.value = val;
+    }
+    try { el.dispatchEvent(new Event('change',{bubbles:true})); } catch(e) {}
+  }
+
+  function _giParseNum(str) {
+    if (!str) return 0;
+    return parseFloat(String(str).replace(/[$,\s]/g,'')) || 0;
+  }
+
+  function _giFormatInput(inp) {
+    var n = _giParseNum(inp.value);
+    if (n > 0) inp.value = '$' + Math.round(n).toLocaleString('en-US');
+  }
+
+  function _giTriggerRecompute() {
+    if (typeof window.runLegacyCalculations === 'function') {
+      try { window.runLegacyCalculations(); } catch(e) {}
+    }
+    if (typeof window.runBSE === 'function') {
+      try { window.runBSE(); } catch(e) {}
+    }
+    if (typeof window.v21RenderPostAnalysis === 'function') {
+      try { window.v21RenderPostAnalysis(); } catch(e) {}
+    }
+  }
+
+  function _renderGuidedInput() {
+    var el = document.getElementById('v21-guided-input');
+    var dh = document.getElementById('dash-header');
+    var vb = document.getElementById('v21-verdict-block');
+    if (!el) return;
+
+    var g = (typeof G !== 'undefined' && G) || (typeof window.G !== 'undefined' && window.G) || {};
+    var needsGuide = !g.income || Number(g.income) <= 0;
+
+    if (!needsGuide) {
+      el.style.display = 'none';
+      if (dh) dh.classList.remove('guided-mode');
+      return;
+    }
+
+    // Guided state — suppress score hero, hide verdict
+    if (dh) dh.classList.add('guided-mode');
+    if (vb) vb.style.display = 'none';
+
+    var intent = g.primaryIntent || '';
+    var isRetire = !!(g.isRetirementMode);
+    var isHome = (intent==='home'||intent==='buy_home');
+    var isDebt = (intent==='debt'||intent==='debtrank');
+    var field3Label = isRetire ? 'Retirement savings'
+                    : isHome  ? 'Target home price'
+                    : isDebt  ? 'Credit card debt'
+                    : 'Monthly expenses';
+    var field3Id = isRetire ? 'gi-retirement'
+                 : isHome  ? 'gi-home-price'
+                 : isDebt  ? 'gi-cc-debt'
+                 : 'gi-expenses';
+    var field3Placeholder = isHome ? '$400,000' : '$0';
+
+    // Only rebuild DOM if intent changed or card is hidden
+    if (el.getAttribute('data-gi-intent') === intent && el.style.display !== 'none') return;
+    el.setAttribute('data-gi-intent', intent);
+
+    el.innerHTML =
+      '<div class="v21-gi-card">' +
+        '<p class="v21-gi-title">To see your plan, add these:</p>' +
+        '<p class="v21-gi-sub">Takes 30 seconds.</p>' +
+        '<div class="v21-gi-field">' +
+          '<label class="v21-gi-label" for="gi-income">Monthly income</label>' +
+          '<input class="v21-gi-input" id="gi-income" type="tel" inputmode="numeric" placeholder="$5,000" autocomplete="off">' +
+        '</div>' +
+        '<div class="v21-gi-field">' +
+          '<label class="v21-gi-label" for="gi-savings">Savings</label>' +
+          '<input class="v21-gi-input" id="gi-savings" type="tel" inputmode="numeric" placeholder="$0" autocomplete="off">' +
+        '</div>' +
+        '<div class="v21-gi-field">' +
+          '<label class="v21-gi-label" for="'+field3Id+'">'+field3Label+'</label>' +
+          '<input class="v21-gi-input" id="'+field3Id+'" type="tel" inputmode="numeric" placeholder="'+field3Placeholder+'" autocomplete="off">' +
+        '</div>' +
+        '<button class="v21-gi-cta" id="gi-submit-btn">Calculate my plan \u2192</button>' +
+      '</div>';
+
+    el.style.display = 'block';
+
+    function _wireField(inputId, onValue) {
+      var inp = document.getElementById(inputId);
+      if (!inp) return;
+      inp.addEventListener('blur',  function(){ _giFormatInput(inp); });
+      inp.addEventListener('focus', function(){
+        var n = _giParseNum(inp.value);
+        if (n > 0) inp.value = String(Math.round(n));
+      });
+      inp.addEventListener('input', function(){ onValue(_giParseNum(inp.value)); });
+    }
+
+    _wireField('gi-income', function(val){
+      g.income   = val;
+      g.takeHome = Math.round(val * 0.72);
+      _giSetHiddenInput('income',   Math.round(val));
+      _giSetHiddenInput('takehome', Math.round(val * 0.72));
+    });
+    _wireField('gi-savings', function(val){
+      g.savingsAmt = val;
+      var th = Number(g.takeHome || Math.round((g.income||0)*0.72));
+      var efMoVal = _giEfMonths(val, th);
+      g.emergency = efMoVal;
+      _giSetHiddenInput('emergency', efMoVal);
+    });
+    if (isDebt) {
+      _wireField('gi-cc-debt', function(val){
+        g.ccDebt = val;
+        _giSetHiddenInput('cc-debt', Math.round(val));
+      });
+    } else if (isHome) {
+      _wireField('gi-home-price', function(val){
+        g.homePrice = val;
+        _giSetHiddenInput('home-price', Math.round(val));
+      });
+    } else if (isRetire) {
+      _wireField('gi-retirement', function(val){
+        g.retirementSavings = val;
+      });
+    } else {
+      _wireField('gi-expenses', function(val){
+        g.monthlyExpenses = val;
+      });
+    }
+
+    var submitBtn = document.getElementById('gi-submit-btn');
+    if (submitBtn) {
+      submitBtn.addEventListener('click', function(){
+        var incEl   = document.getElementById('gi-income');
+        var savEl   = document.getElementById('gi-savings');
+        var f3El    = document.getElementById(field3Id);
+        var income  = _giParseNum(incEl  ? incEl.value  : '');
+        var savings = _giParseNum(savEl  ? savEl.value  : '');
+        var f3Val   = _giParseNum(f3El   ? f3El.value   : '');
+
+        if (income > 0) {
+          g.income   = income;
+          g.takeHome = Math.round(income * 0.72);
+          _giSetHiddenInput('income',   Math.round(income));
+          _giSetHiddenInput('takehome', Math.round(income * 0.72));
+        }
+        if (savings >= 0) {
+          g.savingsAmt = savings;
+          var efMoVal  = _giEfMonths(savings, Number(g.takeHome||0));
+          g.emergency  = efMoVal;
+          _giSetHiddenInput('emergency', efMoVal);
+        }
+        if (isDebt && f3Val > 0) {
+          g.ccDebt = f3Val;
+          _giSetHiddenInput('cc-debt', Math.round(f3Val));
+        } else if (isHome && f3Val > 0) {
+          g.homePrice = f3Val;
+          _giSetHiddenInput('home-price', Math.round(f3Val));
+        } else if (isRetire && f3Val > 0) {
+          g.retirementSavings = f3Val;
+        }
+        _giTriggerRecompute();
+      });
+    }
+  }
+
   /* ── WIRE INTO v21RenderPostAnalysis ───────────────────── */
   var _prevRPA = window.v21RenderPostAnalysis;
   window.v21RenderPostAnalysis = function(){
@@ -1197,6 +1413,7 @@
     if(typeof _prevRPA === 'function') _prevRPA();
 
     // Build/update dashboard components
+    try { _renderGuidedInput();   } catch(e) {}
     try { buildVerdict();         } catch(e) {}
     try { enhanceAuthorityCard(); } catch(e) {}
     try { relocateModeRail();     } catch(e) {}
@@ -1228,6 +1445,13 @@
     '  color: rgba(255,255,255,0.42);',
     '  line-height: 1.5;',
     '  letter-spacing: 0.1px;',
+    '}',
+    '.v21-verdict-trust {',
+    '  font-size: 10px;',
+    '  font-weight: 400;',
+    '  color: rgba(255,255,255,0.22);',
+    '  margin-top: 4px;',
+    '  letter-spacing: 0.15px;',
     '}',
     /* ── Compact score ── */
     '#v21-compact-score { margin: 0 var(--s2) var(--s2); }',
@@ -1592,7 +1816,7 @@
         title:'Close the monthly deficit — spending exceeds income by '+fmt(-s.fcf),
         why:'You are currently spending more than you earn. Every other financial goal is impossible until this gap closes.',
         action:'List every fixed obligation. Find the single highest non-essential cost and reduce or eliminate it this week. Even '+fmt(Math.round(-s.fcf*0.5))+'/mo improvement changes the trajectory.',
-        impact:'Stops the bleed; unlocks all downstream actions',timing:'This week',
+        impact:'Stops the bleed; clears the path for all downstream actions',timing:'This week',
         confidenceNote:'Calculated from your inputs — verify with actual bank statements.',
         scoreImpact:10,cashImpact:'+'+fmt(-s.fcf)+'/mo',timeToStart:'This week',
         category:'safety',
@@ -1659,7 +1883,7 @@
         title:'Reduce monthly debt payments by '+fmt(pmtReduction)+' to bring DTI under 43%',
         why:'Your DTI of '+s.dti+'% exceeds the standard lender threshold. Until this falls, mortgage applications face higher rates, stricter terms, or rejections.',
         action:'Identify the debt with the highest minimum payment relative to remaining balance. Accelerate payoff of that one debt specifically — not spread across all of them.',
-        impact:'Unlocks lender qualification; improves credit profile',timing:'1–3 months',
+        impact:'Opens lender qualification; improves credit profile',timing:'1–3 months',
         confidenceNote:'DTI estimated from inputs — verify with actual statements for lender applications.',
         scoreImpact:6,cashImpact:'Lender-ready DTI',timeToStart:'This month',
         category:'debt',
@@ -1700,7 +1924,7 @@
     /* HOME: pre-qualify DTI */
     if(s.homePrice>0&&s.dti>36&&s.dti<=43){
       c.push({id:'home_dti_prep',
-        title:'Reduce DTI from '+s.dti+'% to under 36% before applying — unlocks better rate tier',
+        title:'Reduce DTI from '+s.dti+'% to under 36% before applying — qualify for a better rate tier',
         why:'You qualify at 43% DTI, but the best mortgage rates are reserved for borrowers under 36%. One extra debt payoff before application changes the rate you get.',
         action:'Identify your smallest remaining debt by balance. Pay it off in full before submitting a mortgage application. The freed minimum payment improves your DTI immediately.',
         impact:'Better rate tier; stronger application',timing:'Before application',
@@ -1731,12 +1955,12 @@
     /* HOME: missing target price */
     if(s.homePrice===0&&(s.intent==='home'||s.intent==='buy_home')){
       c.push({id:'home_research',
-        title:'Enter a target home price to unlock your readiness numbers',
+        title:'Enter a target home price to calculate your readiness numbers',
         why:'Without a target price, Tracent cannot calculate your deposit gap, DTI after buying, or monthly payment. All home readiness metrics depend on this single number.',
         action:'Go to Settings and enter a realistic target price for your area. Use current listing prices, not aspirational ones. Update it as the market moves.',
-        impact:'Unlocks deposit gap, DTI projection, and readiness score',timing:'Today',
+        impact:'Enables deposit gap, DTI projection, and readiness score',timing:'Today',
         confidenceNote:'Any estimate is better than none — refine it as you research.',
-        scoreImpact:3,cashImpact:'Unlocks analysis',timeToStart:'Today',
+        scoreImpact:3,cashImpact:'Enables analysis',timeToStart:'Today',
         category:'home',
         scores:{urgency:6,impact:6,feasibility:10,confidence:5,modeAlignment:s.active==='home'?10:4}
       });
@@ -1932,7 +2156,7 @@
       why:'No high-priority actions identified for your current position — small consistent improvements compound over time.',
       action:'Check in weekly and update your numbers when anything changes.',
       impact:'Steady progress',timing:'Weekly',
-      confidenceNote:'Run a full analysis to unlock specific recommendations.',
+      confidenceNote:'Run a full analysis to get specific recommendations.',
       scoreImpact:1,cashImpact:'Steady',timeToStart:'Weekly',
       category:'safety',scores:{urgency:1,impact:1,feasibility:10,confidence:8,modeAlignment:5},
       _alternatives:[],_rankingReason:'No specific high-priority actions identified for current position.'
@@ -1942,7 +2166,7 @@
   function _insufficientData(){
     return {
       id:'insufficient_data',
-      title:'Add a few more details to unlock recommendations',
+      title:'Add a few more details to get your plan',
       why:'Your next best move will appear once your income, housing cost, and debt balances are on file.',
       action:'Tap Settings to complete your profile — it takes under 2 minutes.',
       impact:'—',timing:'Now',
@@ -1972,6 +2196,103 @@
     return 'This action ranked first because: '+parts.join('; ')+'.';
   }
 
+  /* First-move: one executable sentence derived from FCF and move id */
+  function _computeFirstMove(move, gv) {
+    var fcf       = Number(gv.fcf    || 0);
+    var ccDebt    = Number(gv.ccDebt || 0);
+    var savings   = Number(gv.savingsAmt || 0);
+    var hasFcf    = (typeof _hasTrustedCashflowInputs === 'function') && _hasTrustedCashflowInputs(gv) && fcf > 0;
+
+    // High-FCF mode: FCF > $2,000/mo — scale proportionally, no $400 ceiling
+    var highFcf   = hasFcf && fcf > 2000;
+
+    var deploy;
+    if (!hasFcf) {
+      deploy = 150; // fallback when no trusted cashflow data
+    } else if (highFcf) {
+      deploy = Math.max(500, Math.round(fcf * 0.15 / 100) * 100); // 15% of FCF, nearest $100, min $500
+    } else {
+      deploy = Math.max(75, Math.min(Math.round(fcf * 0.40 / 25) * 25, 400)); // standard: 40%, $75–$400
+    }
+
+    var fmt = function(n){ return '$' + Math.round(n).toLocaleString('en-US'); };
+
+    switch(move.id || '') {
+      case 'deficit':
+        return 'List every fixed bill this week and reduce or cancel one.';
+
+      case 'ef_zero':
+        return 'Open a separate savings account and move ' + fmt(Math.min(deploy, highFcf ? 1000 : 250)) + ' in this month.';
+
+      case 'ef_low':
+        return 'Add ' + fmt(deploy) + ' to your emergency fund this month.';
+
+      case 'cc_attack':
+        // High FCF + balance clearable within 4 months → add payoff horizon
+        if (highFcf && ccDebt > 0 && ccDebt <= deploy * 4) {
+          return 'Put ' + fmt(deploy) + ' toward your highest-rate card this month — at this rate you clear the balance in ' + Math.ceil(ccDebt / deploy) + ' months.';
+        }
+        return 'Put ' + fmt(deploy) + ' toward your highest-rate card this month.';
+
+      case 'dti_reduce':
+        return 'Apply ' + fmt(deploy) + ' to your smallest balance to free up a minimum payment.';
+
+      case 'car_paydown':
+        return 'Add ' + fmt(Math.min(deploy, highFcf ? 500 : 200)) + ' to your car payment this month.';
+
+      case 'home_deposit':
+        // High FCF + already strong deposit position → pivot to strategic advice
+        if (highFcf && savings > 50000) {
+          return 'Your deposit position is solid — focus on clearing high-rate debt before application to remove DTI friction.';
+        }
+        return 'Move ' + fmt(deploy) + ' into a dedicated deposit savings account this month.';
+
+      case 'home_dti_prep':
+        // High FCF + balance is clearable → specific clearance framing
+        if (highFcf && ccDebt > 0 && ccDebt <= deploy * 6) {
+          return 'Apply ' + fmt(deploy) + ' to your highest-rate debt — clearing it in full before application eliminates all lender DTI friction.';
+        }
+        return 'Apply ' + fmt(deploy) + ' to your highest-rate debt before submitting your mortgage application.';
+
+      case 'home_research':
+        return 'Add your target home price in settings so your readiness numbers are calculated.';
+
+      case 'home_overstretch':
+        return 'Model a lower target price in settings and compare the monthly payment.';
+
+      case 'match_capture':
+        return 'Log into your 401k portal today and raise your contribution to the match threshold.';
+
+      case 'invest_surplus':
+        var _inv;
+        if (!hasFcf) {
+          _inv = 0;
+        } else if (highFcf) {
+          _inv = Math.max(500, Math.round(fcf * 0.20 / 100) * 100); // 20% of FCF, nearest $100
+        } else {
+          _inv = Math.max(75, Math.min(Math.round(fcf * 0.35 / 25) * 25, 400));
+        }
+        return _inv > 0
+          ? 'Set up a ' + fmt(_inv) + '/mo recurring transfer to a low-cost index fund.'
+          : 'Set up a recurring transfer to a low-cost index fund this month.';
+
+      case 'retire_contrib':
+        return 'Increase your retirement contribution by ' + fmt(Math.min(deploy, highFcf ? 1000 : 200)) + ' this month.';
+
+      case 'career_gap':
+        return 'Find one comparable role paying above your current rate and save the listing this week.';
+
+      case 'recurring_leak':
+        return 'Review your bank statement and cancel one subscription you haven\u2019t used this month.';
+
+      case 'optimize_fcf':
+        return 'Identify your largest discretionary spend and cut it by ' + fmt(Math.min(deploy, highFcf ? 500 : 150)) + ' this month.';
+
+      default:
+        return hasFcf ? 'Redirect ' + fmt(deploy) + ' from discretionary spending toward this goal this month.' : '';
+    }
+  }
+
   /* ═══════════════════════════════════════════════════════
      5. UPDATED RENDER FUNCTION
   ═══════════════════════════════════════════════════════ */
@@ -1988,12 +2309,21 @@
     var _dm = typeof window.getDecisionMode === 'function' ? window.getDecisionMode(G, G.primaryIntent) : { mode: 'tell' };
     if (_dm.mode === 'hold') {
       var f=function(id){ return document.getElementById(id); };
+      var _holdIntent = (G && G.primaryIntent) || '';
+      var _holdWhy = (G && G.isRetirementMode)
+        ? 'Add your retirement savings to calculate your runway.'
+        : (_holdIntent === 'home' || _holdIntent === 'buy_home')
+          ? 'Add your target home price to calculate your readiness.'
+          : (_holdIntent === 'debt' || _holdIntent === 'debtrank')
+            ? 'Add your credit card balance to build your payoff plan.'
+            : 'Add your monthly expenses to assess your cash flow.';
       if(f('v21-nbm-title'))      f('v21-nbm-title').textContent      = 'Too early to make a call';
-      if(f('v21-nbm-why'))        f('v21-nbm-why').textContent        = 'Add your income and key details so Tracent can give you a specific, grounded recommendation.';
+      if(f('v21-nbm-why'))        f('v21-nbm-why').textContent        = _holdWhy;
       if(f('v21-nbm-desc'))       f('v21-nbm-desc').textContent       = '';
       if(f('v21-nbm-impact'))     f('v21-nbm-impact').textContent     = '—';
       if(f('v21-nbm-cash'))       f('v21-nbm-cash').textContent       = '—';
       if(f('v21-nbm-time'))       f('v21-nbm-time').textContent       = '—';
+      if(f('v21-nbm-first-move')) f('v21-nbm-first-move').textContent = '';
       var _wb=f('v21-nbm-why-btn'); if(_wb) _wb.style.display='none';
       var _eb=f('v21-nbm-easier-btn'); if(_eb) _eb.style.display='none';
       card.style.display='block';
@@ -2010,7 +2340,7 @@
       if(f('v21-nbm-why'))        f('v21-nbm-why').textContent        = _isAssumed
         ? 'Before I call this, confirm: ' + _field + '.'
         : 'I need one more thing to give you a real recommendation: ' + _field + '.';
-      if(f('v21-nbm-desc'))       f('v21-nbm-desc').textContent       = _isHomeAsk ? 'Update your home details to unlock your readiness picture.' : 'Update your details to unlock your next best move.';
+      if(f('v21-nbm-desc'))       f('v21-nbm-desc').textContent       = _isHomeAsk ? 'Update your home details to calculate your readiness.' : 'Update your details to get your next best move.';
       if(f('v21-nbm-impact'))     f('v21-nbm-impact').textContent     = '—';
       if(f('v21-nbm-cash'))       f('v21-nbm-cash').textContent       = '—';
       if(f('v21-nbm-time'))       f('v21-nbm-time').textContent       = '—';
@@ -2034,6 +2364,7 @@
       if(f('v21-nbm-impact'))     f('v21-nbm-impact').textContent     = '—';
       if(f('v21-nbm-cash'))       f('v21-nbm-cash').textContent       = '—';
       if(f('v21-nbm-time'))       f('v21-nbm-time').textContent       = '—';
+      if(f('v21-nbm-first-move')) f('v21-nbm-first-move').textContent = '';
       var whyBtnId=f('v21-nbm-why-btn');
       if(whyBtnId) whyBtnId.style.display='none';
       var easierBtnId=f('v21-nbm-easier-btn');
@@ -2050,6 +2381,7 @@
     if(f('v21-nbm-impact'))     f('v21-nbm-impact').textContent     = move.scoreImpact>0?'+'+move.scoreImpact:String(move.scoreImpact||'—');
     if(f('v21-nbm-cash'))       f('v21-nbm-cash').textContent       = move.cashImpact||'—';
     if(f('v21-nbm-time'))       f('v21-nbm-time').textContent       = move.timeToStart||move.timing||'—';
+    if(f('v21-nbm-first-move')) f('v21-nbm-first-move').textContent = _computeFirstMove(move, G);
     var whyBtn=f('v21-nbm-why-btn');
     if(whyBtn) whyBtn.style.display=(move._rankingReason||(move._alternatives&&move._alternatives.length))?'inline-flex':'none';
     _populateDisclosure(move);
@@ -2664,9 +2996,9 @@ window.bseRenderFocusCard = function() {
       '<div class="bse-focus-wrap">' +
         '<div class="bse-focus-eyebrow">Getting started</div>' +
         '<div class="bse-action-card">' +
-          '<div class="bse-action-label">Complete your profile to unlock your plan</div>' +
+          '<div class="bse-action-label">Complete your profile to get your plan</div>' +
           '<div class="bse-action-why">Add your income, housing cost, and debt balances so Tracent can give you a meaningful, specific recommendation.</div>' +
-          '<button class="bse-action-cta" onclick="openSettingsEdit()">Update your details \u2192</button>' +
+          '<button class="bse-action-cta" onclick="openSettingsEdit(\'income\')">Update your details \u2192</button>' +
         '</div>' +
       '</div>';
     el.style.display = 'block';
@@ -2697,12 +3029,12 @@ window.bseRenderFocusCard = function() {
     action = 'Add ' + fmtMoney(extra) + '/mo to your credit card payment';
     why = 'Your card balance costs real money every month in interest. This is the highest-return action available right now.';
     proof = 'This saves hundreds in total interest.';
-    ctaLabel = 'See the debt plan \u2192'; ctaFn = "switchTab('debtrank')";
+    ctaLabel = 'See the debt plan \u2192'; ctaFn = "switchTab('debtrank');setNav(document.getElementById('nav-debt'))";
   } else if (dti > 43) {
     action = 'Direct extra payments to your highest monthly debt payment';
     why = 'Your debt-to-income ratio is above the lender threshold. Reducing it keeps your financial options open.';
     proof = 'One payment reduced shifts your DTI faster than any other single move.';
-    ctaLabel = 'See debt plan \u2192'; ctaFn = "switchTab('debtrank')";
+    ctaLabel = 'See debt plan \u2192'; ctaFn = "switchTab('debtrank');setNav(document.getElementById('nav-debt'))";
   } else {
     try {
       var moves = window.v21GetRankedMoves ? window.v21GetRankedMoves() : [];
@@ -2718,7 +3050,7 @@ window.bseRenderFocusCard = function() {
         action = 'Check that contributions are maximised this month';
         why = 'In the final stretch before retirement, every month of full contributions counts significantly.';
         proof = 'Time-value impact is highest in the years closest to your target.';
-        ctaLabel = 'See retirement plan \u2192'; ctaFn = "showProgressSub('retirement')";
+        ctaLabel = 'See retirement plan \u2192'; ctaFn = "switchTab('progress');showProgressSub('retirement');setNav(document.getElementById('nav-progress'))";
       } else {
         action = 'Review your free cash flow this week';
         why = 'Your position is stable. Consistency is what compounds it.';
@@ -3036,7 +3368,7 @@ window.bseApplyModuleVis = function() {
     },
     general: {
       context:    'A real recommendation needs these numbers.',
-      limitation: 'A few more details will unlock a specific, targeted recommendation.',
+      limitation: 'A few more details will enable a specific, targeted recommendation.',
       actionLabel:'Add your key numbers to get a real recommendation.',
       inputs: [
         { key:'income',    label:'Monthly gross income',         type:'money',   placeholder:'6000',   hint:'e.g. $6,000'    },
@@ -3189,7 +3521,7 @@ window.bseApplyModuleVis = function() {
     high:        'Based on complete financial data. Recommendations are specific and reliable.',
     medium:      'Based on most key inputs. Projected numbers are directional estimates.',
     low:         'Decision-type details are incomplete. The direction is correct; numbers sharpen once you add them.',
-    directional: 'Add your key financial details to unlock a specific recommendation.'
+    directional: 'Add your key financial details to get a specific recommendation.'
   };
   // low and directional share the same label ("More data needed") — same color for consistency
   var CONF_COLOR = { high:'#4CAF7D', medium:'#D4954A', low:'#9e9e9e', directional:'#9e9e9e' };
@@ -3478,7 +3810,7 @@ window.bseApplyModuleVis = function() {
       return 'This remains the strongest move available in your position.';
     }
     if (context.currentTier === 'stabilize') return 'This reduces the pressure first.';
-    if (context.currentTier === 'unlock')    return 'This unlocks the next reliable step.';
+    if (context.currentTier === 'unlock')    return 'This enables the next reliable step.';
     if (context.currentTier === 'optimize')  return 'This improves an already-stable position.';
     if (context.currentTier === 'advance')   return 'You\u2019re in a position to move this forward.';
     return '';
@@ -3652,7 +3984,7 @@ window.bseApplyModuleVis = function() {
     var ctaText;
     if (conf === 'medium') {
       if (cat === 'debt')                 ctaText = 'See the payoff plan \u2192';
-      else if (cat === 'home')            ctaText = 'Check your readiness \u2192';
+      else if (cat === 'home')            ctaText = 'Update my numbers \u2192';
       else if (decisionType === 'retire') ctaText = 'Refine this plan \u2192';
       else                                ctaText = 'Take this step \u2192';
     } else {
@@ -3660,7 +3992,7 @@ window.bseApplyModuleVis = function() {
       if (cat === 'safety' && move.id === 'deficit')       ctaText = 'Fix this first \u2192';
       else if (cat === 'safety')                            ctaText = 'Build this buffer \u2192';
       else if (cat === 'debt')                              ctaText = 'See the payoff plan \u2192';
-      else if (cat === 'home')                              ctaText = 'Check your readiness \u2192';
+      else if (cat === 'home')                              ctaText = 'Update my numbers \u2192';
       else if (cat === 'retire')                            ctaText = 'See retirement view \u2192';
       else if (cat === 'grow' && move.id === 'career_gap')      ctaText = 'See income benchmark \u2192';
       else if (cat === 'grow' && move.id === 'recurring_leak')  ctaText = 'Review recurring charges \u2192';
@@ -3858,7 +4190,7 @@ window.bseApplyModuleVis = function() {
   function _buildRefineCard(g, decisionType) {
     var COPY = {
       retire:  { title:'Refine your retirement picture',
-                 why:  'Add key details so we can give you specific guidance for your retirement stage.',
+                 why:  'Add your retirement savings to calculate your runway.',
                  cta:  'Refine this plan \u2192' },
       home:    { title:'Add your target home details',
                  why:  'We need your target price and savings to show you a specific readiness plan.',
@@ -3867,15 +4199,19 @@ window.bseApplyModuleVis = function() {
                  why:  'Your balance and rate are needed before we can recommend a specific paydown strategy.',
                  cta:  'Add debt details \u2192' },
       general: { title:'Add key financial details',
-                 why:  'We need a clearer picture to guide your next move.',
+                 why:  'Add your monthly expenses to assess your cash flow.',
                  cta:  'Add your details \u2192' }
     };
     var copy = (g.isRetirementMode ? COPY.retire : COPY[decisionType]) || COPY.general;
+    var _rfSection = g.isRetirementMode ? 'assets'
+                   : decisionType === 'home' ? 'home'
+                   : decisionType === 'debt' ? 'debt'
+                   : 'income';
     return '<div class="nbm-card nbm-card-fallback">'+
       '<div class="nbm-eyebrow">Your next move</div>'+
       '<div class="nbm-title">'+copy.title+'</div>'+
       '<div class="nbm-why">'+copy.why+'</div>'+
-      '<button class="nbm-cta" onclick="openSettingsEdit()">'+copy.cta+'</button>'+
+      '<button class="nbm-cta" onclick="openSettingsEdit(\''+_rfSection+'\')">'+copy.cta+'</button>'+
     '</div>';
   }
 
@@ -3973,18 +4309,22 @@ window.bseApplyModuleVis = function() {
     if (!move || move.id === 'insufficient_data') {
       var isRetire = !!(g.isRetirementMode);
       var isHome   = g.primaryIntent === 'home' || g.primaryIntent === 'buy_home';
-      var fbTitle  = isRetire ? 'Add a few details for your retirement picture'
-                  : isHome   ? 'Add income, savings, and a target price for real numbers'
-                  : 'Add key details to unlock your next move';
+      var isDebt   = g.primaryIntent === 'debt' || g.primaryIntent === 'debtrank';
+      var fbTitle  = isRetire ? 'Add your retirement savings to calculate your runway'
+                  : isHome   ? 'Add your target home price to calculate your readiness'
+                  : isDebt   ? 'Add your credit card balance to build your payoff plan'
+                  : 'Add your monthly expenses to assess your cash flow';
       var fbWhy = isRetire ? 'Income, savings rate, and target age are needed to give you specific guidance.'
                 : isHome   ? 'Target price + deposit + income = your real readiness number.'
-                : 'Income and debt are the minimum needed for a grounded recommendation.';
+                : isDebt   ? 'Your balance and rate determine the fastest path to debt-free.'
+                : 'Income and expenses are the minimum needed for a grounded recommendation.';
       var fbCta = isRetire ? 'Add your details \u2192' : 'Complete your profile \u2192';
+      var fbSection = isRetire ? 'assets' : isHome ? 'home' : isDebt ? 'debt' : 'income';
       return '<div class="nbm-card nbm-card-fallback">'+
         '<div class="nbm-eyebrow">Your next move</div>'+
         '<div class="nbm-title">'+fbTitle+'</div>'+
         '<div class="nbm-why">'+fbWhy+'</div>'+
-        '<button class="nbm-cta" onclick="openSettingsEdit()">'+fbCta+'</button>'+
+        '<button class="nbm-cta" onclick="openSettingsEdit(\''+fbSection+'\')">'+fbCta+'</button>'+
       '</div>';
     }
 
@@ -4018,9 +4358,9 @@ window.bseApplyModuleVis = function() {
       return _buildRefineCard(g, assessment ? assessment.decisionType : 'general');
     }
 
-    var ctaFn   = move.category === 'debt'   ? "switchTab('debtrank')" :
+    var ctaFn   = move.category === 'debt'   ? "switchTab('debtrank');setNav(document.getElementById('nav-debt'))" :
                   move.category === 'retire' ? "bseOpenRetirementReview()" :
-                  move.category === 'home'   ? "openSettingsEdit()" :
+                  move.category === 'home'   ? "openSettingsEdit('home')" :
                                                'bseOpenPlan()';
     var outcome = _buildOutcome(move, conf);
 
@@ -4368,9 +4708,9 @@ window.bseApplyModuleVis = function() {
         '<div class="bse-focus-wrap">' +
           '<div class="bse-focus-eyebrow">Getting started</div>' +
           '<div class="bse-action-card">' +
-            '<div class="bse-action-label">Complete your profile to unlock your plan</div>' +
+            '<div class="bse-action-label">Complete your profile to get your plan</div>' +
             '<div class="bse-action-why">Add your income, housing cost, and debt balances so Tracent can give you a meaningful, specific recommendation.</div>' +
-            '<button class="bse-action-cta" onclick="openSettingsEdit()">Update your details \u2192</button>' +
+            '<button class="bse-action-cta" onclick="openSettingsEdit(\'income\')">Update your details \u2192</button>' +
           '</div>' +
         '</div>';
       el.style.display = 'block';

@@ -109,7 +109,7 @@
     var amtK      = Math.round(Math.abs(income - median) / 1000);
     var lineage;
     if (confidence === null) {
-      lineage = 'Add or refine your title and work location to unlock market positioning.';
+      lineage = 'Add or refine your title and work location to see your market positioning.';
     } else if (aboveMedian && amtK > 0) {
       lineage = 'About $' + amtK + 'k above the midpoint for ' + roleFor + ' roles in ' + stateName + ', base salary only.';
     } else if (!aboveMedian && amtK > 0) {

@@ -594,7 +594,7 @@ function _0x5d74b48() {
     label = 'Getting Close'; sub = G.housingType === 'renting' ? 'Keep building your deposit & score' : '1–2 moves away from your next property';
     arcColor = '#0077B6';
   } else if (readiness >= 40) {
-    label = 'Building Foundations'; sub = dti > 36 ? 'Reduce DTI to unlock better rates' : ef < 2 ? 'Build emergency fund first' : 'Growing steadily';
+    label = 'Building Foundations'; sub = dti > 36 ? 'Reduce DTI to qualify for better rates' : ef < 2 ? 'Build emergency fund first' : 'Growing steadily';
     arcColor = '#F8A750';
   } else {
     label = 'Early Stage'; sub = 'Your plan starts here — every step counts';
@@ -824,7 +824,7 @@ function _0xb70f5a4(dti, fcf, credit, emergency, ccDebt, ccRate, housingType, to
         if (fill) { fill.style.width = Math.min(100, bm.pctOfMedian) + '%'; fill.style.background = bm.aboveMedian ? '#10B981' : '#00A8E8'; }
         if (pctEl) pctEl.textContent = bm.pctOfMedian + '% of market median';
       }
-      if (msgEl) msgEl.textContent = bm ? bm.lineage : 'Add your job title and location to unlock market positioning.';
+      if (msgEl) msgEl.textContent = bm ? bm.lineage : 'Add your job title and location to see your market positioning.';
       // Update header market gap pill — only when confident
       var pillMarketWrap = document.getElementById('pill-market-wrap');
       var pillMarketGap  = document.getElementById('pill-market-gap');
@@ -3096,7 +3096,7 @@ function _0xf056049(overrides) {
           fixType: 'range', fixKey: 'dti',
           fixMin: 10, fixMax: 60, fixStep: 1,
           fixVal: G.dti || 30, fixUnit: '%',
-          fixHint: (G.dti || 30) > 28 ? 'Get DTI below 36% to unlock more points.' : null,
+          fixHint: (G.dti || 30) > 28 ? 'Get DTI below 36% to gain more points.' : null,
         },
         {
           id: 'debtLoad', weight: 25, score: cats.debtLoad.score,
@@ -3118,7 +3118,7 @@ function _0xf056049(overrides) {
           fixType: 'range', fixKey: 'efMo',
           fixMin: 0, fixMax: 12, fixStep: 1,
           fixVal: parseInt(G.emergency || 0), fixUnit: ' mo',
-          fixHint: parseInt(G.emergency || 0) < 3 ? 'Reaching 3 months of emergency savings unlocks a significant boost.' : null,
+          fixHint: parseInt(G.emergency || 0) < 3 ? 'Reaching 3 months of emergency savings delivers a significant boost.' : null,
         },
         {
           id: 'creditStanding', weight: 10, score: cats.creditStanding.score,
@@ -3182,9 +3182,9 @@ function _0xf056049(overrides) {
   return {
     total,
     categories: [
-      { id:'paymentStability', weight:30, score:s1, label:'Payment Stability', icon:'', value: dti+'% DTI', why: dti<28?'Healthy DTI':dti<36?'Manageable':'Elevated — reduce debt or raise income', fixLabel:'What if my DTI was lower?', fixType:'range', fixKey:'dti', fixMin:10, fixMax:60, fixStep:1, fixVal:dti, fixUnit:'%', fixHint: dti>28?'Below 36% unlocks more points.':null },
+      { id:'paymentStability', weight:30, score:s1, label:'Payment Stability', icon:'', value: dti+'% DTI', why: dti<28?'Healthy DTI':dti<36?'Manageable':'Elevated — reduce debt or raise income', fixLabel:'What if my DTI was lower?', fixType:'range', fixKey:'dti', fixMin:10, fixMax:60, fixStep:1, fixVal:dti, fixUnit:'%', fixHint: dti>28?'Below 36% gains more points.':null},
       { id:'debtLoad', weight:25, score:s2, label:'Debt Load', icon:'', value: debtRatio===0?'Debt-free':Math.round(debtRatio*100)+'% of income', why: debtRatio===0?'Debt-free':'Consumer debt vs income', fixLabel:'What if I paid down debt?', fixType:'range', fixKey:'ccDebt', fixMin:0, fixMax:Math.max(ccDebt+5000,20000), fixStep:500, fixVal:ccDebt, fixUnit:'$', fixHint: ccDebt>0?'Clearing CC debt has biggest impact.':null },
-      { id:'cashCushion', weight:25, score:s3, label:'Cash Cushion', icon:'', value: efMo+' mo emergency · '+fmtCash(fcfVal)+'/mo free', why: efMo===0?'No emergency fund':efMo<3?'Under 3 months':'Good buffer', fixLabel:'What if I grew my emergency fund?', fixType:'range', fixKey:'efMo', fixMin:0, fixMax:12, fixStep:1, fixVal:efMo, fixUnit:' mo', fixHint: efMo<3?'3 months unlocks a significant boost.':null },
+      { id:'cashCushion', weight:25, score:s3, label:'Cash Cushion', icon:'', value: efMo+' mo emergency · '+fmtCash(fcfVal)+'/mo free', why: efMo===0?'No emergency fund':efMo<3?'Under 3 months':'Good buffer', fixLabel:'What if I grew my emergency fund?', fixType:'range', fixKey:'efMo', fixMin:0, fixMax:12, fixStep:1, fixVal:efMo, fixUnit:' mo', fixHint: efMo<3?'3 months delivers a significant boost.':null},
       { id:'creditStanding', weight:10, score:s4, label:'Credit Standing', icon:'', value: credit==='excellent'?'Excellent (720+)':credit==='fair'||credit==='good'?'Good (640–719)':'Building (<640)', why:'Credit band affects every rate you receive', fixLabel:'What if my credit improved?', fixType:'select', fixKey:'credit', fixOptions:[{value:'excellent',label:'Excellent (760+)'},{value:'good',label:'Good (720–759)'},{value:'fair',label:'Fair (680–719)'},{value:'below',label:'Below avg (620–679)'},{value:'poor',label:'Poor (<620)'}], fixVal:credit, fixHint:'Improving credit saves thousands on future loans.' },
       { id:'wealthBuilding', weight:10, score:s5, label:'Wealth Building', icon:'', value: savingsMo>=1?Math.round(savingsMo)+' months saved':'No savings recorded', why: savingsMo>=6?'Strong — compound growth working':'Build savings to improve this', fixLabel:'What if I saved more?', fixType:'range', fixKey:'savings', fixMin:0, fixMax:Math.max(savings*3,50000), fixStep:1000, fixVal:savings, fixUnit:'$', fixHint:'3+ months of income in savings moves this significantly.' },
     ]
@@ -3559,7 +3559,7 @@ function _0x01d514a(score) {
     if (fcf >= 1000) {
       factors.push({ icon: '', label: 'Healthy free cash flow', detail: '$' + Math.round(fcf).toLocaleString('en-US') + '/mo free — ' + savingsRate + '% savings rate. Compounds fast toward a deposit.', positive: true });
     } else if (fcf >= 200) {
-      factors.push({ icon: '', label: 'Tight cash flow', detail: 'Only $' + Math.round(fcf).toLocaleString('en-US') + '/mo free. Reducing one expense category could unlock meaningful savings momentum.', positive: false });
+      factors.push({ icon: '', label: 'Tight cash flow', detail: 'Only $' + Math.round(fcf).toLocaleString('en-US') + '/mo free. Reducing one expense category could create meaningful savings momentum.', positive: false });
     } else {
       factors.push({ icon: '', label: 'Negative or minimal cash flow', detail: 'Spending exceeds or matches income — a deposit won\'t grow from here. This is the first thing to fix.', positive: false });
     }
@@ -4111,7 +4111,7 @@ function renderCareerEngine() {
   var _bm = G.careerBenchmark;
   var gapMsg = (_bm && _bm.confidence !== null)
     ? _bm.lineage
-    : 'Add or refine your title and work location to unlock market positioning.';
+    : 'Add or refine your title and work location to see your market positioning.';
 
   // ── Promotion simulator ──
   var promoSliderVal = 10;
@@ -5092,7 +5092,7 @@ function _0x0e84774() {
     // State D: NO_DATA — no confident benchmark (title and/or state missing)
     // Primary CTA is the button only. vn/vl are secondary affordances, not the only entry point.
     if(vn){vn.textContent='Add your title & state';vn.style.color='rgba(255,255,255,0.35)';vn.style.fontSize='16px';vn.style.cursor='pointer';vn.onclick=function(){if(typeof openSettingsEdit==='function')openSettingsEdit('career');};}
-    if(vl){vl.textContent='Add your job title and work state to unlock your market position, salary gap, and negotiation data.';vl.style.cursor='pointer';vl.onclick=function(){if(typeof openSettingsEdit==='function')openSettingsEdit('career');};}
+    if(vl){vl.textContent='Add your job title and work state to see your market position, salary gap, and negotiation data.';vl.style.cursor='pointer';vl.onclick=function(){if(typeof openSettingsEdit==='function')openSettingsEdit('career');};}
     if(mf){mf.style.width='0%';mf.style.background='';}
     if(mp){mp.textContent='';mp.style.color='';}
     if(am)am.textContent='';

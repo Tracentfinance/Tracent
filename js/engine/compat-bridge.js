@@ -619,7 +619,7 @@ function v21BuildRefinePhase() {
 
   var titleMap = {
     stable:  ['A few real numbers', 'Five inputs move your score from estimated to grounded.'],
-    debt:    ["Let's see the actual pressure", 'Real debt and income numbers unlock a credible payoff plan.'],
+    debt:    ["Let's see the actual pressure", 'Real debt and income numbers build a credible payoff plan.'],
     home:    ['Build your readiness picture', 'Real numbers on income, savings, and debt give you an honest answer.'],
     grow:    ['What does your surplus actually look like?', 'Real income and spending inputs ground every growth recommendation.'],
     retire:  ['Show Tracent your real baseline', 'Income, contributions, and debt load are all it needs to start.']
@@ -866,7 +866,7 @@ function _v21_prefillRefineForm() {
     if (!el || val === undefined || val === null) return;
     el.value = val;
   }
-  function _fmtInput(n) { return n ? Math.round(n).toLocaleString('en-US') : ''; }
+  function _fmtInput(n) { return (n !== null && n !== undefined) ? Math.round(n).toLocaleString('en-US') : ''; }
   if (g.income)              _setField('v21r-income',             _fmtInput(g.income));
   if (g.takeHome)            _setField('v21r-takehome',            _fmtInput(g.takeHome));
   if (g.ccDebt)              _setField('v21r-cc-debt',             _fmtInput(g.ccDebt));
@@ -950,8 +950,9 @@ function v21FinishOnboarding() {
 
   // Stage 4: Fire engine (scoreComputed is dispatched by wrapCompute on success)
   console.log('[STEP4] firing analysis engine');
+  var _finishIntent = (typeof G !== 'undefined' && G.primaryIntent) || '';
   if (typeof _0xf1a6af7 === 'function') {
-    try { _0xf1a6af7(); } catch(e) {
+    try { _0xf1a6af7(_finishIntent); } catch(e) {
       console.error('[STEP4 CRASH] _0xf1a6af7 threw:', e);
       var _greet = document.getElementById('analysis-greeting');
       if (_greet) _greet.textContent = 'Something went wrong — please try again.';

@@ -120,9 +120,18 @@ function openSettingsEdit(section) {
       _el._blurFmtBound = true;
     }
   });
-  // Scroll to section anchor if requested (e.g. 'assets' → savings field, 'debt' → debt section)
+  // Scroll to section anchor + focus the target field (reduces friction on mobile)
   if (section) {
-    var _sectionMap = { career: 'se-career-section', assets: 'se-assets-section', networth: 'se-assets-section', debt: 'se-cc-debt', apr: 'se-apr-section', emergency: 'se-emergency' };
+    var _sectionMap = {
+      career:   'se-career-section',
+      assets:   'se-assets-section',
+      networth: 'se-assets-section',
+      debt:     'se-cc-debt',
+      home:     'se-savings',
+      income:   'se-income',
+      apr:      'se-apr-section',
+      emergency:'se-emergency'
+    };
     var _anchorId = _sectionMap[section] || 'se-income';
     setTimeout(function() {
       var _anchor = document.getElementById(_anchorId);
@@ -130,7 +139,14 @@ function openSettingsEdit(section) {
       if (_anchor && _sheet) {
         _sheet.scrollTop = Math.max(0, _anchor.offsetTop - 24);
       }
-    }, 80); // after modal open transition
+      // Focus + highlight the field so the user can type immediately
+      if (_anchor && (_anchor.tagName === 'INPUT' || _anchor.tagName === 'TEXTAREA')) {
+        try { _anchor.focus(); } catch(e) {}
+        try { _anchor.select(); } catch(e) {}
+        _anchor.classList.add('se-field-focus-in');
+        setTimeout(function() { _anchor.classList.remove('se-field-focus-in'); }, 1400);
+      }
+    }, 200); // allow modal slide-up animation to complete before keyboard opens
   }
   // Apply experience layer BSE adaptation to modal state
   if (typeof TracentExperienceLayer !== 'undefined' && typeof TracentExperienceLayer.applySettingsModal === 'function') {
@@ -170,10 +186,23 @@ function saveSettingsEdit() {
   var otherRateInput   = _num('se-other-rate');
   var creditInput      = _str('se-credit');
 
+  // Snapshot prior G state for payment change-detection — must happen before any writes
+  var _gPre            = (typeof G !== 'undefined') ? G : (window.G || {});
+  var _prevCarDebt     = _gPre.carDebt     || 0;
+  var _prevStudentDebt = _gPre.studentDebt || 0;
+  var _prevOtherDebt   = _gPre.otherDebt   || 0;
+
   // Derive minimum payments from balances (same logic as bridge)
-  var carPmt     = carDebt     > 0 ? Math.round(carDebt / 60)                          : 0;
-  var stuPmt     = studentDebt > 0 ? Math.max(Math.round(studentDebt / 120), 100)      : 0;
-  var othPmt     = otherDebt   > 0 ? Math.max(Math.round(otherDebt / 60), 50)          : 0;
+  // Only re-derive if the corresponding balance changed — preserves valid persisted payment values
+  var carPmt = (carDebt !== _prevCarDebt)
+    ? (carDebt     > 0 ? Math.round(carDebt / 60)                     : 0)
+    : (_gPre.carPayment     || 0);
+  var stuPmt = (studentDebt !== _prevStudentDebt)
+    ? (studentDebt > 0 ? Math.max(Math.round(studentDebt / 120), 100) : 0)
+    : (_gPre.studentPayment || 0);
+  var othPmt = (otherDebt !== _prevOtherDebt)
+    ? (otherDebt   > 0 ? Math.max(Math.round(otherDebt / 60), 50)     : 0)
+    : (_gPre.otherPayment   || 0);
 
   // Write to G
   var _g = (typeof G !== 'undefined') ? G : (window.G || {});

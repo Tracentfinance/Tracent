@@ -600,7 +600,7 @@
             <div class="stat-val" id="hdr-debt">—</div>
             <div class="stat-lbl">Debt</div>
           </div>
-          <div class="stat-cell" onclick="switchTab('progress');setNav(document.getElementById('nav-progress'))">
+          <div class="stat-cell" onclick="switchTab('progress');showProgressSub('networth');setNav(document.getElementById('nav-progress'))">
             <div class="stat-val" id="hdr-nw">—</div>
             <div class="stat-lbl">Net Worth</div>
           </div>
@@ -646,6 +646,9 @@
         <!-- ── BSE Focus Card — injected here by BSE IIFE on DOMContentLoaded ── -->
         <div id="bse-focus-mode" style="display:none;"></div>
 
+        <!-- ── Guided input card — shown when no income entered (holds score ring + verdict) ── -->
+        <div id="v21-guided-input" style="display:none;"></div>
+
         <!-- ── Verdict + verdict sub (injected by dashboard-pass, controlled by BSE) ── -->
         <div id="v21-verdict-block" style="display:none;"></div>
 
@@ -677,6 +680,7 @@
               </div>
             </div>
             <div class="v21-nbm-confidence" id="v21-nbm-confidence"></div>
+            <div class="v21-nbm-first-move" id="v21-nbm-first-move"></div>
             <div class="v21-nbm-actions">
               <button class="v21-nbm-btn" onclick="openWhatIf()">What if? →</button>
               <button class="v21-nbm-btn v21-nbm-why-btn" id="v21-nbm-why-btn" onclick="v21ToggleNBMDisclosure()">Why
@@ -2148,9 +2152,11 @@
         </select>
       </div>
 
-      <button onclick="saveSettingsEdit()" class="btn-cta" style="margin-bottom:10px;">Save and recalculate →</button>
-      <button onclick="closeModal('settings-edit-sheet')"
-        style="width:100%;padding:13px;background:transparent;color:var(--gray-3);border:none;font-family:var(--font-body);font-size:13px;cursor:pointer;">Cancel</button>
+      <div class="se-save-footer">
+        <button onclick="saveSettingsEdit()" class="btn-cta" style="margin-bottom:10px;">Save and recalculate →</button>
+        <button onclick="closeModal('settings-edit-sheet')"
+          style="width:100%;padding:13px;background:transparent;color:var(--gray-3);border:none;font-family:var(--font-body);font-size:13px;cursor:pointer;">Cancel</button>
+      </div>
     </div>
   </div>
 

@@ -39,18 +39,22 @@ function goBackFromStep3() { if (typeof v21BackPhase === 'function') v21BackPhas
 function nextStep(n) {
   if (n === 5) {
     if (typeof showScreen === 'function') showScreen('screen-analysis');
-    if (typeof _0xf1a6af7 === 'function') _0xf1a6af7();
+    if (typeof _0xf1a6af7 === 'function') {
+      var _ni = (typeof G !== 'undefined' && G.primaryIntent) || (typeof window.G !== 'undefined' && window.G.primaryIntent) || '';
+      _0xf1a6af7(_ni);
+    }
   }
 }
 
-function _0xf1a6af7() {
+function _0xf1a6af7(intent) {
   const greet  = document.getElementById('analysis-greeting');
   const statusEl = document.getElementById('analysis-status-text');
 
-  /* Intent-specific messages — read G.primaryIntent set during phase 1 */
-  var _intent = (typeof G !== 'undefined' && G.primaryIntent) ? G.primaryIntent
+  /* Intent passed directly from call site — no G read at runtime */
+  var _intent = intent
+              || ((typeof G !== 'undefined' && G.primaryIntent) ? G.primaryIntent
               : (typeof window.G !== 'undefined' && window.G.primaryIntent) ? window.G.primaryIntent
-              : '';
+              : '');
   var _goalMode = (typeof G !== 'undefined' && G.goalMode) ? G.goalMode
                 : (typeof window.G !== 'undefined' && window.G.goalMode) ? window.G.goalMode
                 : '';

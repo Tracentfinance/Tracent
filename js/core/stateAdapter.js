@@ -23,7 +23,9 @@
     'ageRange','primaryIntent',
     'retirementStage','goalMode','retirementIncomeSource',
     'retirementSavings','socialSecurityMonthly','pensionIncome',
-    'homeIncomeMode','homeHouseholdTakeHome'
+    'homeIncomeMode','homeHouseholdTakeHome',
+    'carPayment','otherPayment','goal',
+    'homeValue'
   ];
 
   // ── Safe readers ───────────────────────────────────────

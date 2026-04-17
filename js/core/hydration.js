@@ -60,7 +60,9 @@
         'ageRange','primaryIntent',
         'retirementStage','goalMode','retirementIncomeSource',
         'retirementSavings','socialSecurityMonthly','pensionIncome',
-        'homeIncomeMode','homeHouseholdTakeHome'
+        'homeIncomeMode','homeHouseholdTakeHome',
+        'carPayment','otherPayment','goal',
+        'homeValue'
       ];
       fields.forEach(function(key) {
         if (fi[key] !== null && fi[key] !== undefined) g[key] = fi[key];
@@ -152,9 +154,13 @@
       'emergency':        g.emergency,
       'retirement-match': g.retMatch,
       'home-price':       (g.homePrice    != null) ? g.homePrice    : g.targetHomePrice,
+      'home-value':       g.homeValue,
       'deposit-saved':    (g.depositSaved != null) ? g.depositSaved : g.downPayment,
       'current-rent':     g.currentRent,
       'purchase-price':   g.purchasePrice,
+      'car-payment':      g.carPayment,
+      'other-payment':    g.otherPayment,
+      'goal':             g.goal,
       'firstname':        g.firstname
     };
     Object.keys(map).forEach(function(id) {
