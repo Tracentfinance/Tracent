@@ -9,17 +9,18 @@
 
 /* Header */
 .dash-header {
-  background: linear-gradient(170deg, var(--navy-mid) 0%, var(--navy) 100%);
+  background: linear-gradient(175deg, var(--navy-mid) 0%, var(--navy-deep) 100%);
   position: relative;
   overflow: hidden;
+  /* Tracent brand accent line — same blue as wordmark dot */
+  border-top: 2px solid var(--sky);
 }
 .dash-header::before {
   content: '';
   position: absolute;
   inset: 0;
-  background:
-    radial-gradient(ellipse 60% 80% at 90% 15%, rgba(0,168,232,0.13) 0%, transparent 60%),
-    radial-gradient(ellipse 40% 50% at 5% 85%, rgba(16,185,129,0.06) 0%, transparent 55%);
+  /* Single restrained radial — directional light from top-right, brand blue only */
+  background: radial-gradient(ellipse 50% 70% at 92% 0%, rgba(0,168,232,0.11) 0%, transparent 65%);
   pointer-events: none;
 }
 
@@ -120,8 +121,8 @@
 .dash-header.force-show-score .score-hero-wrap {
   max-height: 400px !important;
   opacity: 1 !important;
-  padding-top: clamp(16px, 8vh, 48px) !important;
-  padding-bottom: clamp(12px, 6vh, 36px) !important;
+  padding-top: clamp(24px, 10vh, 56px) !important;
+  padding-bottom: clamp(20px, 8vh, 44px) !important;
   pointer-events: auto !important;
 }
 
@@ -134,8 +135,8 @@
 
 /* Breathing room on hero — also applies before force-show-score settles */
 #dash-header:not(.compact) .score-hero-wrap {
-  padding-top: clamp(16px, 8vh, 48px) !important;
-  padding-bottom: clamp(12px, 6vh, 36px) !important;
+  padding-top: clamp(24px, 10vh, 56px) !important;
+  padding-bottom: clamp(20px, 8vh, 44px) !important;
 }
 
 /* Stack ring above detail text, centered */
@@ -188,7 +189,7 @@
 }
 
 .score-ring-svg { transform: rotate(-90deg); }
-.score-ring-track { stroke: rgba(255,255,255,0.10); }
+.score-ring-track { stroke: rgba(0,168,232,0.15); }
 .score-ring-arc {
   stroke: var(--sky);
   stroke-dasharray: 271;
@@ -231,7 +232,7 @@
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 6px;
 }
 .score-title {
   font-family: var(--font-display);
@@ -241,7 +242,7 @@
 }
 .score-sub {
   font-size: 13px;
-  color: rgba(255,255,255,0.45);
+  color: rgba(0,168,232,0.65);
   line-height: 1.5;
 }
 .score-disclaimer { font-size: 10px; color: rgba(255,255,255,0.28); margin-top: 3px; display: block; }
@@ -257,7 +258,7 @@
   overflow: hidden;
 }
 .stat-cell {
-  padding: 12px 8px;
+  padding: 9px 8px;
   text-align: center;
   border-right: 1px solid rgba(255,255,255,0.06);
   cursor: pointer;
@@ -268,7 +269,7 @@
 .stat-cell:active { background: rgba(255,255,255,0.04); }
 .stat-val {
   font-family: var(--font-display);
-  font-size: 16px;
+  font-size: 14px;
   color: var(--white);
   line-height: 1;
   margin-bottom: 3px;
@@ -938,8 +939,7 @@
   --band-exposed:    #F59E0B;
   --band-stabilizing:#00A8E8;
   --band-advancing:  #10B981;
-  --band-compounding:#8B5CF6;
-  --purple:          #8B5CF6;
+  --band-compounding:#0077B6;
   --teal-light:      #38BDF8;
   --teal-dim:        rgba(0,119,182,0.08);
 }
@@ -949,15 +949,12 @@
 .v21-phase.active { display: block; animation: fadeUp 0.28s var(--spring) both; }
 
 /* ── V21 Choice Cards ── */
-.v21-choice-grid { display: flex; flex-direction: column; gap: 11px; margin-bottom: var(--s3); }
+.v21-choice-grid { display: flex; flex-direction: column; gap: 9px; margin-bottom: var(--s3); }
 .v21-choice {
   background: var(--white);
   border: 1.5px solid var(--gray-2);
   border-radius: var(--r-md);
-  padding: 16px;
-  display: flex;
-  align-items: flex-start;
-  gap: 14px;
+  padding: 16px 18px;
   cursor: pointer;
   transition: border-color var(--fast) var(--spring), background var(--fast), transform var(--fast) var(--spring);
   -webkit-tap-highlight-color: transparent;
@@ -965,11 +962,10 @@
   box-shadow: var(--shadow-sm);
 }
 .v21-choice:active { transform: scale(0.98); }
-.v21-choice.selected { border-color: var(--sky); background: rgba(0,168,232,0.04); }
-.v21-choice-icon { font-size: 24px; flex-shrink: 0; line-height: 1.2; margin-top: 1px; }
-.v21-choice-title { font-size: 15px; font-weight: 700; color: var(--navy); margin-bottom: 3px; line-height: 1.2; }
+.v21-choice.selected { border-color: var(--sky); background: rgba(0,168,232,0.07); }
+.v21-choice-title { font-size: 16px; font-weight: 700; color: var(--navy); margin-bottom: 4px; line-height: 1.2; letter-spacing: -0.2px; }
 .v21-choice.selected .v21-choice-title { color: var(--teal); }
-.v21-choice-sub { font-size: 12px; color: var(--gray-3); line-height: 1.45; }
+.v21-choice-sub { font-size: 12px; color: var(--gray-4); line-height: 1.45; }
 
 /* ── V21 Signal Hint ── */
 .signal-hint {
@@ -1128,7 +1124,7 @@
 .band-exposed-glow    { background: radial-gradient(circle, rgba(245,158,11,0.22) 0%, transparent 65%) !important; }
 .band-stabilizing-glow{ background: radial-gradient(circle, rgba(0,168,232,0.22) 0%, transparent 65%) !important; }
 .band-advancing-glow  { background: radial-gradient(circle, rgba(16,185,129,0.22) 0%, transparent 65%) !important; }
-.band-compounding-glow{ background: radial-gradient(circle, rgba(139,92,246,0.22) 0%, transparent 65%) !important; }
+.band-compounding-glow{ background: radial-gradient(circle, rgba(0,119,182,0.22) 0%, transparent 65%) !important; }
 
 /* ── V21 Premium Teaser Card ── */
 .v21-premium-teaser {
@@ -1559,6 +1555,17 @@
   color: var(--green);
   letter-spacing: 0.2px;
   padding-left: 2px;
+}
+
+/* ── Copilot: hidden during onboarding ─────────────────────
+   body.tracent-onboarding is toggled by showScreen() in
+   navigation.js — set when screen-onboarding is active,
+   cleared on any other screen transition.
+────────────────────────────────────────────────────────── */
+body.tracent-onboarding #tcp-fab,
+body.tracent-onboarding #tcp-panel,
+body.tracent-onboarding #tcp-overlay {
+  display: none !important;
 }
 
 .bse-score-tap {

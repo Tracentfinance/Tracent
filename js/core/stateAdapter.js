@@ -20,7 +20,10 @@
     'ccDebt','ccRate','studentDebt','carDebt','otherDebt','emergency',
     'retMatch','homePrice','depositSaved','currentRent','purchasePrice',
     'housingType','credit','savingsAmt',
-    'ageRange','primaryIntent'
+    'ageRange','primaryIntent',
+    'retirementStage','goalMode','retirementIncomeSource',
+    'retirementSavings','socialSecurityMonthly','pensionIncome',
+    'homeIncomeMode','homeHouseholdTakeHome'
   ];
 
   // ── Safe readers ───────────────────────────────────────

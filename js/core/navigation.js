@@ -47,12 +47,48 @@ function _0xf1a6af7() {
   const greet  = document.getElementById('analysis-greeting');
   const statusEl = document.getElementById('analysis-status-text');
 
-  /* Three calm messages that fade in sequence */
-  var greetMessages = [
-    'Understanding your financial position',
-    'Assessing your buying power',
-    'Building your next move'
+  /* Intent-specific messages — read G.primaryIntent set during phase 1 */
+  var _intent = (typeof G !== 'undefined' && G.primaryIntent) ? G.primaryIntent
+              : (typeof window.G !== 'undefined' && window.G.primaryIntent) ? window.G.primaryIntent
+              : '';
+  var _goalMode = (typeof G !== 'undefined' && G.goalMode) ? G.goalMode
+                : (typeof window.G !== 'undefined' && window.G.goalMode) ? window.G.goalMode
+                : '';
+  var _INTENT_MESSAGES = {
+    home: [
+      'Evaluating purchase readiness',
+      'Calculating buying power',
+      'Defining your price range'
+    ],
+    debt: [
+      'Evaluating debt pressure',
+      'Calculating optimal payoff path',
+      'Defining your strategy'
+    ],
+    retire: [
+      'Evaluating retirement position',
+      'Calculating income sustainability',
+      'Defining drawdown safety'
+    ],
+    stable: [
+      'Evaluating cash flow position',
+      'Calculating pressure points',
+      'Defining your stability path'
+    ],
+    grow: [
+      'Evaluating deployable surplus',
+      'Calculating highest-leverage move',
+      'Defining your growth path'
+    ]
+  };
+  var _fallbackMessages = [
+    'Evaluating your financial position',
+    'Calculating your next move',
+    'Defining your plan'
   ];
+  var greetMessages = (_goalMode === 'retirement' && _INTENT_MESSAGES.retire)
+    ? _INTENT_MESSAGES.retire
+    : (_INTENT_MESSAGES[_intent] || _fallbackMessages);
   var greetIdx = 0;
   if (greet) { greet.textContent = greetMessages[0]; }
   if (statusEl) { statusEl.textContent = 'This will take a moment'; }
@@ -137,6 +173,8 @@ function showScreen(id) {
     }
   });
   if (id === 'screen-splash' && typeof _0xbda85bb === 'function') _0xbda85bb();
+  // Hide Copilot FAB during onboarding — restore on any other screen
+  document.body.classList.toggle('tracent-onboarding', id === 'screen-onboarding');
   // Telemetry: screen view
   try { tracentEnterScreen(id); } catch(e) {}
 }

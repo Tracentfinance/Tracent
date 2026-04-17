@@ -703,7 +703,7 @@
      3. PURCHASE DECISION LOGIC (client-side, no AI needed)
   ═══════════════════════════════════════════════════════ */
   function evaluatePurchase(cost, ctx){
-    var fmt = function(n){ return '$'+Math.round(Math.abs(n||0)).toLocaleString(); };
+    var fmt = function(n){ return '$'+Math.round(Math.abs(n||0)).toLocaleString('en-US'); };
     var fcf = ctx.fcf;
     var ef  = ctx.efMonths;
     var cc  = ctx.ccDebt;
@@ -767,11 +767,11 @@
       'The user has a Tracent planning score of '+(ctx.scoreFinal?ctx.score+'/100 ('+ctx.band+')':'not yet calculated')+'.\n'+
       'Active mode: '+ctx.activeMode+'.\n'+
       factorLines+'.\n'+
-      'Free cash flow: $'+Math.round(ctx.fcf).toLocaleString()+'/mo. '+
-      'Take-home: $'+Math.round(ctx.takeHome).toLocaleString()+'/mo. '+
+      'Free cash flow: $'+Math.round(ctx.fcf).toLocaleString('en-US')+'/mo. '+
+      'Take-home: $'+Math.round(ctx.takeHome).toLocaleString('en-US')+'/mo. '+
       'Emergency fund: '+ctx.efMonths+' months. '+
-      'Credit card debt: $'+Math.round(ctx.ccDebt).toLocaleString()+'. '+
-      'Total non-housing debt: $'+Math.round(ctx.totalDebt).toLocaleString()+'. '+
+      'Credit card debt: $'+Math.round(ctx.ccDebt).toLocaleString('en-US')+'. '+
+      'Total non-housing debt: $'+Math.round(ctx.totalDebt).toLocaleString('en-US')+'. '+
       'DTI: '+ctx.dti+'%. '+
       'Behavioral pattern: '+ctx.archetype+'. '+
       (ctx.nbmTitle ? 'Top recommended action: '+ctx.nbmTitle+'. Why: '+ctx.nbmWhy+'. ' : '')+
@@ -835,7 +835,7 @@
   ═══════════════════════════════════════════════════════ */
   function localFallback(userMessage, ctx){
     var intent = detectIntent(userMessage);
-    var fmt = function(n){ return '$'+Math.round(Math.abs(n||0)).toLocaleString(); };
+    var fmt = function(n){ return '$'+Math.round(Math.abs(n||0)).toLocaleString('en-US'); };
 
     if (intent === 'purchase') {
       var numMatch = userMessage.match(/\$?([\d,]+(?:\.\d+)?)/);

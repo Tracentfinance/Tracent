@@ -105,6 +105,21 @@ function openSettingsEdit(section) {
   var efEl = document.getElementById('se-emergency');
   if (efEl && g.emergency) efEl.value = g.emergency;
   openModal('settings-edit-sheet');
+  // Blur-reformat: money fields show commas after user leaves a field
+  var _seMoneyIds = ['se-income','se-takehome','se-savings','se-home-value','se-cc-debt','se-car-debt','se-student-debt','se-other-debt'];
+  _seMoneyIds.forEach(function(id) {
+    var _el = document.getElementById(id);
+    if (_el && !_el._blurFmtBound) {
+      _el.addEventListener('blur', function() {
+        var stripped = String(this.value || '').replace(/[^0-9.]/g, '');
+        if (!stripped) { this.value = ''; return; }
+        var raw = parseFloat(stripped);
+        if (isNaN(raw)) { this.value = ''; return; }
+        this.value = raw === 0 ? '0' : Math.round(raw).toLocaleString('en-US');
+      });
+      _el._blurFmtBound = true;
+    }
+  });
   // Scroll to section anchor if requested (e.g. 'assets' → savings field, 'debt' → debt section)
   if (section) {
     var _sectionMap = { career: 'se-career-section', assets: 'se-assets-section', networth: 'se-assets-section', debt: 'se-cc-debt', apr: 'se-apr-section', emergency: 'se-emergency' };
@@ -272,6 +287,21 @@ function toggleGrowStructure() {
     _pf('ge-other-debt',   _fmt(g.otherDebt));
     var rmEl = document.getElementById('ge-ret-match');
     if (rmEl && g.retMatch) rmEl.value = g.retMatch;
+    // Blur-reformat: money fields show commas after user leaves a field
+    var _geMoneyIds = ['ge-savings','ge-home-value','ge-mortgage','ge-cc-debt','ge-car-debt','ge-student-debt','ge-other-debt'];
+    _geMoneyIds.forEach(function(id) {
+      var _el = document.getElementById(id);
+      if (_el && !_el._blurFmtBound) {
+        _el.addEventListener('blur', function() {
+          var stripped = String(this.value || '').replace(/[^0-9.]/g, '');
+          if (!stripped) { this.value = ''; return; }
+          var raw = parseFloat(stripped);
+          if (isNaN(raw)) { this.value = ''; return; }
+          this.value = raw === 0 ? '0' : Math.round(raw).toLocaleString('en-US');
+        });
+        _el._blurFmtBound = true;
+      }
+    });
     body.style.display = 'block';
     if (chevron) chevron.innerHTML = '&#9660;';
   } else {

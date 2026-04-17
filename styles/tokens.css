@@ -60,15 +60,15 @@
   --s4: 32px; --s5: 40px;  --s6: 48px;
 
   /* Radius */
-  --r-sm:  12px;
-  --r-md:  18px;
-  --r-lg:  24px;
+  --r-sm:  8px;
+  --r-md:  12px;
+  --r-lg:  16px;
   --r-pill:50px;
 
   /* Shadows */
-  --shadow-sm: 0 1px 3px rgba(0,31,51,0.06), 0 2px 8px rgba(0,31,51,0.04);
-  --shadow-md: 0 4px 16px rgba(0,31,51,0.10), 0 1px 4px rgba(0,31,51,0.06);
-  --shadow-lg: 0 8px 32px rgba(0,31,51,0.14), 0 2px 8px rgba(0,31,51,0.06);
+  --shadow-sm: 0 1px 2px rgba(0,31,51,0.06), 0 1px 6px rgba(0,31,51,0.03);
+  --shadow-md: 0 2px 8px rgba(0,31,51,0.08), 0 1px 2px rgba(0,31,51,0.05);
+  --shadow-lg: 0 4px 20px rgba(0,31,51,0.10), 0 1px 4px rgba(0,31,51,0.06);
 
   /* Motion — base */
   --spring:   cubic-bezier(0.16, 1, 0.3, 1);

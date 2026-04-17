@@ -1437,7 +1437,7 @@ window.buildRetireStrategyHTML = function() {
     // No real retire-specific inputs entered — show placeholder only
     if (!hasRealRetireData) {
       return '<div class="tracent-mode-header">' +
-        '<div class="tracent-mode-badge" style="background:rgba(139,92,246,0.10);color:#8B5CF6;">\ud83c\udf05 Retire Mode \u2014 Retirement Stability</div>' +
+        '<div class="tracent-mode-badge" style="background:rgba(0,119,182,0.10);color:#0077B6;">\ud83c\udf05 Retire Mode \u2014 Retirement Stability</div>' +
         '<div class="tracent-mode-insight" style="margin-top:12px;">' +
           '<div class="tracent-mode-insight-label">Stability outlook</div>' +
           '<div class="tracent-mode-insight-text">Reserve picture not yet defined. Add your savings, Social Security, or pension amount to see your stability picture.</div>' +
@@ -1458,7 +1458,7 @@ window.buildRetireStrategyHTML = function() {
       : 'Your position is stable. Consistent withdrawal discipline and an annual review are the most important things now.';
 
     return '<div class="tracent-mode-header">' +
-      '<div class="tracent-mode-badge" style="background:rgba(139,92,246,0.10);color:#8B5CF6;">\ud83c\udf05 Retire Mode \u2014 Retirement Stability</div>' +
+      '<div class="tracent-mode-badge" style="background:rgba(0,119,182,0.10);color:#0077B6;">\ud83c\udf05 Retire Mode \u2014 Retirement Stability</div>' +
       '<div class="tracent-mode-grid-3">' +
         '<div class="tracent-mode-cell"><div class="tracent-mode-cell-label">Income source</div><div class="tracent-mode-cell-value">' + incSrcLabel + '</div><div class="tracent-mode-cell-note">Primary retirement income</div></div>' +
         '<div class="tracent-mode-cell"><div class="tracent-mode-cell-label">Position</div><div class="tracent-mode-cell-value" style="color:' + stabilityColor + '">' + stabilityLabel + '</div><div class="tracent-mode-cell-note">Overall stability signal</div></div>' +
@@ -1514,7 +1514,7 @@ window.buildRetireStrategyHTML = function() {
     : '';
 
   return '<div class="tracent-mode-header">' +
-    '<div class="tracent-mode-badge" style="background:rgba(139,92,246,0.10);color:#8B5CF6;">\ud83c\udf05 Retire Mode \u2014 Long-Horizon Security</div>' +
+    '<div class="tracent-mode-badge" style="background:rgba(0,119,182,0.10);color:#0077B6;">\ud83c\udf05 Retire Mode \u2014 Long-Horizon Security</div>' +
     '<div class="tracent-mode-grid-3">' +
       '<div class="tracent-mode-cell"><div class="tracent-mode-cell-label">Trajectory signal</div><div class="tracent-mode-cell-value" style="color:' + trajectoryColor + '">' + trajectoryLabel + '</div><div class="tracent-mode-cell-note">Based on match + debt position</div></div>' +
       projCell +

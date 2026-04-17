@@ -199,7 +199,7 @@ function estimateTakeHome() {
     cityTax  = gross * 0.03876;
     if (liveState === 'CT') {
       const ctCredit = Math.min(gross * liveRate, gross * workRate);
-      stateTaxNote = `\u26a0\ufe0f CT/NYC commuter: NY state + NYC city tax (~8.8% + 3.9%). CT gives a credit, so you pay NYC\u2019s higher combined rate. Est. extra vs CT-only: $${Math.round((gross * workRate + cityTax - ctCredit) / 12).toLocaleString()}/mo.`;
+      stateTaxNote = `\u26a0\ufe0f CT/NYC commuter: NY state + NYC city tax (~8.8% + 3.9%). CT gives a credit, so you pay NYC\u2019s higher combined rate. Est. extra vs CT-only: $${Math.round((gross * workRate + cityTax - ctCredit) / 12).toLocaleString('en-US')}/mo.`;
     } else {
       stateTaxNote = `NYC city tax (~3.88%) adds on top of NY state tax \u2014 a significant extra cost for NYC workers.`;
     }
@@ -234,7 +234,7 @@ function estimateTakeHome() {
   if (breakdown) {
     breakdown.style.display = 'block';
     const filingLabels = {single:'Single',mfj:'Married/Joint',hoh:'Head of Household',mfs:'Married/Separate'};
-    let txt = `${filingLabels[filing] || 'Single'} · Fed: <strong>$${Math.round(fedTax/12).toLocaleString()}/mo</strong> · FICA: <strong>$${Math.round(fica/12).toLocaleString()}/mo</strong> · State: <strong>$${Math.round(stateTax/12).toLocaleString()}/mo</strong> · Effective: <strong>${effRate}%</strong>`;
+    let txt = `${filingLabels[filing] || 'Single'} · Fed: <strong>$${Math.round(fedTax/12).toLocaleString('en-US')}/mo</strong> · FICA: <strong>$${Math.round(fica/12).toLocaleString('en-US')}/mo</strong> · State: <strong>$${Math.round(stateTax/12).toLocaleString('en-US')}/mo</strong> · Effective: <strong>${effRate}%</strong>`;
     breakdown.innerHTML = txt;
   }
 
@@ -377,8 +377,8 @@ function calcOwnerMortgage() {
 
   // Update preview boxes
   const set = (id, val) => { const e = document.getElementById(id); if (e) e.textContent = val; };
-  set('calc-pi', '$' + displayPI.toLocaleString() + (window._splitCosts ? ' (your half)' : ''));
-  set('calc-balance', '$' + Math.round(estimatedBalance / 1000).toLocaleString() + 'K');
+  set('calc-pi', '$' + displayPI.toLocaleString('en-US') + (window._splitCosts ? ' (your half)' : ''));
+  set('calc-balance', '$' + Math.round(estimatedBalance / 1000).toLocaleString('en-US') + 'K');
 
   const ltvEl = document.getElementById('calc-ltv');
   if (ltvEl) {
@@ -390,11 +390,11 @@ function calcOwnerMortgage() {
   const pmiEl = document.getElementById('calc-pmi');
   const pmiNote = document.getElementById('calc-pmi-note');
   if (hasPMI) {
-    if (pmiEl) { pmiEl.textContent = '$' + pmiMonthly.toLocaleString() + '/mo'; pmiEl.style.color = 'var(--red)'; }
+    if (pmiEl) { pmiEl.textContent = '$' + pmiMonthly.toLocaleString('en-US') + '/mo'; pmiEl.style.color = 'var(--red)'; }
     if (pmiBox) pmiBox.style.background = 'rgba(230,57,70,0.06)';
     if (pmiNote) {
       pmiNote.style.display = 'block';
-      pmiNote.textContent = `PMI is costing you $${pmiMonthly.toLocaleString()}/mo because your down payment was under 20%. You need ${equityPct < 20 ? (20 - equityPct) + '% more equity to remove it' : 'an appraisal — you may qualify to cancel now'}. Ask your lender once you hit 20% equity.`;
+      pmiNote.textContent = `PMI is costing you $${pmiMonthly.toLocaleString('en-US')}/mo because your down payment was under 20%. You need ${equityPct < 20 ? (20 - equityPct) + '% more equity to remove it' : 'an appraisal — you may qualify to cancel now'}. Ask your lender once you hit 20% equity.`;
     }
   } else {
     if (pmiEl) { pmiEl.textContent = 'None'; pmiEl.style.color = 'var(--green)'; }
@@ -488,16 +488,16 @@ function updateBuyingEstimates() {
   if (preview) { preview.style.display = 'block'; }
 
   const set = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
-  set('preview-pi', `$${pi.toLocaleString()}/mo`);
-  set('preview-pmi', pmi > 0 ? `$${pmi.toLocaleString()}/mo` : 'None');
+  set('preview-pi', `$${pi.toLocaleString('en-US')}/mo`);
+  set('preview-pmi', pmi > 0 ? `$${pmi.toLocaleString('en-US')}/mo` : 'None');
   const pmiRow = document.getElementById('preview-pmi-row');
   if (pmiRow) pmiRow.style.display = (loanType === 'va' || loanType === 'usda') ? 'none' : 'flex';
-  set('preview-tax', `$${monthlyTax.toLocaleString()}/mo`);
-  set('preview-ins', `$${monthlyIns.toLocaleString()}/mo`);
-  set('preview-total', `$${totalPITI.toLocaleString()}/mo`);
-  set('preview-dp', `$${Math.round(dp).toLocaleString()}`);
-  set('preview-closing', `$${closingCosts.toLocaleString()}`);
-  set('preview-cash-total', `$${totalCash.toLocaleString()}`);
+  set('preview-tax', `$${monthlyTax.toLocaleString('en-US')}/mo`);
+  set('preview-ins', `$${monthlyIns.toLocaleString('en-US')}/mo`);
+  set('preview-total', `$${totalPITI.toLocaleString('en-US')}/mo`);
+  set('preview-dp', `$${Math.round(dp).toLocaleString('en-US')}`);
+  set('preview-closing', `$${closingCosts.toLocaleString('en-US')}`);
+  set('preview-cash-total', `$${totalCash.toLocaleString('en-US')}`);
 }
 
 // ─── LIFE EVENT NOTES ───
@@ -627,7 +627,7 @@ function _0x82f03c5(n, compact) {
   const sign = n < 0 ? '-' : '';
   if (compact && abs >= 1000000) return sign + '$' + (abs/1000000).toFixed(1) + 'M';
   if (compact && abs >= 1000) return sign + '$' + (abs/1000).toFixed(1) + 'k';
-  return sign + '$' + Math.round(abs).toLocaleString();
+  return sign + '$' + Math.round(abs).toLocaleString('en-US');
 }
 
 function _0xb70f5a4(dti, fcf, credit, emergency, ccDebt, ccRate, housingType, totalNonHousingDebt, monthlyIncome) {
@@ -713,13 +713,13 @@ function _0xb70f5a4(dti, fcf, credit, emergency, ccDebt, ccRate, housingType, to
       value: debtRatio === 0 ? 'None' : Math.round(debtRatio * 100) + '% of income',
       desc: debtRatio === 0 ? 'Debt-free — maximum score' : debtRatio < 0.1 ? 'Minimal — strong position' : debtRatio < 0.2 ? 'Manageable — monitor closely' : 'Significant — focus on payoff' },
     cashCushion: { score: cat3, weight: 25, label: 'Cash Cushion', icon: '',
-      value: ef + ' mo emergency + $' + Math.round(Math.max(0,fcf)).toLocaleString() + '/mo free',
+      value: ef + ' mo emergency + $' + Math.round(Math.max(0,fcf)).toLocaleString('en-US') + '/mo free',
       desc: ef >= 3 && fcfMargin >= 0.10 ? 'Strong buffer — resilient position' : ef === 0 ? 'No emergency fund — highest priority fix' : fcfMargin < 0.05 ? 'Tight margins — cash flow needs attention' : 'Building — keep growing this' },
     creditStanding: { score: cat4, weight: 10, label: 'Credit Standing', icon: '',
       value: credit === 'excellent' ? 'Excellent (720+)' : credit === 'fair' || credit === 'good' ? 'Good (640–719)' : credit === 'poor' || credit === 'below' ? 'Building (<640)' : 'Not provided',
       desc: cat4 >= 80 ? 'Qualifies for best rates — saves thousands' : cat4 >= 60 ? 'Eligible for most mortgages' : 'Priority area — affects every rate you receive' },
     wealthBuilding: { score: cat5, weight: 10, label: 'Wealth Building', icon: '',
-      value: savingsMonths >= 1 ? Math.round(savingsMonths) + ' months saved' : savings > 0 ? '$' + Math.round(savings).toLocaleString() + ' saved' : 'No savings recorded',
+      value: savingsMonths >= 1 ? Math.round(savingsMonths) + ' months saved' : savings > 0 ? '$' + Math.round(savings).toLocaleString('en-US') + ' saved' : 'No savings recorded',
       desc: savingsMonths >= 6 ? 'Strong — compound growth working for you' : savingsMonths >= 3 ? 'Good foundation — keep building' : 'Early stage — even small consistent amounts count' },
   };
 
@@ -1461,7 +1461,7 @@ function _0xe29af62(color, eyebrow, headline, recText) {
   const mBE  = document.getElementById('metric-breakeven');
   const mBELbl = document.getElementById('metric-breakeven-label');
   if (mDTI) mDTI.textContent = G.dti != null ? Math.round(G.dti) + '%' : '—';
-  if (mSav) mSav.textContent = G.fcf != null ? (G.fcf >= 0 ? '+$' : '-$') + Math.abs(Math.round(G.fcf)).toLocaleString() : '—';
+  if (mSav) mSav.textContent = G.fcf != null ? (G.fcf >= 0 ? '+$' : '-$') + Math.abs(Math.round(G.fcf)).toLocaleString('en-US') : '—';
   if (mSavLbl) mSavLbl.textContent = 'Free cash flow';
   const totalDebtAmt = (G.ccDebt||0)+(G.carDebt||0)+(G.studentDebt||0)+(G.otherDebt||0);
   if (mBE) mBE.textContent = totalDebtAmt > 0 ? '$' + Math.round(totalDebtAmt/1000*10)/10 + 'k' : '—';
@@ -1589,7 +1589,7 @@ function _0x8d99b9d(monthlyIncome, expenses, debtPayments, housingCost, name, fc
     ].map(b => `
       <div style="background:var(--gray-1);border-radius:10px;padding:12px;text-align:center;">
         <div style="font-size:16px;margin-bottom:4px;">${b.icon}</div>
-        <div style="font-family:var(--font-display);font-size:15px;color:${b.color};margin-bottom:2px;">${b.val < 0 ? '-$' : '$'}${Math.abs(Math.round(b.val)).toLocaleString()}</div>
+        <div style="font-family:var(--font-display);font-size:15px;color:${b.color};margin-bottom:2px;">${b.val < 0 ? '-$' : '$'}${Math.abs(Math.round(b.val)).toLocaleString('en-US')}</div>
         <div style="font-size:11px;color:var(--gray-4);">${b.label}</div>
       </div>`).join('');
   }
@@ -1598,8 +1598,8 @@ function _0x8d99b9d(monthlyIncome, expenses, debtPayments, housingCost, name, fc
   const cfHeadline = document.getElementById('cf-headline');
   if (cfHeadline) {
     cfHeadline.textContent = remaining >= 0
-      ? `$${Math.round(remaining).toLocaleString()} free each month`
-      : `Monthly shortfall of $${Math.abs(Math.round(remaining)).toLocaleString()}`;
+      ? `$${Math.round(remaining).toLocaleString('en-US')} free each month`
+      : `Monthly shortfall of $${Math.abs(Math.round(remaining)).toLocaleString('en-US')}`;
     cfHeadline.style.color = remaining >= 0 ? 'var(--navy)' : 'var(--red)';
   }
 
@@ -1625,7 +1625,7 @@ function _0x8d99b9d(monthlyIncome, expenses, debtPayments, housingCost, name, fc
   const spend = 1 - s.save - s.invest - s.give;
 
   cfSuggestion.innerHTML = `
-    <div style="font-size:12px;font-weight:600;color:var(--navy);margin-bottom:10px;letter-spacing:0.5px;">HOW TO USE YOUR $${Math.round(remaining).toLocaleString()}/MO FREE CASH</div>
+    <div style="font-size:12px;font-weight:600;color:var(--navy);margin-bottom:10px;letter-spacing:0.5px;">HOW TO USE YOUR $${Math.round(remaining).toLocaleString('en-US')}/MO FREE CASH</div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
       <div style="background:var(--gray-1);border-radius:10px;padding:10px;text-align:center;">
         <div style="font-size:15px;font-weight:700;color:var(--navy);">${_0x4f66a67(remaining * spend)}</div>
@@ -1825,7 +1825,7 @@ function renderGoalFocus() {
 
 
 function _0x80e4d42() {
-  const fmt = n => n == null ? '—' : (Math.abs(n) >= 1000 ? (n < 0 ? '-' : '') + '$' + Math.round(Math.abs(n)/1000*10)/10 + 'k' : (n < 0 ? '-$' : '$') + Math.abs(Math.round(n)).toLocaleString());
+  const fmt = n => n == null ? '—' : (Math.abs(n) >= 1000 ? (n < 0 ? '-' : '') + '$' + Math.round(Math.abs(n)/1000*10)/10 + 'k' : (n < 0 ? '-$' : '$') + Math.abs(Math.round(n)).toLocaleString('en-US'));
   const _0x3e27a99 = n => n == null ? '—' : Math.round(n) + '%';
 
   // Stagger animate all home cards
@@ -1964,7 +1964,7 @@ function _0x80e4d42() {
   if (fcf < 0) insights.push({ icon: '', text: 'Spending exceeds take-home — review your cash flow', tab: 'recommend', nav: 'advice' });
   else if (fcf > 0 && fcf < G.takeHome * 0.1) insights.push({ icon: '', text: 'Tight margins — under 10% free cash flow', tab: 'recommend', nav: 'advice' });
   if (dti > 43) insights.push({ icon: '', text: 'DTI above 43% — may affect loan eligibility', tab: 'debtrank', nav: 'debt' });
-  if (G.ccDebt > 1000) insights.push({ icon: '', text: `$${Math.round(G.ccDebt).toLocaleString()} credit card balance — priority payoff`, tab: 'debtrank', nav: 'debt' });
+  if (G.ccDebt > 1000) insights.push({ icon: '', text: `$${Math.round(G.ccDebt).toLocaleString('en-US')} credit card balance — priority payoff`, tab: 'debtrank', nav: 'debt' });
   if (score && score >= 80) insights.push({ icon: '', text: 'Strong financial health score', tab: 'recommend', nav: 'advice' });
   if (G.housingType === 'owner' && G.currentRate > (G.marketRate || MARKET_RATE_30Y) + 0.75) insights.push({ icon: '', text: 'Your rate is above market — check refinance options', tab: 'house', nav: 'house' });
   if (!insights.length) insights.push({ icon: '', text: 'Everything looks balanced — continue building.', tab: 'recommend', nav: 'advice' });
@@ -1987,7 +1987,7 @@ function _0x80e4d42() {
   }
 
   // Update header 3-stat strip
-  const fmt2 = n => n == null ? '—' : (Math.abs(n) >= 1000 ? (n<0?'-':'')+'$'+Math.round(Math.abs(n)/1000*10)/10+'k' : (n<0?'-$':'$')+Math.abs(Math.round(n)).toLocaleString());
+  const fmt2 = n => n == null ? '—' : (Math.abs(n) >= 1000 ? (n<0?'-':'')+'$'+Math.round(Math.abs(n)/1000*10)/10+'k' : (n<0?'-$':'$')+Math.abs(Math.round(n)).toLocaleString('en-US'));
   const hdrFcf = el('hdr-fcf');
   if (hdrFcf) { hdrFcf.textContent = fmt2(G.fcf); hdrFcf.style.color = (G.fcf||0) >= 0 ? 'var(--teal-light)' : '#ff6b7a'; }
   const hdrDti = el('hdr-dti');
@@ -2011,7 +2011,7 @@ function _0x80e4d42() {
       const prog = Math.min((ts - start) / duration, 1);
       const ease = 1 - Math.pow(1 - prog, 3);
       const cur = Math.round(abs * ease);
-      el.textContent = sign + prefix + (isK ? (cur >= 1000 ? Math.round(cur/100)/10 + 'k' : cur) : cur.toLocaleString()) + suffix;
+      el.textContent = sign + prefix + (isK ? (cur >= 1000 ? Math.round(cur/100)/10 + 'k' : cur) : cur.toLocaleString('en-US')) + suffix;
       if (prog < 1) requestAnimationFrame(update);
     };
     requestAnimationFrame(update);
@@ -2283,8 +2283,8 @@ function _0x338efee() {
             </div>
           </div>
           <div class="goal-amount-target">
-            <div class="goal-current-val" style="color:${meta.color}">$${Math.round(goal.current).toLocaleString()}</div>
-            <div class="goal-target-val">of $${Math.round(goal.target).toLocaleString()}</div>
+            <div class="goal-current-val" style="color:${meta.color}">$${Math.round(goal.current).toLocaleString('en-US')}</div>
+            <div class="goal-target-val">of $${Math.round(goal.target).toLocaleString('en-US')}</div>
           </div>
         </div>
         <div class="goal-progress-wrap">
@@ -2293,15 +2293,15 @@ function _0x338efee() {
           </div>
           <div class="goal-progress-meta">
             <span style="color:${meta.color};font-weight:600;">${pct}% complete</span>
-            <span>${remaining > 0 ? '$' + Math.round(remaining).toLocaleString() + ' to go' : 'Goal reached.'}${targetDate ? ' · ' + targetDate : ''}</span>
+            <span>${remaining > 0 ? '$' + Math.round(remaining).toLocaleString('en-US') + ' to go' : 'Goal reached.'}${targetDate ? ' · ' + targetDate : ''}</span>
           </div>
         </div>
         ${goal.monthly > 0 ? `
         <div style="padding:8px 18px 4px;">
           <div style="background:var(--gray-1);border-radius:10px;padding:10px 14px;font-size:13px;color:var(--gray-4);line-height:1.5;">
-            Saving <strong style="color:var(--navy);">$${goal.monthly.toLocaleString()}/month</strong>
+            Saving <strong style="color:var(--navy);">$${goal.monthly.toLocaleString('en-US')}/month</strong>
             ${monthsLeft ? ` · On track to finish <strong style="color:${meta.color};">${targetDate}</strong>` : ''}
-            ${goal.checkins && goal.checkins.length > 0 ? ` · Added <strong style="color:var(--teal);">$${Math.round(goal.checkins.reduce((s,c)=>s+(c.added||0),0)).toLocaleString()}</strong> total` : ''}
+            ${goal.checkins && goal.checkins.length > 0 ? ` · Added <strong style="color:var(--teal);">$${Math.round(goal.checkins.reduce((s,c)=>s+(c.added||0),0)).toLocaleString('en-US')}</strong> total` : ''}
           </div>
         </div>` : ''}
         <div class="goal-card-footer">
@@ -2323,7 +2323,7 @@ function showMilestones(id) {
   milestones.forEach(m => {
     const amt = Math.round(goal.target * m / 100);
     const reached = goal.current >= amt;
-    msg += `${m}% — $${amt.toLocaleString()}${reached ? ' (reached)' : ''}\n`;
+    msg += `${m}% — $${amt.toLocaleString('en-US')}${reached ? ' (reached)' : ''}\n`;
   });
   alert(msg);
 }
@@ -2348,7 +2348,7 @@ function _0x74237db(name) {
   const monthsLeft = topGoal.monthly > 0 ? Math.ceil(remaining / topGoal.monthly) : null;
 
   titleEl.textContent = `${name} — your ${month} financial check-in`;
-  bodyEl.innerHTML = `Your <strong>${topGoal.name}</strong> is ${pct}% complete — $${Math.round(topGoal.current).toLocaleString()} of $${Math.round(topGoal.target).toLocaleString()} saved.${monthsLeft ? ` You're on track to finish in ~${monthsLeft} months.` : ''}<br><br><em>${motivation}</em><br><br><strong>This month's action:</strong> ${remaining > 0 ? `Put $${topGoal.monthly.toLocaleString()} toward your ${topGoal.name} goal before the 1st.` : 'Goal complete. Time to set your next one.'}`;
+  bodyEl.innerHTML = `Your <strong>${topGoal.name}</strong> is ${pct}% complete — $${Math.round(topGoal.current).toLocaleString('en-US')} of $${Math.round(topGoal.target).toLocaleString('en-US')} saved.${monthsLeft ? ` You're on track to finish in ~${monthsLeft} months.` : ''}<br><br><em>${motivation}</em><br><br><strong>This month's action:</strong> ${remaining > 0 ? `Put $${topGoal.monthly.toLocaleString('en-US')} toward your ${topGoal.name} goal before the 1st.` : 'Goal complete. Time to set your next one.'}`;
 }
 
 function _0x760196b(monthsLeft) {
@@ -2479,7 +2479,7 @@ function _0x340b247() {
     <div class="simulator-card" style="border-left:3px solid var(--amber);">
       <div class="rec-eyebrow amber" style="display:inline-flex;margin-bottom:16px;">Credit premium active</div>
       <div style="font-size:14px;font-weight:600;color:var(--navy);margin-bottom:6px;">Your credit score is costing you ${creditPremium.toFixed(1)}% extra</div>
-      <div style="font-size:13px;color:var(--gray-4);line-height:1.6;">Improving your credit score one tier is equivalent to rates falling ${creditPremium.toFixed(1)}% — often achievable faster than waiting for the Bank of England to cut. On a ${_0x4f66a67(targetPrice||300000)} home that's roughly <strong style="color:var(--teal);">$${Math.round(mp(Math.max(0,(targetPrice||300000)-deposit), baseRate, 30) - mp(Math.max(0,(targetPrice||300000)-deposit), Math.max(3,baseRate-creditPremium*0.6), 30)).toLocaleString()}/month</strong> saved.</div>
+      <div style="font-size:13px;color:var(--gray-4);line-height:1.6;">Improving your credit score one tier is equivalent to rates falling ${creditPremium.toFixed(1)}% — often achievable faster than waiting for the Bank of England to cut. On a ${_0x4f66a67(targetPrice||300000)} home that's roughly <strong style="color:var(--teal);">$${Math.round(mp(Math.max(0,(targetPrice||300000)-deposit), baseRate, 30) - mp(Math.max(0,(targetPrice||300000)-deposit), Math.max(3,baseRate-creditPremium*0.6), 30)).toLocaleString('en-US')}/month</strong> saved.</div>
     </div>` : ''}
   `;
 
@@ -2548,8 +2548,8 @@ function updateRateWatch(rate) {
   const tpiEl = document.getElementById('rw-target-pi');
   if (tpiEl && targetPrice > 0) {
     const piColor = dti <= 36 ? 'var(--teal)' : dti <= 43 ? 'var(--amber)' : 'var(--red)';
-    tpiEl.innerHTML = `$${targetPI.toLocaleString()}<span style="font-size:13px;font-weight:400;color:var(--gray-4);">/mo</span>`
-      + (piSaving > 0 ? `<span style="font-size:13px;color:var(--teal);display:block;margin-top:2px;">-$${piSaving.toLocaleString()} vs today</span>` : '');
+    tpiEl.innerHTML = `$${targetPI.toLocaleString('en-US')}<span style="font-size:13px;font-weight:400;color:var(--gray-4);">/mo</span>`
+      + (piSaving > 0 ? `<span style="font-size:13px;color:var(--teal);display:block;margin-top:2px;">-$${piSaving.toLocaleString('en-US')} vs today</span>` : '');
     tpiEl.style.color = piColor;
   }
 
@@ -2577,7 +2577,7 @@ function updateRateWatch(rate) {
           <span>0%</span><span style="color:var(--green);">36%</span><span style="color:var(--amber);">43%</span><span>50%+</span>
         </div>
         <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:12px;">${gapChip}
-          ${piSaving > 0 ? `<span style="color:var(--teal);">-$${piSaving.toLocaleString()}/mo vs today</span>` : ''}
+          ${piSaving > 0 ? `<span style="color:var(--teal);">-$${piSaving.toLocaleString('en-US')}/mo vs today</span>` : ''}
         </div>
       </div>`;
   } else if (dtiEl) {
@@ -2597,7 +2597,7 @@ function updateRateWatch(rate) {
     } else if (dti > 36) {
       cls = 'neutral'; msg = `At ${rate.toFixed(2)}%, DTI is ${dti}% — you'd likely qualify, but it's firm. Your monthly breathing room would be ${_0x4f66a67(Math.max(0, Math.round(takeHome - targetPI - nonHousing - (G.expenses||0))))}.`;
     } else {
-      cls = 'good'; msg = `At ${rate.toFixed(2)}%, DTI is a healthy ${dti}%. You could afford up to ${_0x4f66a67(maxPrice)} at this rate${piSaving > 0 ? ` — saving $${piSaving.toLocaleString()}/mo vs buying today` : ''}.`;
+      cls = 'good'; msg = `At ${rate.toFixed(2)}%, DTI is a healthy ${dti}%. You could afford up to ${_0x4f66a67(maxPrice)} at this rate${piSaving > 0 ? ` — saving $${piSaving.toLocaleString('en-US')}/mo vs buying today` : ''}.`;
     }
     vEl.className = 'sim-verdict ' + cls;
     vEl.textContent = msg;
@@ -2612,13 +2612,13 @@ function updateRateWatch(rate) {
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;">
           <div style="background:rgba(244,162,97,0.08);border-radius:12px;padding:14px;text-align:center;">
             <div style="font-size:10px;font-weight:700;color:var(--amber);letter-spacing:1px;text-transform:uppercase;margin-bottom:6px;">Keep Renting</div>
-            <div style="font-family:var(--font-display);font-size:22px;color:var(--navy);">$${monthlyRent.toLocaleString()}/mo</div>
-            <div style="font-size:11px;color:var(--gray-4);margin-top:4px;">$${annualRent.toLocaleString()}/yr · no equity</div>
+            <div style="font-family:var(--font-display);font-size:22px;color:var(--navy);">$${monthlyRent.toLocaleString('en-US')}/mo</div>
+            <div style="font-size:11px;color:var(--gray-4);margin-top:4px;">$${annualRent.toLocaleString('en-US')}/yr · no equity</div>
           </div>
           <div style="background:${dti<=43?'var(--teal-dim)':'rgba(230,57,70,0.07)'};border-radius:12px;padding:14px;text-align:center;border:1.5px solid ${dti<=43?'rgba(0,119,182,0.25)':'rgba(230,57,70,0.2)'};">
             <div style="font-size:10px;font-weight:700;color:${dti<=43?'var(--teal)':'var(--red)'};letter-spacing:1px;text-transform:uppercase;margin-bottom:6px;">Buy at ${rate.toFixed(2)}%</div>
-            <div style="font-family:var(--font-display);font-size:22px;color:var(--navy);">$${targetPI.toLocaleString()}/mo</div>
-            <div style="font-size:11px;color:var(--gray-4);margin-top:4px;">${targetPI <= monthlyRent ? 'Less than rent' : '+$'+(targetPI-monthlyRent).toLocaleString()+'/mo vs rent'} · equity builds</div>
+            <div style="font-family:var(--font-display);font-size:22px;color:var(--navy);">$${targetPI.toLocaleString('en-US')}/mo</div>
+            <div style="font-size:11px;color:var(--gray-4);margin-top:4px;">${targetPI <= monthlyRent ? 'Less than rent' : '+$'+(targetPI-monthlyRent).toLocaleString('en-US')+'/mo vs rent'} · equity builds</div>
           </div>
         </div>
         <div style="background:var(--navy);border-radius:12px;padding:14px;font-size:13px;color:rgba(255,255,255,0.8);line-height:1.6;">
@@ -2671,9 +2671,9 @@ function updateSimulator(rateVal) {
   const newTotalInterest = newPayment * G.yearsLeft * 12 - G.balance;
   const lifetimeSavings = currentTotalInterest - newTotalInterest;
 
-  document.getElementById('sim-monthly').textContent = '$' + Math.round(newPayment).toLocaleString();
+  document.getElementById('sim-monthly').textContent = '$' + Math.round(newPayment).toLocaleString('en-US');
   const savEl = document.getElementById('sim-savings');
-  savEl.textContent = (diff >= 0 ? '+$' : '-$') + Math.abs(Math.round(diff)).toLocaleString() + '/mo';
+  savEl.textContent = (diff >= 0 ? '+$' : '-$') + Math.abs(Math.round(diff)).toLocaleString('en-US') + '/mo';
   savEl.className = 'sim-result-val ' + (diff > 0 ? 'positive' : diff < 0 ? 'negative' : '');
   document.getElementById('sim-breakeven').textContent = breakeven ? breakeven + ' mo' : 'N/A';
   const lsEl = document.getElementById('sim-lifetime');
@@ -2717,7 +2717,7 @@ function _0x7bdbfe0() {
   const savingAtMarket = curPmt - mktPmt;
   const beTarget = savingAtTarget > 0 ? Math.round(closing / savingAtTarget) : null;
   const beMarket = savingAtMarket > 0 ? Math.round(closing / savingAtMarket) : null;
-  const fmt = n => '$' + Math.abs(Math.round(n)).toLocaleString();
+  const fmt = n => '$' + Math.abs(Math.round(n)).toLocaleString('en-US');
 
   el.innerHTML = `
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;">
@@ -2865,7 +2865,7 @@ function _0x3e799ba() {
   const maxBal = Math.max(...debts.map(d=>d.balance));
   const totalDebt = debts.reduce((s,d)=>s+d.balance,0);
   const totalAnnualInterest = debts.reduce((s,d)=>s+d.balance*(d.rate/100),0);
-  const fmt = n => _0x4f66a67 ? _0x4f66a67(n) : '$'+Math.round(n).toLocaleString();
+  const fmt = n => _0x4f66a67 ? _0x4f66a67(n) : '$'+Math.round(n).toLocaleString('en-US');
 
   // ── Rank cards ──────────────────────────────────────────────────
   // Use activeOrder for rank, add all debts (mortgage last)
@@ -3177,7 +3177,7 @@ function _0xf056049(overrides) {
   const s5 = savingsMo >= 18 ? 100 : savingsMo >= 12 ? 88 : savingsMo >= 6 ? 72 : savingsMo >= 3 ? 52 : savingsMo >= 1 ? 32 : 10;
   const total = Math.max(10, Math.min(100, Math.round(s1*0.30 + s2*0.25 + s3*0.25 + s4*0.10 + s5*0.10)));
 
-  const fmtCash = n => n >= 0 ? '$' + Math.round(n).toLocaleString() : '-$' + Math.abs(Math.round(n)).toLocaleString();
+  const fmtCash = n => n >= 0 ? '$' + Math.round(n).toLocaleString('en-US') : '-$' + Math.abs(Math.round(n)).toLocaleString('en-US');
 
   return {
     total,
@@ -3267,7 +3267,7 @@ function _0xdbcabb1() {
             style="width:100%;accent-color:var(--teal);" disabled>
           <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--gray-3);margin-top:3px;">
             <span>${cat.fixUnit === '$' ? '$0' : cat.fixMin + cat.fixUnit}</span>
-            <span>${cat.fixUnit === '$' ? '$' + Math.round(cat.fixMax).toLocaleString() : cat.fixMax + cat.fixUnit}</span>
+            <span>${cat.fixUnit === '$' ? '$' + Math.round(cat.fixMax).toLocaleString('en-US') : cat.fixMax + cat.fixUnit}</span>
           </div>
           ${cat.fixHint ? `<div style="font-size:11px;color:var(--gray-4);background:var(--gray-1);border-radius:8px;padding:8px 10px;margin-top:10px;line-height:1.5;">${cat.fixHint}</div>` : ''}
         </div>`;
@@ -3346,7 +3346,7 @@ function sbdApply(catId, key, val, unit) {
   _sbdActiveCatId = catId;
   // Update just the displayed value label without full re-render
   const fvEl = document.getElementById('sbd-fv-' + catId);
-  if (fvEl) fvEl.textContent = unit === '$' ? '$' + Math.round(Math.max(0,val)).toLocaleString() : Math.round(val) + unit;
+  if (fvEl) fvEl.textContent = unit === '$' ? '$' + Math.round(Math.max(0,val)).toLocaleString('en-US') : Math.round(val) + unit;
   // Re-render the header ring + banner (light update)
   _0x7443caf();
 }
@@ -3446,7 +3446,7 @@ function _0xf426109() {
 
   // Salary display
   const el = id => document.getElementById(id);
-  const fmt = n => '$' + (Math.abs(n) >= 1000 ? Math.round(Math.abs(n)/1000).toLocaleString() + 'K' : Math.round(Math.abs(n)).toLocaleString());
+  const fmt = n => '$' + (Math.abs(n) >= 1000 ? Math.round(Math.abs(n)/1000).toLocaleString('en-US') + 'K' : Math.round(Math.abs(n)).toLocaleString('en-US'));
   if (el('sc-your-salary')) el('sc-your-salary').textContent = fmt(salary);
   if (el('sc-median-salary')) el('sc-median-salary').textContent = fmt(band.median);
 
@@ -3557,9 +3557,9 @@ function _0x01d514a(score) {
     const monthlyIncome = G.income / 12;
     const savingsRate = monthlyIncome > 0 ? Math.round((fcf / monthlyIncome) * 100) : 0;
     if (fcf >= 1000) {
-      factors.push({ icon: '', label: 'Healthy free cash flow', detail: '$' + Math.round(fcf).toLocaleString() + '/mo free — ' + savingsRate + '% savings rate. Compounds fast toward a deposit.', positive: true });
+      factors.push({ icon: '', label: 'Healthy free cash flow', detail: '$' + Math.round(fcf).toLocaleString('en-US') + '/mo free — ' + savingsRate + '% savings rate. Compounds fast toward a deposit.', positive: true });
     } else if (fcf >= 200) {
-      factors.push({ icon: '', label: 'Tight cash flow', detail: 'Only $' + Math.round(fcf).toLocaleString() + '/mo free. Reducing one expense category could unlock meaningful savings momentum.', positive: false });
+      factors.push({ icon: '', label: 'Tight cash flow', detail: 'Only $' + Math.round(fcf).toLocaleString('en-US') + '/mo free. Reducing one expense category could unlock meaningful savings momentum.', positive: false });
     } else {
       factors.push({ icon: '', label: 'Negative or minimal cash flow', detail: 'Spending exceeds or matches income — a deposit won\'t grow from here. This is the first thing to fix.', positive: false });
     }
@@ -3703,8 +3703,8 @@ function _0xda59b7c(monthlyIncome) {
     <div style="background:var(--navy);border-radius:14px;padding:18px;margin-bottom:14px;">
       <div style="font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:rgba(255,255,255,0.4);margin-bottom:16px;">10% DEPOSIT PROGRESS — TARGET $${Math.round(targetPrice/1000)}K HOME</div>
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-        <div style="font-family:var(--font-display);font-size:22px;color:white;">$${Math.round(cashNow).toLocaleString()}</div>
-        <div style="font-size:13px;color:rgba(255,255,255,0.5);">of $${Math.round(targetPrice*0.1).toLocaleString()} needed</div>
+        <div style="font-family:var(--font-display);font-size:22px;color:white;">$${Math.round(cashNow).toLocaleString('en-US')}</div>
+        <div style="font-size:13px;color:rgba(255,255,255,0.5);">of $${Math.round(targetPrice*0.1).toLocaleString('en-US')} needed</div>
       </div>
       <div style="background:rgba(255,255,255,0.12);border-radius:4px;height:8px;overflow:hidden;margin-bottom:8px;">
         <div style="width:${depPct}%;height:100%;background:linear-gradient(90deg,var(--teal),var(--teal-light));border-radius:4px;transition:width 0.8s ease;"></div>
@@ -3726,8 +3726,8 @@ function _0xda59b7c(monthlyIncome) {
 
   _0xa9e1fb8(
     dti + '% current DTI',
-    depositGap > 0 ? '$' + Math.round(depositGap).toLocaleString() + ' deposit gap' : 'Deposit ready',
-    G.rentAmt ? '$' + Math.round(G.rentAmt).toLocaleString() + '/mo rent (current)' : 'No rent entered',
+    depositGap > 0 ? '$' + Math.round(depositGap).toLocaleString('en-US') + ' deposit gap' : 'Deposit ready',
+    G.rentAmt ? '$' + Math.round(G.rentAmt).toLocaleString('en-US') + '/mo rent (current)' : 'No rent entered',
     'Net worth based on actual figures only'
   );
 }
@@ -4233,7 +4233,7 @@ function updatePromoSim() {
   `;
 
   var ins = document.getElementById('promo-sim-insight');
-  if (ins) ins.innerHTML = `A <strong style="color:#00A8E8;">+${pct}%</strong> promotion in Year ${yr} adds <strong style="color:#00A8E8;">~$${fcfGain.toLocaleString()}/mo</strong> in extra take-home and compounds to <strong style="color:#00A8E8;">~$${Math.round(lifetimeGain/1000)}k</strong> more over 10 years vs. staying put.`;
+  if (ins) ins.innerHTML = `A <strong style="color:#00A8E8;">+${pct}%</strong> promotion in Year ${yr} adds <strong style="color:#00A8E8;">~$${fcfGain.toLocaleString('en-US')}/mo</strong> in extra take-home and compounds to <strong style="color:#00A8E8;">~$${Math.round(lifetimeGain/1000)}k</strong> more over 10 years vs. staying put.`;
 
   // ── System Impact ─────────────────────────────────────────────────
   var _si = document.getElementById('promo-system-impact');
@@ -4423,7 +4423,7 @@ function _0xa9e1fb8(dti, liquidity, equity, horizon) {
 function _0xb7aa5c8(icon, label, val, cls) {
   return `<div class="nw-row">
     <span class="nw-row-label">${icon} ${label}</span>
-    <span class="nw-row-val ${cls}">$${Math.round(val).toLocaleString()}</span>
+    <span class="nw-row-val ${cls}">$${Math.round(val).toLocaleString('en-US')}</span>
   </div>`;
 }
 // openScenarios defined in UI controller
@@ -4637,7 +4637,7 @@ function renderNextBestMoves() {
   var dti   = G.dti   || 0;
   var ccDebt = G.ccDebt || 0;
   var emergency = parseInt(G.emergency) || 0;
-  var fmt = function(n) { return '$' + Math.round(Math.abs(n)).toLocaleString(); };
+  var fmt = function(n) { return '$' + Math.round(Math.abs(n)).toLocaleString('en-US'); };
 
   if (emergency === 0)
     moves.push({ icon:'', title:'Build an emergency fund', body:'No emergency savings detected. Even $1,000 is a critical buffer against unexpected costs.', priority:'high' });
@@ -5239,7 +5239,7 @@ function _0xa438a4e() {
   list.innerHTML = _careerLog.map(function(e){
     return '<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--gray-2);font-size:13px;">'
       +'<div><span style="font-weight:600;color:var(--navy);">'+e.title+'</span>'
-      +(e.type==='bonus'?'':' <span style="color:var(--gray-4);">'+('$'+Math.round(e.income).toLocaleString()+'/yr')+'</span>')+'</div>'
+      +(e.type==='bonus'?'':' <span style="color:var(--gray-4);">'+('$'+Math.round(e.income).toLocaleString('en-US')+'/yr')+'</span>')+'</div>'
       +'<span style="color:var(--gray-4);font-size:11px;">'+e.date+'</span></div>';
   }).join('');
 }
@@ -5277,7 +5277,7 @@ function logCareerEvent() {
 }
 
 function showPromoCelebration(type,title,income,prevIncome,raise,raiseAmt) {
-  var fmt=function(n){return '$'+Math.round(n).toLocaleString();};
+  var fmt=function(n){return '$'+Math.round(n).toLocaleString('en-US');};
   var typeLabels={promo:'Promotion logged!',raise:'Raise logged!',newjob:'New job logged!',bonus:'Bonus logged!'};
   var typeEmojis={promo:'\uD83C\uDFC6',raise:'\uD83D\uDCC8',newjob:'\uD83D\uDE80',bonus:'\uD83D\uDCB0'};
   var headline=typeLabels[type]||'Achievement logged!';
@@ -5321,15 +5321,15 @@ async function generateSalaryScript() {
   if(loadEl) loadEl.style.display='block';
   var tenureMap={'under1':'less than 1 year','1to2':'1-2 years','2to4':'2-4 years','4plus':'4+ years'};
   var role=(G&&G.jobTitle)?G.jobTitle:'their current role';
-  var income=G&&G.income?'$'+Math.round(G.income).toLocaleString():'their current salary';
+  var income=G&&G.income?'$'+Math.round(G.income).toLocaleString('en-US'):'their current salary';
   var gapAmt=Math.round(Math.abs(gap.gapFromMedian||0));
   var marketMedian=Math.round(gap.marketMedian||0);
   var state=(G&&G.state)?'in '+(G.state):'';
   var prompt='Write a professional, confident salary negotiation script for someone who:\n'
     +'- Works as: '+role+' '+state+'\n'
     +'- Current salary: '+income+'\n'
-    +'- Market median for their role: $'+marketMedian.toLocaleString()+'\n'
-    +'- Gap from market: $'+gapAmt.toLocaleString()+' '+(gap.aboveMedian?'above':'below')+' median\n'
+    +'- Market median for their role: $'+marketMedian.toLocaleString('en-US')+'\n'
+    +'- Gap from market: $'+gapAmt.toLocaleString('en-US')+' '+(gap.aboveMedian?'above':'below')+' median\n'
     +'- Time in role: '+tenureMap[tenure]+'\n'
     +'- Key achievements: '+(achieve||'not specified')+'\n'
     +'- Target raise: '+target+'%\n\n'
@@ -5351,7 +5351,7 @@ async function generateSalaryScript() {
     if(bodyEl) bodyEl.textContent=script;
     var targetIncome=Math.round((G.income||0)*(1+parseFloat(target)/100));
     var posEl=document.getElementById('sn-position-summary');
-    if(posEl) posEl.textContent='Asking for '+target+'% raises your salary to $'+targetIncome.toLocaleString()+'/yr'+(gapAmt>0?' \u2014 a reasonable ask based on BLS market data.':'.');
+    if(posEl) posEl.textContent='Asking for '+target+'% raises your salary to $'+targetIncome.toLocaleString('en-US')+'/yr'+(gapAmt>0?' \u2014 a reasonable ask based on BLS market data.':'.');
     window._snScript=script;
   } catch(e) {
     if(loadEl) loadEl.style.display='none';
@@ -5439,15 +5439,15 @@ if (typeof refreshAIAdvice === 'undefined') {
     };
     var userGoal = goalLabels[G.goal] || (G.goal || 'improve their financial position');
     var prompt = 'PRIMARY GOAL: '+userGoal+'. '+
-      'Profile: income $'+Math.round(G.income||0).toLocaleString()+
-      ', take-home $'+Math.round(G.takeHome||0).toLocaleString()+'/mo'+
+      'Profile: income $'+Math.round(G.income||0).toLocaleString('en-US')+
+      ', take-home $'+Math.round(G.takeHome||0).toLocaleString('en-US')+'/mo'+
       ', DTI '+(G.dti||0)+'%'+
-      ', FCF $'+Math.round(G.fcf||0).toLocaleString()+'/mo'+
+      ', FCF $'+Math.round(G.fcf||0).toLocaleString('en-US')+'/mo'+
       ', credit '+(G.credit||'unknown')+
       ', state '+(G.state||'US')+
       ', housing '+(G.housingType||'unknown')+
-      (G.ccDebt>0?', CC debt $'+Math.round(G.ccDebt).toLocaleString():'')+
-      (G.studentDebt>0?', student debt $'+Math.round(G.studentDebt).toLocaleString():'')+
+      (G.ccDebt>0?', CC debt $'+Math.round(G.ccDebt).toLocaleString('en-US'):'')+
+      (G.studentDebt>0?', student debt $'+Math.round(G.studentDebt).toLocaleString('en-US'):'')+
       '. Return JSON array of 3 recs: [{"title":"...","body":"2 sentences...","why":"...","action":"...","priority":"high|medium|low","goalTag":"..."}]. JSON only.';
     try {
       var r = await _tracentAIRequest({
@@ -5512,7 +5512,7 @@ if (typeof sendAIChat === 'undefined') {
     thinkEl.style.cssText = 'font-size:13px;color:var(--gray-4);padding:8px 0;';
     thinkEl.textContent = 'Thinking\u2026';
     msgs.appendChild(thinkEl);
-    var ctx = 'User profile: income $'+Math.round(G.income||0).toLocaleString()+
+    var ctx = 'User profile: income $'+Math.round(G.income||0).toLocaleString('en-US')+
       ', DTI '+(G.dti||0)+'%'+
       ', credit '+(G.credit||'unknown')+
       ', goal '+(G.goal||'build savings')+

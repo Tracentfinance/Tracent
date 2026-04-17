@@ -17,7 +17,7 @@
   var CONTAINER_ID = 'tracent-debt-experience';
   var DEFAULT_MOUNT = 'tab-debtrank';
 
-  function fmt(n) { return '$' + Math.abs(Math.round(n || 0)).toLocaleString(); }
+  function fmt(n) { return '$' + Math.abs(Math.round(n || 0)).toLocaleString('en-US'); }
 
   /* ── Tone background gradients ──────────────────────── */
   var TONE_BG = {

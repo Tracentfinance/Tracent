@@ -13,7 +13,7 @@
 
   function _g() { return window.G || {}; }
   function _bse() { return window.BSE || {}; }
-  function fmt(n) { return '$' + Math.abs(Math.round(n || 0)).toLocaleString(); }
+  function fmt(n) { return '$' + Math.abs(Math.round(n || 0)).toLocaleString('en-US'); }
 
   /* ── Build debt items from G ────────────────────────── */
   function _buildDebts(g) {

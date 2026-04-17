@@ -57,7 +57,10 @@
         'ccDebt','ccRate','studentDebt','carDebt','otherDebt','emergency',
         'retMatch','homePrice','depositSaved','currentRent','purchasePrice',
         'housingType','credit','savingsAmt',
-        'ageRange','primaryIntent'
+        'ageRange','primaryIntent',
+        'retirementStage','goalMode','retirementIncomeSource',
+        'retirementSavings','socialSecurityMonthly','pensionIncome',
+        'homeIncomeMode','homeHouseholdTakeHome'
       ];
       fields.forEach(function(key) {
         if (fi[key] !== null && fi[key] !== undefined) g[key] = fi[key];

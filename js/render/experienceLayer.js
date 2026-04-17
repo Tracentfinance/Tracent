@@ -81,7 +81,7 @@
     var takeHome = g.takeHome || 0;
     var efMonths = parseInt(g.emergency || g.emergencyMonths || '0');
     var fcf = g.fcf || 0;
-    var fmt = function(n) { return '$' + Math.round(Math.abs(n || 0)).toLocaleString(); };
+    var fmt = function(n) { return '$' + Math.round(Math.abs(n || 0)).toLocaleString('en-US'); };
 
     // ── Stability band (derived from buffer + cashflow, NOT actuarial) ─
     var _bandLabel, _bandClass;

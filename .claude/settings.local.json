@@ -35,7 +35,9 @@
       "Bash(grep -v \"toLocaleString\\\\|K\\\\`\\\\|'K\\\\|/[0-9]\\\\|000\\\\b\")",
       "Bash(grep -rn '\\\\$\\\\${' \"c:/Users/damia/OneDrive/My Businesses/2. Tracent Finance/Tracent/js/engine/legacy-calculations.js\")",
       "Bash(grep -v \"toLocaleString\\\\|\\\\.toFixed\\\\|000}\\\\`\\\\|K}\\\\|k}\\\\|M}\\\\|//\")",
-      "Bash(grep \"\\\\$\\\\|balance\\\\|debt\\\\|amount\")"
+      "Bash(grep \"\\\\$\\\\|balance\\\\|debt\\\\|amount\")",
+      "Read(//c/Users/damia/.claude/projects/c--Users-damia-OneDrive-My-Businesses-2--Tracent-Finance-Tracent/924bd776-93d8-4ac0-aba8-d39d330b6e53/tool-results/**)",
+      "Bash(grep -n \"G\\\\\\\\.income\\\\|G\\\\\\\\.takehome\\\\|G\\\\\\\\.expenses\" \"c:/Users/damia/OneDrive/My Businesses/2. Tracent Finance/Tracent/js/engine/compat-bridge.js\")"
     ]
   }
 }

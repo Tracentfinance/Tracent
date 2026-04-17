@@ -35,7 +35,7 @@ function setDebtMethod(method, btn) {
 }
 function updateDebtAccelerator(val) {
   var valEl = document.getElementById('debt-accelerator-val');
-  if (valEl) valEl.textContent = '$' + parseInt(val).toLocaleString();
+  if (valEl) valEl.textContent = '$' + parseInt(val).toLocaleString('en-US');
   if (typeof G !== 'undefined') G.extraPayment = parseInt(val);
   var impactEl = document.getElementById('debt-accelerator-impact');
   if (impactEl && typeof _0x3e799ba === 'function') { setTimeout(function () { try { _0x3e799ba(); } catch (e) { } }, 50); }
@@ -68,7 +68,7 @@ window.updateDebtAccelerator = updateDebtAccelerator;
    Reads: window.BSE.debtLayer, window.G (financial data)
 ═══════════════════════════════════════════════════════════ */
 window.bseRenderDebtRelief = function () {
-  var fmtMoney = function (n) { return '$' + Math.round(Math.abs(n || 0)).toLocaleString(); };
+  var fmtMoney = function (n) { return '$' + Math.round(Math.abs(n || 0)).toLocaleString('en-US'); };
   var el = document.getElementById('bse-debt-relief');
   if (!el) return;
   var BSE = window.BSE || {};

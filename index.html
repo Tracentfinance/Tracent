@@ -112,39 +112,24 @@
             system either way.</p>
           <div class="v21-choice-grid">
             <div class="v21-choice" onclick="v21SelectIntent('stable',this)">
-              <div class="v21-choice-icon">🛟</div>
-              <div>
-                <div class="v21-choice-title">Get financially stable</div>
-                <div class="v21-choice-sub">Create a safer, calmer financial baseline</div>
-              </div>
+              <div class="v21-choice-title">Get financially stable</div>
+              <div class="v21-choice-sub">Create a safer, calmer financial baseline</div>
             </div>
             <div class="v21-choice" onclick="v21SelectIntent('debt',this)">
-              <div class="v21-choice-icon">⚡</div>
-              <div>
-                <div class="v21-choice-title">Pay off debt</div>
-                <div class="v21-choice-sub">Reduce pressure and free up monthly cash flow</div>
-              </div>
+              <div class="v21-choice-title">Pay off debt</div>
+              <div class="v21-choice-sub">Reduce pressure and free up monthly cash flow</div>
             </div>
             <div class="v21-choice" onclick="v21SelectIntent('home',this)">
-              <div class="v21-choice-icon">🏠</div>
-              <div>
-                <div class="v21-choice-title">Buy my first home</div>
-                <div class="v21-choice-sub">Understand readiness, deposit gap and timeline</div>
-              </div>
+              <div class="v21-choice-title">Buy my first home</div>
+              <div class="v21-choice-sub">Understand readiness, deposit gap and timeline</div>
             </div>
             <div class="v21-choice" onclick="v21SelectIntent('grow',this)">
-              <div class="v21-choice-icon">📈</div>
-              <div>
-                <div class="v21-choice-title">Grow wealth</div>
-                <div class="v21-choice-sub">Build momentum beyond the basics</div>
-              </div>
+              <div class="v21-choice-title">Grow wealth</div>
+              <div class="v21-choice-sub">Build momentum beyond the basics</div>
             </div>
             <div class="v21-choice" onclick="v21SelectIntent('retire',this)">
-              <div class="v21-choice-icon">🌅</div>
-              <div>
-                <div class="v21-choice-title">Plan retirement</div>
-                <div class="v21-choice-sub">Turn today's choices into long-term security</div>
-              </div>
+              <div class="v21-choice-title">Plan retirement</div>
+              <div class="v21-choice-sub">Turn today's choices into long-term security</div>
             </div>
           </div>
           <div class="v21-disclaimer">Takes 2 minutes · No credit check · No bank login · Educational only</div>
@@ -603,7 +588,7 @@
 
         <!-- Stat strip — visible for stable/optimizer, hidden for stressed -->
         <div class="stat-strip" id="bse-stat-strip">
-          <div class="stat-cell" onclick="switchTab('debtrank');setNav(document.getElementById('nav-debt'))">
+          <div class="stat-cell" onclick="switchTab('progress');setNav(document.getElementById('nav-progress'))">
             <div class="stat-val" id="hdr-fcf">—</div>
             <div class="stat-lbl">Cash/mo</div>
           </div>
@@ -722,7 +707,7 @@
         <!-- Metrics grid — suppressed for focused users, shown for stable/optimizer -->
         <div class="home-metrics" id="home-metrics" style="display:none;">
           <div class="home-metric" id="hm-cashflow"
-            onclick="switchTab('debtrank');setNav(document.getElementById('nav-debt'))">
+            onclick="switchTab('progress');setNav(document.getElementById('nav-progress'))">
             <div class="home-metric-lbl">Free cash flow</div>
             <div class="home-metric-val" id="hm-cashflow-val">—</div>
             <div class="home-metric-sub" id="hm-cashflow-sub">per month</div>

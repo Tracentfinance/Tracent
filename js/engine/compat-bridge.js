@@ -372,7 +372,7 @@ var _v21BandMeta = {
   exposed:     { label: 'Exposed',     color: '#F59E0B', min: 40, max: 54  },
   stabilizing: { label: 'Stabilizing', color: '#00A8E8', min: 55, max: 69  },
   advancing:   { label: 'Advancing',   color: '#10B981', min: 70, max: 84  },
-  compounding: { label: 'Compounding', color: '#8B5CF6', min: 85, max: 100 }
+  compounding: { label: 'Compounding', color: '#0077B6', min: 85, max: 100 }
 };
 
 function v21BandForScore(score) {
@@ -894,6 +894,21 @@ function _v21_prefillRefineForm() {
     }
   }
   if (g.homeHouseholdTakeHome) _setField('v21r-household-takehome', _fmtInput(g.homeHouseholdTakeHome));
+  // Blur-reformat: money fields show commas after user leaves a field
+  var _v21rMoneyIds = ['v21r-income','v21r-takehome','v21r-cc-debt','v21r-car-debt','v21r-student-debt','v21r-other-debt','v21r-retirement-savings','v21r-ss-monthly','v21r-pension-monthly','v21r-household-takehome'];
+  _v21rMoneyIds.forEach(function(id) {
+    var _el = document.getElementById(id);
+    if (_el && !_el._blurFmtBound) {
+      _el.addEventListener('blur', function() {
+        var stripped = String(this.value || '').replace(/[^0-9.]/g, '');
+        if (!stripped) { this.value = ''; return; }
+        var raw = parseFloat(stripped);
+        if (isNaN(raw)) { this.value = ''; return; }
+        this.value = raw === 0 ? '0' : Math.round(raw).toLocaleString('en-US');
+      });
+      _el._blurFmtBound = true;
+    }
+  });
 }
 window._v21_prefillRefineForm = _v21_prefillRefineForm;
 

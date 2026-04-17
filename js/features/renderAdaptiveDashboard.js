@@ -16,7 +16,7 @@
   var CONTAINER_ID = 'tracent-adaptive-dashboard';
   var DEFAULT_MOUNT = 'tab-home';
 
-  function fmt(n) { return '$' + Math.abs(Math.round(n || 0)).toLocaleString(); }
+  function fmt(n) { return '$' + Math.abs(Math.round(n || 0)).toLocaleString('en-US'); }
 
   /* ── Tone background gradients (only dynamic value that must be inline) ── */
   var TONE_BG = {
@@ -28,7 +28,7 @@
   };
   var TONE_DOT = {
     calm: '#EF4444', reassuring: '#10B981', encouraging: '#00A8E8',
-    confident: '#8B5CF6', neutral: '#94A3B8'
+    confident: '#0077B6', neutral: '#94A3B8'
   };
 
   /* ── Ensure container ───────────────────────────────── */

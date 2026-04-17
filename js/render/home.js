@@ -635,7 +635,7 @@
         : 'Your position is stable. Consistent withdrawal discipline and an annual review are the most important things now.';
 
       return '<div class="tracent-mode-header">' +
-        '<div class="tracent-mode-badge" style="background:rgba(139,92,246,0.10);color:#8B5CF6;">Retire Mode — Retirement Stability</div>' +
+        '<div class="tracent-mode-badge" style="background:rgba(0,119,182,0.10);color:#0077B6;">Retire Mode — Retirement Stability</div>' +
         '<div class="tracent-mode-grid-3">' +
           '<div class="tracent-mode-cell"><div class="tracent-mode-cell-label">Income source</div><div class="tracent-mode-cell-value">'+incSrcLabel+'</div><div class="tracent-mode-cell-note">Primary retirement income</div></div>' +
           '<div class="tracent-mode-cell"><div class="tracent-mode-cell-label">Position</div><div class="tracent-mode-cell-value" style="color:'+stabilityColor+'">'+stabilityLabel+'</div><div class="tracent-mode-cell-note">Overall stability signal</div></div>' +
@@ -688,7 +688,7 @@
       : '';
 
     return '<div class="tracent-mode-header">' +
-      '<div class="tracent-mode-badge" style="background:rgba(139,92,246,0.10);color:#8B5CF6;">Retire Mode — Long-Horizon Security</div>' +
+      '<div class="tracent-mode-badge" style="background:rgba(0,119,182,0.10);color:#0077B6;">Retire Mode — Long-Horizon Security</div>' +
       '<div class="tracent-mode-grid-3">' +
         '<div class="tracent-mode-cell"><div class="tracent-mode-cell-label">Trajectory signal</div><div class="tracent-mode-cell-value" style="color:'+trajectoryColor+'">'+trajectoryLabel+'</div><div class="tracent-mode-cell-note">Based on match + debt position</div></div>' +
         projCell +
@@ -718,7 +718,7 @@
     })();
 
     return '<div class="tracent-mode-header">' +
-      '<div class="tracent-mode-badge" style="background:rgba(0,119,182,0.10);color:var(--teal);">Today Mode — Mission Control</div>' +
+      '<div class="tracent-mode-badge" style="color:rgba(0,119,182,0.65);font-size:0.62rem;font-weight:700;letter-spacing:0.13em;text-transform:uppercase;">Today Mode — Mission Control</div>' +
       '<div class="tracent-mode-grid-3">' +
         '<div class="tracent-mode-cell"><div class="tracent-mode-cell-label">Planning score</div><div class="tracent-mode-cell-value">'+(score ? score+'/100' : '—')+'</div><div class="tracent-mode-cell-note">'+(score ? 'Real weighted score' : 'Complete analysis to see')+'</div></div>' +
         '<div class="tracent-mode-cell"><div class="tracent-mode-cell-label">Free cash flow</div><div class="tracent-mode-cell-value" style="color:'+(_hasTrustedCashflowInputs(g)?(fcf>=0?'var(--teal)':'var(--red)'):'var(--gray-3)')+'">'+(_hasTrustedCashflowInputs(g)?fmt(fcf)+'/mo':'—')+'</div><div class="tracent-mode-cell-note">'+(_hasTrustedCashflowInputs(g)?'After obligations':'Add housing &amp; spending to calculate')+'</div></div>' +
@@ -794,36 +794,37 @@
   var style = document.createElement('style');
   style.textContent = `
     #v21-mode-strategy { margin-bottom: var(--s3); }
-    .tracent-mode-header { }
+    .tracent-mode-header { margin-top: 32px; margin-bottom: 12px; padding-top: 4px; padding-bottom: 4px; }
     .tracent-mode-badge {
-      display: inline-flex; align-items: center; gap: 6px;
-      padding: 5px 12px; border-radius: 999px;
-      font-size: 11px; font-weight: 700;
-      margin-bottom: 14px;
+      display: inline-block;
+      padding: 0 0 8px 0; border-radius: 0;
+      background: none;
+      font-size: 10px; font-weight: 700;
+      margin-bottom: 10px;
     }
     .tracent-mode-grid-3 {
       display: grid;
       grid-template-columns: repeat(2, 1fr);
-      gap: 10px;
-      margin-bottom: 14px;
+      gap: 6px;
+      margin-bottom: 12px;
     }
     .tracent-mode-cell {
       background: var(--off-white);
-      border: 1px solid var(--gray-2);
-      border-radius: 14px;
-      padding: 12px;
+      border: 1px solid rgba(0,31,51,0.08);
+      border-radius: 6px;
+      padding: 8px 10px;
     }
     .tracent-mode-cell-label {
-      font-size: 10px; font-weight: 700;
+      font-size: 9px; font-weight: 700;
       color: var(--gray-3); text-transform: uppercase;
-      letter-spacing: .4px; margin-bottom: 5px;
+      letter-spacing: .5px; margin-bottom: 2px;
     }
     .tracent-mode-cell-value {
       font-size: 15px; font-weight: 700; color: var(--navy);
-      margin-bottom: 3px; line-height: 1.2;
+      margin-bottom: 2px; line-height: 1.15;
     }
     .tracent-mode-cell-note {
-      font-size: 11px; color: var(--gray-4); line-height: 1.45;
+      font-size: 10px; color: var(--gray-4); line-height: 1.3;
     }
     .tracent-mode-insight {
       background: var(--gray-1);
@@ -1122,7 +1123,6 @@
   /* ── 5. STAGGER ENTRANCE ───────────────────────────────── */
   var STAGGER_ORDER = [
     'v21-verdict-block',
-    'v21-compact-score',
     'v21-authority-card',
     'v21-nbm-card',
     'v21-mode-rail-home',
@@ -1198,12 +1198,10 @@
 
     // Build/update dashboard components
     try { buildVerdict();         } catch(e) {}
-    try { buildCompactScore();    } catch(e) {}
     try { enhanceAuthorityCard(); } catch(e) {}
     try { relocateModeRail();     } catch(e) {}
     try { syncRailClone();        } catch(e) {}
     try { elevateNBM();           } catch(e) {}
-    try { compactScoreRing();     } catch(e) {}
 
     // Stagger entrance after a brief settling pause
     setTimeout(runDashboardEntrance, 80);
@@ -1269,14 +1267,7 @@
     '  color: rgba(0,168,232,0.75);',
     '  font-weight: 600;',
     '}',
-    /* ── Reduce existing score ring dominance ── */
-    '.v21-score-compact .score-ring-area { margin-bottom: 6px !important; }',
-    '.v21-score-compact .score-ring-wrap { width: 72px !important; height: 72px !important; }',
-    '.v21-score-compact .score-ring-svg  { width: 72px !important; height: 72px !important; }',
-    '.v21-score-compact .score-ring-num  { font-size: 22px !important; }',
-    '.v21-score-compact .score-title     { font-size: 17px !important; }',
-    '.v21-score-compact                  { padding-bottom: 8px !important; }',
-    /* Score hero remains visible alongside compact score row */
+    /* Score ring renders at full natural size — no compaction rules */
     /* ── Authority card meta bar ── */
     '.v21-auth-meta-bar { margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--gray-1); }',
     '.v21-auth-meta-row { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }',
